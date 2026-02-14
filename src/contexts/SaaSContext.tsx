@@ -21,6 +21,7 @@ export interface SaaSConfig {
   seller_name: string;
   status: string;
   configuration_schema: Record<string, any> | null;
+  facebook_app_id: string | null;
 }
 
 interface SaaSContextValue {

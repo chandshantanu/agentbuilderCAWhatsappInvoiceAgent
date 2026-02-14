@@ -13,6 +13,7 @@ import { useSaaS } from '@/contexts/SaaSContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { saasApi } from '@/services/saasApiService';
 import { CheckCircle2, ArrowRight, Loader2 } from 'lucide-react';
+import WhatsAppConnectStep from '@/components/WhatsAppConnectStep';
 
 interface ConfigField {
   key: string;
@@ -26,7 +27,7 @@ interface ConfigField {
 
 export default function SaaSOnboardingPage() {
   const { config, subdomain } = useSaaS();
-  const { isConfigured, refetch } = useSubscription();
+  const { isConfigured, subscriptionId, refetch } = useSubscription();
   const navigate = useNavigate();
 
   const [fields, setFields] = useState<ConfigField[]>([]);
@@ -85,10 +86,18 @@ export default function SaaSOnboardingPage() {
   const handleNext = async () => {
     if (!currentField) return;
 
-    const value = values[currentField.key]?.trim();
-    if (currentField.required && !value) {
-      setError(`${currentField.label} is required`);
-      return;
+    // For whatsapp_connect, the value is set by onConnected callback
+    if (currentField.type === 'whatsapp_connect') {
+      if (currentField.required && !values[currentField.key]) {
+        setError('Please connect your WhatsApp Business account to continue');
+        return;
+      }
+    } else {
+      const value = values[currentField.key]?.trim();
+      if (currentField.required && !value) {
+        setError(`${currentField.label} is required`);
+        return;
+      }
     }
 
     setError('');
@@ -189,7 +198,17 @@ export default function SaaSOnboardingPage() {
           )}
 
           {/* Field input */}
-          {currentField.type === 'select' && currentField.options ? (
+          {currentField.type === 'whatsapp_connect' ? (
+            <WhatsAppConnectStep
+              facebookAppId={config.facebook_app_id || ''}
+              subscriptionId={subscriptionId || ''}
+              subdomain={subdomain || ''}
+              onConnected={(data) =>
+                setValues((v) => ({ ...v, [currentField.key]: JSON.stringify(data) }))
+              }
+              primaryColor={primaryColor}
+            />
+          ) : currentField.type === 'select' && currentField.options ? (
             <select
               value={values[currentField.key] || ''}
               onChange={(e) =>

@@ -90,4 +90,15 @@ export const saasApi = {
   // Mark config complete
   completeConfig: (subdomain: string) =>
     apiCall('POST', `/api/v1/saas/runtime/${subdomain}/config/complete`),
+
+  // Exchange WhatsApp Embedded Signup auth code for credentials
+  exchangeWhatsAppCode: (subscriptionId: string, code: string) =>
+    apiCall('POST', `/api/v1/whatsapp/embedded-signup/exchange-code`, {
+      code,
+      subscription_id: subscriptionId,
+    }),
+
+  // Get WhatsApp connection status for a subdomain
+  getWhatsAppStatus: (subdomain: string) =>
+    apiCall('GET', `/api/v1/saas/runtime/${subdomain}/whatsapp/status`),
 };
