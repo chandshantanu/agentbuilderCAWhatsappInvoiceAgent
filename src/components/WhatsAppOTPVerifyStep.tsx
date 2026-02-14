@@ -85,11 +85,23 @@ export default function WhatsAppOTPVerifyStep({
     setState('sending');
 
     try {
-      await saasApi.requestPhoneOTP(subdomain, {
+      const resp = await saasApi.requestPhoneOTP(subdomain, {
         phone_number: cleanPhone,
         country_code: countryCode,
         verified_name: businessName.trim(),
       });
+      // Phone was already verified on the WABA — skip OTP entry
+      if (resp.data?.already_verified) {
+        const data = {
+          phone_number_id: resp.data.phone_number_id,
+          display_phone_number: resp.data.display_phone_number || `+${countryCode} ${cleanPhone}`,
+          verified_name: resp.data.verified_name || businessName.trim(),
+        };
+        setVerifiedData(data);
+        setState('verified');
+        onVerified(data);
+        return;
+      }
       setState('otp_sent');
       setResendCooldown(60);
       // Focus first OTP input

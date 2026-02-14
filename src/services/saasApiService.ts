@@ -124,7 +124,13 @@ export const saasApi = {
   ) =>
     apiCall<{
       success: boolean;
-      data: { phone_number_id: string; message: string };
+      data: {
+        phone_number_id: string;
+        message: string;
+        already_verified?: boolean;
+        display_phone_number?: string;
+        verified_name?: string;
+      };
     }>(
       'POST',
       `/api/v1/saas/runtime/${subdomain}/whatsapp/request-code`,
