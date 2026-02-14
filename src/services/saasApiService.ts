@@ -117,18 +117,21 @@ export const saasApi = {
       phone_number_id: phoneNumberId,
     }),
 
-  // Request OTP for phone number verification (bring-your-own-number)
+  // Request phone registration on seller's WABA + SMS code
   requestPhoneOTP: (
     subdomain: string,
     data: { phone_number: string; country_code: string; verified_name: string },
   ) =>
-    apiCall<{ success: boolean; data: { message: string } }>(
+    apiCall<{
+      success: boolean;
+      data: { phone_number_id: string; message: string };
+    }>(
       'POST',
       `/api/v1/saas/runtime/${subdomain}/whatsapp/request-code`,
       data,
     ),
 
-  // Verify OTP code
+  // Verify SMS code with Meta + register for Cloud API
   verifyPhoneOTP: (
     subdomain: string,
     data: { code: string },
@@ -136,6 +139,7 @@ export const saasApi = {
     apiCall<{
       success: boolean;
       data: {
+        phone_number_id?: string;
         display_phone_number: string;
         verified_name: string;
       };

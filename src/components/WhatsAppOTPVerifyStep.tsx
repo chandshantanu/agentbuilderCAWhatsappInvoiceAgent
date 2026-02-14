@@ -1,6 +1,7 @@
 /**
  * WhatsApp OTP Verify Step
- * CA enters their phone number, receives a WhatsApp verification code, and verifies.
+ * CA enters their phone number, Meta adds it to the seller's WABA,
+ * sends an SMS verification code, and registers for Cloud API on verify.
  * State machine: input -> sending -> otp_sent -> verifying -> verified
  */
 
@@ -12,6 +13,7 @@ import {
   Phone,
   AlertCircle,
   ArrowLeft,
+  AlertTriangle,
 } from 'lucide-react';
 
 type FlowState = 'input' | 'sending' | 'otp_sent' | 'verifying' | 'verified';
@@ -19,6 +21,7 @@ type FlowState = 'input' | 'sending' | 'otp_sent' | 'verifying' | 'verified';
 interface Props {
   subdomain: string;
   onVerified: (data: {
+    phone_number_id?: string;
     display_phone_number: string;
     verified_name: string;
   }) => void;
@@ -51,6 +54,7 @@ export default function WhatsAppOTPVerifyStep({
   const [error, setError] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
   const [verifiedData, setVerifiedData] = useState<{
+    phone_number_id?: string;
     display_phone_number: string;
     verified_name: string;
   } | null>(null);
@@ -219,7 +223,7 @@ export default function WhatsAppOTPVerifyStep({
 
         <div className="text-center">
           <p className="text-sm text-gray-600 mb-1">
-            Enter the 6-digit code sent via WhatsApp to
+            Enter the 6-digit code sent via SMS to
           </p>
           <p className="font-medium text-gray-900">
             +{countryCode} {phoneNumber}
@@ -290,9 +294,19 @@ export default function WhatsAppOTPVerifyStep({
       )}
 
       <p className="text-sm text-gray-500">
-        Enter your phone number to receive a verification code via WhatsApp.
-        This number will be used for WhatsApp Business messaging.
+        Enter your phone number to register it for WhatsApp Business messaging.
+        You will receive a verification code via SMS.
       </p>
+
+      {/* Personal WhatsApp warning */}
+      <div className="flex gap-2.5 text-sm bg-amber-50 border border-amber-200 rounded-lg p-3">
+        <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+        <div className="text-amber-800">
+          <span className="font-medium">Important:</span> If you use personal
+          WhatsApp on this number, it will be disconnected. WhatsApp Business App
+          users are not affected — both can work simultaneously.
+        </div>
+      </div>
 
       {/* Country code + phone */}
       <div className="flex gap-2">

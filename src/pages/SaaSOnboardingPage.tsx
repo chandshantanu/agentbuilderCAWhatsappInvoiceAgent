@@ -219,6 +219,9 @@ export default function SaaSOnboardingPage() {
                   [currentField.key]: data.display_phone_number,
                   whatsapp_phone_number: data.display_phone_number,
                   whatsapp_verified_name: data.verified_name,
+                  ...(data.phone_number_id
+                    ? { whatsapp_phone_number_id: data.phone_number_id }
+                    : {}),
                 }))
               }
               primaryColor={primaryColor}
