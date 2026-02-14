@@ -28,7 +28,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle, Plus, Trash2, Save, CheckCircle } from 'lucide-react';
+import { AlertTriangle, Plus, Trash2, Save, CheckCircle, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
 import {
   caInvoiceService,
   type CaInvoice,
@@ -36,6 +36,7 @@ import {
 } from '@/services/caInvoiceService';
 
 const STATUS_COLORS: Record<string, string> = {
+  pending_user_confirmation: 'bg-purple-100 text-purple-800',
   pending_review: 'bg-orange-100 text-orange-800',
   approved: 'bg-green-100 text-green-800',
   rejected: 'bg-red-100 text-red-800',
@@ -104,6 +105,91 @@ function calcTotals(items: InvoiceLineItem[], roundOff: number) {
   };
 }
 
+/* ─── Invoice Media Preview ────────────────────────── */
+
+function InvoiceMediaPreview({ invoiceId }: { invoiceId: string }) {
+  const [pageCount, setPageCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(false);
+    caInvoiceService.getInvoiceMediaCount(invoiceId).then((count) => {
+      if (!cancelled) {
+        setPageCount(count);
+        setLoading(false);
+      }
+    }).catch(() => {
+      if (!cancelled) {
+        setPageCount(0);
+        setLoading(false);
+        setError(true);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [invoiceId]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full bg-gray-50 rounded-lg">
+        <Skeleton className="h-96 w-full" />
+      </div>
+    );
+  }
+
+  if (error || pageCount === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full bg-gray-50 rounded-lg text-gray-400 gap-2 py-12">
+        <ImageIcon className="h-10 w-10" />
+        <p className="text-sm">No document preview available</p>
+      </div>
+    );
+  }
+
+  const mediaUrl = caInvoiceService.getInvoiceMediaUrl(invoiceId, currentPage);
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex-1 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center min-h-[400px]">
+        <img
+          src={mediaUrl}
+          alt={`Invoice page ${currentPage + 1}`}
+          className="max-w-full max-h-[70vh] object-contain"
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = 'none';
+          }}
+        />
+      </div>
+      {pageCount > 1 && (
+        <div className="flex items-center justify-center gap-3 mt-2">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={currentPage === 0}
+            onClick={() => setCurrentPage((p) => p - 1)}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-sm text-gray-500">
+            Page {currentPage + 1} of {pageCount}
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={currentPage >= pageCount - 1}
+            onClick={() => setCurrentPage((p) => p + 1)}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Editable Invoice Detail Dialog ───────────────── */
 
 function InvoiceDetailDialog({
@@ -120,7 +206,8 @@ function InvoiceDetailDialog({
   onSaved: () => void;
 }) {
   const { toast } = useToast();
-  const isEditable = invoice.status === 'pending_review';
+  const isEditable = invoice.status === 'pending_review' || invoice.status === 'pending_user_confirmation';
+  const hasMedia = (invoice.media_file_ids?.length ?? 0) > 0;
 
   // Editable state
   const [invoiceNumber, setInvoiceNumber] = useState(invoice.invoice_number || '');
@@ -205,20 +292,32 @@ function InvoiceDetailDialog({
   };
 
   return (
-    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+    <DialogContent className={`${hasMedia ? 'max-w-7xl' : 'max-w-4xl'} max-h-[90vh] overflow-y-auto`}>
       <DialogHeader>
         <div className="flex items-center justify-between">
           <DialogTitle className="flex items-center gap-3">
             Invoice #{invoice.invoice_number}
             <span className={`px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[invoice.status] || ''}`}>
-              {invoice.status.replace('_', ' ')}
+              {invoice.status.replace(/_/g, ' ')}
             </span>
+            {invoice.wa_confirmed && (
+              <Badge className="bg-green-50 text-green-700 text-xs">WA Confirmed</Badge>
+            )}
           </DialogTitle>
           {confidenceBadge(invoice.confidence_score || 0)}
         </div>
       </DialogHeader>
 
-      <div className="space-y-6 text-sm">
+      <div className={`${hasMedia ? 'grid grid-cols-5 gap-6' : ''}`}>
+        {/* Left panel: Document preview */}
+        {hasMedia && (
+          <div className="col-span-2">
+            <InvoiceMediaPreview invoiceId={invoice.id} />
+          </div>
+        )}
+
+        {/* Right panel: Extracted data */}
+        <div className={`${hasMedia ? 'col-span-3' : ''} space-y-6 text-sm`}>
         {/* Editable banner */}
         {isEditable && (
           <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
@@ -538,11 +637,93 @@ function InvoiceDetailDialog({
           </div>
         </div>
 
+        {/* Additional Charges */}
+        {invoice.additional_charges && (() => {
+          const ac = invoice.additional_charges!;
+          const hasCharges = (ac.service_charge || 0) > 0 || (ac.delivery_charge || 0) > 0 ||
+            (ac.packaging_charge || 0) > 0 || (ac.tips_gratuity || 0) > 0 ||
+            (ac.convenience_fee || 0) > 0 || (ac.other_charges || 0) > 0;
+          if (!hasCharges) return null;
+          return (
+            <div className="border-t pt-4">
+              <p className="font-semibold text-gray-900 mb-2">Additional Charges</p>
+              <div className="grid grid-cols-2 gap-2 max-w-xs text-sm">
+                {(ac.service_charge || 0) > 0 && (
+                  <>
+                    <span className="text-gray-500">
+                      Service Charge{ac.service_charge_rate ? ` (${ac.service_charge_rate}%)` : ''}:
+                    </span>
+                    <span className="text-right font-mono">{formatCurrency(ac.service_charge)}</span>
+                  </>
+                )}
+                {(ac.delivery_charge || 0) > 0 && (
+                  <>
+                    <span className="text-gray-500">Delivery:</span>
+                    <span className="text-right font-mono">{formatCurrency(ac.delivery_charge)}</span>
+                  </>
+                )}
+                {(ac.packaging_charge || 0) > 0 && (
+                  <>
+                    <span className="text-gray-500">Packaging:</span>
+                    <span className="text-right font-mono">{formatCurrency(ac.packaging_charge)}</span>
+                  </>
+                )}
+                {(ac.tips_gratuity || 0) > 0 && (
+                  <>
+                    <span className="text-gray-500">Tips/Gratuity:</span>
+                    <span className="text-right font-mono">{formatCurrency(ac.tips_gratuity)}</span>
+                  </>
+                )}
+                {(ac.convenience_fee || 0) > 0 && (
+                  <>
+                    <span className="text-gray-500">Convenience Fee:</span>
+                    <span className="text-right font-mono">{formatCurrency(ac.convenience_fee)}</span>
+                  </>
+                )}
+                {(ac.other_charges || 0) > 0 && (
+                  <>
+                    <span className="text-gray-500">{ac.other_charges_description || 'Other'}:</span>
+                    <span className="text-right font-mono">{formatCurrency(ac.other_charges)}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Discount */}
+        {invoice.discount && (invoice.discount.discount_amount || 0) > 0 && (
+          <div className="border-t pt-4">
+            <p className="font-semibold text-gray-900 mb-2">Discount</p>
+            <div className="grid grid-cols-2 gap-2 max-w-xs text-sm">
+              <span className="text-gray-500">
+                Amount{invoice.discount.discount_percentage ? ` (${invoice.discount.discount_percentage}%)` : ''}:
+              </span>
+              <span className="text-right font-mono text-green-700">
+                -{formatCurrency(invoice.discount.discount_amount)}
+              </span>
+              {invoice.discount.discount_description && (
+                <>
+                  <span className="text-gray-500">Description:</span>
+                  <span className="text-right">{invoice.discount.discount_description}</span>
+                </>
+              )}
+              {invoice.discount.coupon_code && (
+                <>
+                  <span className="text-gray-500">Coupon:</span>
+                  <span className="text-right font-mono">{invoice.discount.coupon_code}</span>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Extraction notes */}
         {invoice.extraction_notes && (
           <p className="text-xs text-gray-400">Notes: {invoice.extraction_notes}</p>
         )}
-      </div>
+      </div>{/* end right panel / data column */}
+      </div>{/* end grid */}
 
       <DialogFooter>
         {isEditable ? (
@@ -680,6 +861,7 @@ export default function InvoiceTable({ config }: { config: Record<string, unknow
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="pending_user_confirmation">Awaiting Confirmation</SelectItem>
               <SelectItem value="pending_review">Pending Review</SelectItem>
               <SelectItem value="approved">Approved</SelectItem>
               <SelectItem value="rejected">Rejected</SelectItem>
@@ -744,11 +926,11 @@ export default function InvoiceTable({ config }: { config: Record<string, unknow
                     </TableCell>
                     <TableCell>
                       <span className={`px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[inv.status] || ''}`}>
-                        {inv.status.replace('_', ' ')}
+                        {inv.status.replace(/_/g, ' ')}
                       </span>
                     </TableCell>
                     <TableCell>
-                      {inv.status === 'pending_review' && (
+                      {(inv.status === 'pending_review' || inv.status === 'pending_user_confirmation') && (
                         <div className="flex gap-1">
                           <Button size="sm" variant="ghost" onClick={() => handleApprove(inv.id)}>
                             Approve

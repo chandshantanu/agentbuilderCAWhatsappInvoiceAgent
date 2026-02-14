@@ -34,6 +34,24 @@ export interface CaBranch {
   created_at: string;
 }
 
+export interface AdditionalCharges {
+  service_charge: number;
+  service_charge_rate: number;
+  delivery_charge: number;
+  packaging_charge: number;
+  tips_gratuity: number;
+  convenience_fee: number;
+  other_charges: number;
+  other_charges_description?: string;
+}
+
+export interface InvoiceDiscount {
+  discount_amount: number;
+  discount_percentage: number;
+  discount_description?: string;
+  coupon_code?: string;
+}
+
 export interface CaInvoice {
   id: string;
   invoice_number: string;
@@ -51,13 +69,18 @@ export interface CaInvoice {
   buyer_state_code?: string;
   buyer_state_name?: string;
   line_items: InvoiceLineItem[];
+  additional_charges?: AdditionalCharges;
+  discount?: InvoiceDiscount;
   totals: InvoiceTotals;
-  status: 'pending_review' | 'approved' | 'rejected' | 'exported';
+  status: 'pending_user_confirmation' | 'pending_review' | 'approved' | 'rejected' | 'exported';
   client_id?: string;
   client_name?: string;
   sender_phone: string;
   confidence_score: number;
   extraction_notes?: string;
+  media_file_ids?: string[];
+  wa_confirmed?: boolean;
+  wa_confirmed_at?: string;
   created_at: string;
   updated_at: string;
 }
@@ -101,6 +124,7 @@ export interface UnknownSender {
 export interface DashboardStats {
   total_invoices: number;
   pending_review: number;
+  pending_confirmation: number;
   approved: number;
   exported: number;
   total_clients: number;
@@ -267,6 +291,17 @@ async function exportCsv(params: {
   return resp.data;
 }
 
+// ─── Invoice Media ────────────────────────────────────────────────
+
+function getInvoiceMediaUrl(invoiceId: string, page: number = 0): string {
+  return `/api/invoices/${invoiceId}/media?page=${page}`;
+}
+
+async function getInvoiceMediaCount(invoiceId: string): Promise<number> {
+  const resp = await apiClient.get(`/api/invoices/${invoiceId}/media-count`);
+  return resp.data?.data?.page_count || 0;
+}
+
 // ─── Dead Letter Queue ────────────────────────────────────────────
 
 async function listDlqItems(status: string = 'unprocessed'): Promise<DlqItem[]> {
@@ -304,6 +339,8 @@ export const caInvoiceService = {
   approveInvoice,
   rejectInvoice,
   bulkApproveInvoices,
+  getInvoiceMediaUrl,
+  getInvoiceMediaCount,
   exportTally,
   exportCsv,
   listDlqItems,
