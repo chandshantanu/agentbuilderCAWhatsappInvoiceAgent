@@ -15,6 +15,7 @@ import { saasApi } from '@/services/saasApiService';
 import { CheckCircle2, ArrowRight, Loader2 } from 'lucide-react';
 import WhatsAppConnectStep from '@/components/WhatsAppConnectStep';
 import WhatsAppPhoneSelectStep from '@/components/WhatsAppPhoneSelectStep';
+import WhatsAppOTPVerifyStep from '@/components/WhatsAppOTPVerifyStep';
 
 interface ConfigField {
   key: string;
@@ -87,13 +88,19 @@ export default function SaaSOnboardingPage() {
   const handleNext = async () => {
     if (!currentField) return;
 
-    // For whatsapp_connect / whatsapp_phone_select, the value is set by callback
-    if (currentField.type === 'whatsapp_connect' || currentField.type === 'whatsapp_phone_select') {
+    // For whatsapp_connect / whatsapp_phone_select / whatsapp_verify, the value is set by callback
+    if (
+      currentField.type === 'whatsapp_connect' ||
+      currentField.type === 'whatsapp_phone_select' ||
+      currentField.type === 'whatsapp_verify'
+    ) {
       if (currentField.required && !values[currentField.key]) {
         setError(
-          currentField.type === 'whatsapp_phone_select'
-            ? 'Please select a WhatsApp number to continue'
-            : 'Please connect your WhatsApp Business account to continue'
+          currentField.type === 'whatsapp_verify'
+            ? 'Please verify your WhatsApp number to continue'
+            : currentField.type === 'whatsapp_phone_select'
+              ? 'Please select a WhatsApp number to continue'
+              : 'Please connect your WhatsApp Business account to continue'
         );
         return;
       }
@@ -203,7 +210,21 @@ export default function SaaSOnboardingPage() {
           )}
 
           {/* Field input */}
-          {currentField.type === 'whatsapp_phone_select' ? (
+          {currentField.type === 'whatsapp_verify' ? (
+            <WhatsAppOTPVerifyStep
+              subdomain={subdomain || ''}
+              onVerified={(data) =>
+                setValues((v) => ({
+                  ...v,
+                  [currentField.key]: data.phone_number_id,
+                  whatsapp_phone_number_id: data.phone_number_id,
+                  whatsapp_phone_number: data.display_phone_number,
+                  whatsapp_verified_name: data.verified_name,
+                }))
+              }
+              primaryColor={primaryColor}
+            />
+          ) : currentField.type === 'whatsapp_phone_select' ? (
             <WhatsAppPhoneSelectStep
               subdomain={subdomain || ''}
               onSelected={(data) =>

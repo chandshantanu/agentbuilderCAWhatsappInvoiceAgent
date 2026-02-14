@@ -116,4 +116,29 @@ export const saasApi = {
     apiCall('POST', `/api/v1/saas/runtime/${subdomain}/whatsapp/select-phone`, {
       phone_number_id: phoneNumberId,
     }),
+
+  // Request OTP for phone number verification (bring-your-own-number)
+  requestPhoneOTP: (
+    subdomain: string,
+    data: { phone_number: string; country_code: string; verified_name: string },
+  ) =>
+    apiCall<{ success: boolean; data: { phone_number_id: string; message: string } }>(
+      'POST',
+      `/api/v1/saas/runtime/${subdomain}/whatsapp/request-code`,
+      data,
+    ),
+
+  // Verify OTP code and register phone
+  verifyPhoneOTP: (
+    subdomain: string,
+    data: { phone_number_id: string; code: string },
+  ) =>
+    apiCall<{
+      success: boolean;
+      data: {
+        phone_number_id: string;
+        display_phone_number: string;
+        verified_name: string;
+      };
+    }>('POST', `/api/v1/saas/runtime/${subdomain}/whatsapp/verify-code`, data),
 };
