@@ -101,4 +101,19 @@ export const saasApi = {
   // Get WhatsApp connection status for a subdomain
   getWhatsAppStatus: (subdomain: string) =>
     apiCall('GET', `/api/v1/saas/runtime/${subdomain}/whatsapp/status`),
+
+  // Get available phones from seller's pool for CA to select
+  getAvailablePhones: (subdomain: string) =>
+    apiCall<{ success: boolean; data: Array<{
+      phone_number_id: string;
+      display_phone_number: string;
+      verified_name: string;
+      quality_rating: string;
+    }> }>('GET', `/api/v1/saas/runtime/${subdomain}/whatsapp/available-phones`),
+
+  // CA selects a phone number from the seller's pool
+  selectPhone: (subdomain: string, phoneNumberId: string) =>
+    apiCall('POST', `/api/v1/saas/runtime/${subdomain}/whatsapp/select-phone`, {
+      phone_number_id: phoneNumberId,
+    }),
 };

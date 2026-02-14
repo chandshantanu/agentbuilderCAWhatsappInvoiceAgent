@@ -2,18 +2,49 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { apiClient } from '@/lib/apiClient';
+import { saasApi } from '@/services/saasApiService';
+
+interface WhatsAppStatusData {
+  connected: boolean;
+  phone_number?: string;
+  verified_name?: string;
+  waba_id?: string;
+  connected_at?: string;
+}
 
 export default function WhatsAppStatus({ config }: { config: Record<string, unknown> }) {
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [statusData, setStatusData] = useState<WhatsAppStatusData | null>(null);
 
   useEffect(() => {
-    // Check runtime health to determine connection status
-    apiClient.get('/api/health')
-      .then(() => setConnected(true))
-      .catch(() => setConnected(false))
-      .finally(() => setLoading(false));
-  }, []);
+    const subdomain = (config?.subdomain as string) || '';
+
+    // Try SaaS status endpoint first, fall back to health check
+    if (subdomain) {
+      saasApi
+        .getWhatsAppStatus(subdomain)
+        .then((resp: any) => {
+          const data = resp.data || resp;
+          setStatusData(data);
+          setConnected(!!data.connected);
+        })
+        .catch(() => {
+          // Fall back to runtime health check
+          apiClient
+            .get('/api/health')
+            .then(() => setConnected(true))
+            .catch(() => setConnected(false));
+        })
+        .finally(() => setLoading(false));
+    } else {
+      apiClient
+        .get('/api/health')
+        .then(() => setConnected(true))
+        .catch(() => setConnected(false))
+        .finally(() => setLoading(false));
+    }
+  }, [config?.subdomain]);
 
   return (
     <div className="space-y-6">
@@ -36,6 +67,26 @@ export default function WhatsAppStatus({ config }: { config: Record<string, unkn
             <div className="grid grid-cols-2 gap-4 max-w-md">
               <span className="text-gray-500">Status:</span>
               <span className="font-medium">{loading ? 'Checking...' : connected ? 'Active' : 'Inactive'}</span>
+              {statusData?.phone_number && (
+                <>
+                  <span className="text-gray-500">Phone Number:</span>
+                  <span className="font-medium">{statusData.phone_number}</span>
+                </>
+              )}
+              {statusData?.verified_name && (
+                <>
+                  <span className="text-gray-500">Verified Name:</span>
+                  <span className="font-medium">{statusData.verified_name}</span>
+                </>
+              )}
+              {statusData?.connected_at && (
+                <>
+                  <span className="text-gray-500">Connected:</span>
+                  <span className="font-medium">
+                    {new Date(statusData.connected_at).toLocaleDateString()}
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </CardContent>
