@@ -122,21 +122,20 @@ export const saasApi = {
     subdomain: string,
     data: { phone_number: string; country_code: string; verified_name: string },
   ) =>
-    apiCall<{ success: boolean; data: { phone_number_id: string; message: string } }>(
+    apiCall<{ success: boolean; data: { message: string } }>(
       'POST',
       `/api/v1/saas/runtime/${subdomain}/whatsapp/request-code`,
       data,
     ),
 
-  // Verify OTP code and register phone
+  // Verify OTP code
   verifyPhoneOTP: (
     subdomain: string,
-    data: { phone_number_id: string; code: string },
+    data: { code: string },
   ) =>
     apiCall<{
       success: boolean;
       data: {
-        phone_number_id: string;
         display_phone_number: string;
         verified_name: string;
       };

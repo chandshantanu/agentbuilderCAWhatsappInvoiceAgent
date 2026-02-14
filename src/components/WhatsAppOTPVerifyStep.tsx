@@ -1,6 +1,6 @@
 /**
  * WhatsApp OTP Verify Step
- * CA enters their own phone number, receives SMS OTP from Meta, and verifies.
+ * CA enters their phone number, receives a WhatsApp verification code, and verifies.
  * State machine: input -> sending -> otp_sent -> verifying -> verified
  */
 
@@ -19,7 +19,6 @@ type FlowState = 'input' | 'sending' | 'otp_sent' | 'verifying' | 'verified';
 interface Props {
   subdomain: string;
   onVerified: (data: {
-    phone_number_id: string;
     display_phone_number: string;
     verified_name: string;
   }) => void;
@@ -48,12 +47,10 @@ export default function WhatsAppOTPVerifyStep({
   const [countryCode, setCountryCode] = useState('91');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [businessName, setBusinessName] = useState('');
-  const [phoneNumberId, setPhoneNumberId] = useState('');
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
   const [verifiedData, setVerifiedData] = useState<{
-    phone_number_id: string;
     display_phone_number: string;
     verified_name: string;
   } | null>(null);
@@ -84,12 +81,11 @@ export default function WhatsAppOTPVerifyStep({
     setState('sending');
 
     try {
-      const resp = await saasApi.requestPhoneOTP(subdomain, {
+      await saasApi.requestPhoneOTP(subdomain, {
         phone_number: cleanPhone,
         country_code: countryCode,
         verified_name: businessName.trim(),
       });
-      setPhoneNumberId(resp.data.phone_number_id);
       setState('otp_sent');
       setResendCooldown(60);
       // Focus first OTP input
@@ -108,12 +104,11 @@ export default function WhatsAppOTPVerifyStep({
 
     try {
       const cleanPhone = phoneNumber.replace(/\D/g, '');
-      const resp = await saasApi.requestPhoneOTP(subdomain, {
+      await saasApi.requestPhoneOTP(subdomain, {
         phone_number: cleanPhone,
         country_code: countryCode,
         verified_name: businessName.trim(),
       });
-      setPhoneNumberId(resp.data.phone_number_id);
       setState('otp_sent');
       setResendCooldown(60);
       setTimeout(() => otpRefs.current[0]?.focus(), 100);
@@ -167,10 +162,7 @@ export default function WhatsAppOTPVerifyStep({
     setState('verifying');
 
     try {
-      const resp = await saasApi.verifyPhoneOTP(subdomain, {
-        phone_number_id: phoneNumberId,
-        code,
-      });
+      const resp = await saasApi.verifyPhoneOTP(subdomain, { code });
       setVerifiedData(resp.data);
       setState('verified');
       onVerified(resp.data);
@@ -227,7 +219,7 @@ export default function WhatsAppOTPVerifyStep({
 
         <div className="text-center">
           <p className="text-sm text-gray-600 mb-1">
-            Enter the 6-digit code sent to
+            Enter the 6-digit code sent via WhatsApp to
           </p>
           <p className="font-medium text-gray-900">
             +{countryCode} {phoneNumber}
@@ -298,8 +290,8 @@ export default function WhatsAppOTPVerifyStep({
       )}
 
       <p className="text-sm text-gray-500">
-        Enter your phone number to receive a verification code via SMS.
-        This number will be registered for WhatsApp Business messaging.
+        Enter your phone number to receive a verification code via WhatsApp.
+        This number will be used for WhatsApp Business messaging.
       </p>
 
       {/* Country code + phone */}

@@ -216,8 +216,7 @@ export default function SaaSOnboardingPage() {
               onVerified={(data) =>
                 setValues((v) => ({
                   ...v,
-                  [currentField.key]: data.phone_number_id,
-                  whatsapp_phone_number_id: data.phone_number_id,
+                  [currentField.key]: data.display_phone_number,
                   whatsapp_phone_number: data.display_phone_number,
                   whatsapp_verified_name: data.verified_name,
                 }))
