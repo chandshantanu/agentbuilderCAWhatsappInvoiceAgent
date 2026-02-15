@@ -19,28 +19,31 @@ function LoadingSpinner() {
 }
 
 export function RequireAuth({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useSupabaseAuth();
+  const { isAuthenticated, isEmailVerified, isLoading } = useSupabaseAuth();
   if (isLoading) return <LoadingSpinner />;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isEmailVerified) return <Navigate to="/verify-email" replace />;
   return <>{children}</>;
 }
 
 export function RequireSubscription({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading: authLoading } = useSupabaseAuth();
+  const { isAuthenticated, isEmailVerified, isLoading: authLoading } = useSupabaseAuth();
   const { hasSubscription, isLoading: subLoading } = useSubscription();
 
   if (authLoading || subLoading) return <LoadingSpinner />;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isEmailVerified) return <Navigate to="/verify-email" replace />;
   if (!hasSubscription) return <Navigate to="/checkout" replace />;
   return <>{children}</>;
 }
 
 export function RequireConfigured({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading: authLoading } = useSupabaseAuth();
+  const { isAuthenticated, isEmailVerified, isLoading: authLoading } = useSupabaseAuth();
   const { hasSubscription, isConfigured, isLoading: subLoading } = useSubscription();
 
   if (authLoading || subLoading) return <LoadingSpinner />;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isEmailVerified) return <Navigate to="/verify-email" replace />;
   if (!hasSubscription) return <Navigate to="/checkout" replace />;
   if (!isConfigured) return <Navigate to="/onboarding" replace />;
   return <>{children}</>;

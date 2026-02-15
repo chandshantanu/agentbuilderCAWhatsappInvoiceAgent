@@ -23,6 +23,7 @@ const SignupPage = lazy(() => import('@/pages/SignupPage'));
 const CheckoutPage = lazy(() => import('@/pages/CheckoutPage'));
 const SaaSOnboardingPage = lazy(() => import('@/pages/SaaSOnboardingPage'));
 const SaaSDashboardPage = lazy(() => import('@/pages/SaaSDashboardPage'));
+const VerifyEmailPage = lazy(() => import('@/pages/VerifyEmailPage'));
 
 // ── Shared UI ──
 
@@ -104,6 +105,7 @@ function SaaSModeApp() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route
             path="/checkout"
             element={

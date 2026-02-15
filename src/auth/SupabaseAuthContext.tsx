@@ -15,6 +15,7 @@ interface SupabaseAuthState {
   session: Session | null;
   user: User | null;
   isAuthenticated: boolean;
+  isEmailVerified: boolean;
   isLoading: boolean;
   error: string | null;
   signUp: (email: string, password: string, fullName?: string) => Promise<void>;
@@ -27,6 +28,7 @@ const SupabaseAuthContext = createContext<SupabaseAuthState>({
   session: null,
   user: null,
   isAuthenticated: false,
+  isEmailVerified: false,
   isLoading: true,
   error: null,
   signUp: async () => {},
@@ -88,11 +90,17 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
     if (!supabase) throw new Error('Supabase not initialized');
     setError(null);
 
+    // Build redirect URL: use agent subdomain if in SaaS mode, else default
+    const redirectUrl = subdomain
+      ? `https://${subdomain}.agents.chatslytics.com/checkout`
+      : undefined;
+
     const { data, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { full_name: fullName },
+        ...(redirectUrl && { emailRedirectTo: redirectUrl }),
       },
     });
 
@@ -149,6 +157,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
         session,
         user,
         isAuthenticated: !!session,
+        isEmailVerified: !!user?.email_confirmed_at,
         isLoading,
         error,
         signUp,

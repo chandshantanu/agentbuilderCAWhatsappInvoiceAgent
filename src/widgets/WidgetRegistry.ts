@@ -26,6 +26,7 @@ const WIDGET_REGISTRY: Record<string, WidgetLoader> = {
   ca_client_management: () => import('./agent-specific/ca-invoices/ClientManagement'),
   ca_export_panel: () => import('./agent-specific/ca-invoices/ExportPanel'),
   ca_whatsapp_status: () => import('./agent-specific/ca-invoices/WhatsAppStatus'),
+  ca_whatsapp_chat: () => import('./agent-specific/ca-invoices/WhatsAppChat'),
 
   // ─── Instagram DM Agent ───────────────────────────────────────
   instagram_conversations: () => import('./agent-specific/instagram/ConversationsPanel'),

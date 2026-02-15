@@ -34,7 +34,7 @@ export default function SignupPage() {
     setLoading(true);
     try {
       await signUp(email, password, fullName);
-      navigate('/checkout');
+      navigate('/verify-email');
     } catch (err: any) {
       setError(err.message || 'Sign up failed');
     } finally {
