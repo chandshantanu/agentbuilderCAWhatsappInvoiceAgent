@@ -16,6 +16,7 @@ import { CheckCircle2, ArrowRight, Loader2 } from 'lucide-react';
 import WhatsAppConnectStep from '@/components/WhatsAppConnectStep';
 import WhatsAppPhoneSelectStep from '@/components/WhatsAppPhoneSelectStep';
 import WhatsAppOTPVerifyStep from '@/components/WhatsAppOTPVerifyStep';
+import InstagramConnectStep from '@/components/InstagramConnectStep';
 
 interface ConfigField {
   key: string;
@@ -88,19 +89,22 @@ export default function SaaSOnboardingPage() {
   const handleNext = async () => {
     if (!currentField) return;
 
-    // For whatsapp_connect / whatsapp_phone_select / whatsapp_verify, the value is set by callback
+    // For whatsapp_connect / whatsapp_phone_select / whatsapp_verify / instagram_connect, the value is set by callback
     if (
       currentField.type === 'whatsapp_connect' ||
       currentField.type === 'whatsapp_phone_select' ||
-      currentField.type === 'whatsapp_verify'
+      currentField.type === 'whatsapp_verify' ||
+      currentField.type === 'instagram_connect'
     ) {
       if (currentField.required && !values[currentField.key]) {
         setError(
-          currentField.type === 'whatsapp_verify'
-            ? 'Please verify your WhatsApp number to continue'
-            : currentField.type === 'whatsapp_phone_select'
-              ? 'Please select a WhatsApp number to continue'
-              : 'Please connect your WhatsApp Business account to continue'
+          currentField.type === 'instagram_connect'
+            ? 'Please connect your Instagram Business account to continue'
+            : currentField.type === 'whatsapp_verify'
+              ? 'Please verify your WhatsApp number to continue'
+              : currentField.type === 'whatsapp_phone_select'
+                ? 'Please select a WhatsApp number to continue'
+                : 'Please connect your WhatsApp Business account to continue'
         );
         return;
       }
@@ -210,7 +214,23 @@ export default function SaaSOnboardingPage() {
           )}
 
           {/* Field input */}
-          {currentField.type === 'whatsapp_verify' ? (
+          {currentField.type === 'instagram_connect' ? (
+            <InstagramConnectStep
+              facebookAppId={config.facebook_app_id || ''}
+              subscriptionId={subscriptionId || ''}
+              subdomain={subdomain || ''}
+              onConnected={(data) =>
+                setValues((v) => ({
+                  ...v,
+                  [currentField.key]: JSON.stringify(data),
+                  instagram_page_name: data.page_name,
+                  instagram_username: data.instagram_username,
+                  instagram_business_account_id: data.instagram_business_account_id,
+                }))
+              }
+              primaryColor={primaryColor}
+            />
+          ) : currentField.type === 'whatsapp_verify' ? (
             <WhatsAppOTPVerifyStep
               subdomain={subdomain || ''}
               onVerified={(data) =>
