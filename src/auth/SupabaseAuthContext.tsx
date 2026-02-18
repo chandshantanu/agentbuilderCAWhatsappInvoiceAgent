@@ -21,6 +21,8 @@ interface SupabaseAuthState {
   signUp: (email: string, password: string, fullName?: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  updatePassword: (password: string) => Promise<void>;
 }
 
 const SupabaseAuthContext = createContext<SupabaseAuthState>({
@@ -34,6 +36,8 @@ const SupabaseAuthContext = createContext<SupabaseAuthState>({
   signUp: async () => {},
   signIn: async () => {},
   signOut: async () => {},
+  resetPassword: async () => {},
+  updatePassword: async () => {},
 });
 
 const PLATFORM_API_URL =
@@ -150,6 +154,36 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
     setUser(null);
   };
 
+  const resetPassword = async (email: string) => {
+    if (!supabase) throw new Error('Supabase not initialized');
+    setError(null);
+
+    const redirectUrl = subdomain
+      ? `https://${subdomain}.agents.chatslytics.com/reset-password`
+      : `${window.location.origin}/reset-password`;
+
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl,
+    });
+
+    if (resetError) {
+      setError(resetError.message);
+      throw resetError;
+    }
+  };
+
+  const updatePassword = async (password: string) => {
+    if (!supabase) throw new Error('Supabase not initialized');
+    setError(null);
+
+    const { error: updateError } = await supabase.auth.updateUser({ password });
+
+    if (updateError) {
+      setError(updateError.message);
+      throw updateError;
+    }
+  };
+
   return (
     <SupabaseAuthContext.Provider
       value={{
@@ -163,6 +197,8 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
         signUp,
         signIn,
         signOut,
+        resetPassword,
+        updatePassword,
       }}
     >
       {children}

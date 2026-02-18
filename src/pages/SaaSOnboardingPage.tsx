@@ -17,6 +17,7 @@ import WhatsAppConnectStep from '@/components/WhatsAppConnectStep';
 import WhatsAppPhoneSelectStep from '@/components/WhatsAppPhoneSelectStep';
 import WhatsAppOTPVerifyStep from '@/components/WhatsAppOTPVerifyStep';
 import InstagramConnectStep from '@/components/InstagramConnectStep';
+import KnowledgeBaseUploadStep from '@/components/KnowledgeBaseUploadStep';
 
 interface ConfigField {
   key: string;
@@ -100,12 +101,13 @@ export default function SaaSOnboardingPage() {
   const handleNext = async () => {
     if (!currentField) return;
 
-    // For whatsapp_connect / whatsapp_phone_select / whatsapp_verify / instagram_connect, the value is set by callback
+    // For special field types, the value is set by callback
     if (
       currentField.type === 'whatsapp_connect' ||
       currentField.type === 'whatsapp_phone_select' ||
       currentField.type === 'whatsapp_verify' ||
-      currentField.type === 'instagram_connect'
+      currentField.type === 'instagram_connect' ||
+      currentField.type === 'knowledge_base_upload'
     ) {
       if (currentField.required && !values[currentField.key]) {
         setError(
@@ -225,7 +227,15 @@ export default function SaaSOnboardingPage() {
           )}
 
           {/* Field input */}
-          {currentField.type === 'instagram_connect' ? (
+          {currentField.type === 'knowledge_base_upload' ? (
+            <KnowledgeBaseUploadStep
+              subdomain={subdomain || ''}
+              onComplete={(data) =>
+                setValues((v) => ({ ...v, [currentField.key]: data }))
+              }
+              primaryColor={primaryColor}
+            />
+          ) : currentField.type === 'instagram_connect' ? (
             <InstagramConnectStep
               instagramAppId={config.facebook_app_id || ''}
               subscriptionId={subscriptionId || ''}

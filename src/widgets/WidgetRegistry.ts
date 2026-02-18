@@ -22,6 +22,7 @@ const WIDGET_REGISTRY: Record<string, WidgetLoader> = {
   activity_feed: () => import('./generic/ActivityFeed'),
 
   // ─── CA Invoice Agent ─────────────────────────────────────────
+  ca_dashboard_overview: () => import('./agent-specific/ca-invoices/DashboardOverview'),
   ca_invoice_table: () => import('./agent-specific/ca-invoices/InvoiceTable'),
   ca_client_management: () => import('./agent-specific/ca-invoices/ClientManagement'),
   ca_export_panel: () => import('./agent-specific/ca-invoices/ExportPanel'),
@@ -31,6 +32,11 @@ const WIDGET_REGISTRY: Record<string, WidgetLoader> = {
   // ─── Instagram DM Agent ───────────────────────────────────────
   instagram_conversations: () => import('./agent-specific/instagram/ConversationsPanel'),
   instagram_metrics: () => import('./agent-specific/instagram/MetricsPanel'),
+  instagram_dashboard_overview: () => import('./agent-specific/instagram/DashboardOverview'),
+  instagram_products: () => import('./agent-specific/instagram/ProductsPanel'),
+  instagram_knowledge_base: () => import('./agent-specific/instagram/KnowledgeBasePanel'),
+  instagram_crm: () => import('./agent-specific/instagram/CRMPanel'),
+  instagram_settings: () => import('./agent-specific/instagram/SettingsPanel'),
 };
 
 /**

@@ -14,7 +14,11 @@ import {
   Instagram,
   Search,
   Loader2,
-  X
+  X,
+  Pause,
+  Play,
+  Tag,
+  Flame,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,6 +46,7 @@ interface InstagramMessage {
 
 interface InstagramConversation {
   id: string;
+  sender_id?: string;
   user: {
     id: string;
     username: string;
@@ -57,6 +62,10 @@ interface InstagramConversation {
   messages: InstagramMessage[];
   tags?: string[];
   sentiment?: 'positive' | 'neutral' | 'negative';
+  lead_score?: number;
+  deal_stage?: string;
+  ai_paused?: boolean;
+  notes?: Array<{ id: string; text: string; created_at: string }>;
 }
 
 export default function ConversationsPanel({ config }: { config: Record<string, unknown> }) {
@@ -270,9 +279,40 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {selectedConversation.lead_score != null && (
+                  <Badge className={
+                    selectedConversation.lead_score >= 70 ? 'bg-emerald-100 text-emerald-700' :
+                    selectedConversation.lead_score >= 30 ? 'bg-amber-100 text-amber-700' :
+                    'bg-neutral-100 text-neutral-600'
+                  }>
+                    <Flame className="w-3 h-3 mr-1" />
+                    {selectedConversation.lead_score}
+                  </Badge>
+                )}
                 <Badge className={getSentimentColor(selectedConversation.sentiment)}>
                   {selectedConversation.sentiment || 'neutral'}
                 </Badge>
+                <Button
+                  variant={selectedConversation.ai_paused ? "default" : "outline"}
+                  size="sm"
+                  className={selectedConversation.ai_paused ? "bg-orange-500 hover:bg-orange-600 text-white" : ""}
+                  onClick={async () => {
+                    const senderId = selectedConversation.sender_id || selectedConversation.id;
+                    const newState = !selectedConversation.ai_paused;
+                    try {
+                      await apiClient.put(`/api/conversations/${senderId}/handoff`, { ai_paused: newState });
+                      setSelectedConversation({ ...selectedConversation, ai_paused: newState });
+                    } catch (err) {
+                      console.error('Handoff toggle failed:', err);
+                    }
+                  }}
+                >
+                  {selectedConversation.ai_paused ? (
+                    <><Play className="w-3 h-3 mr-1" /> Resume AI</>
+                  ) : (
+                    <><Pause className="w-3 h-3 mr-1" /> Pause AI</>
+                  )}
+                </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon">
