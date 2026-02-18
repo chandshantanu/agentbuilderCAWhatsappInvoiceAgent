@@ -307,11 +307,15 @@ export default function SaaSOnboardingPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select...</option>
-              {currentField.options.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
+              {currentField.options.map((opt: any) => {
+                const val = typeof opt === 'string' ? opt : opt.value;
+                const label = typeof opt === 'string' ? opt.charAt(0).toUpperCase() + opt.slice(1) : opt.label;
+                return (
+                  <option key={val} value={val}>
+                    {label}
+                  </option>
+                );
+              })}
             </select>
           ) : currentField.type === 'textarea' ? (
             <textarea
