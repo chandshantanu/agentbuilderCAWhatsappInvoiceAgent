@@ -161,4 +161,8 @@ export const saasApi = {
         verified_name: string;
       };
     }>('POST', `/api/v1/saas/runtime/${subdomain}/whatsapp/verify-code`, data),
+
+  // Proxy a request to the agent runtime through the SaaS proxy
+  runtimeProxy: (subdomain: string, path: string, options?: { method?: string; body?: any }) =>
+    apiCall(options?.method || 'POST', `/api/v1/saas/runtime/${subdomain}/proxy${path}`, options?.body ? JSON.parse(options.body) : undefined),
 };

@@ -158,7 +158,7 @@ export default function KnowledgeBaseUploadStep({
       // Save via runtime API (through SaaS proxy)
       for (const article of articles) {
         try {
-          await saasApi.request(subdomain, '/api/knowledge-base', {
+          await saasApi.runtimeProxy(subdomain, '/api/knowledge-base', {
             method: 'POST',
             body: JSON.stringify(article),
           });
