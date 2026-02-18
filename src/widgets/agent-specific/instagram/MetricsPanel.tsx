@@ -174,8 +174,23 @@ export default function MetricsPanel({ config }: { config: Record<string, unknow
   useEffect(() => {
     setLoading(true);
     apiClient.get(endpoint)
-      .then((resp: any) => setMetrics(resp.data?.data || resp.data || DEFAULT_METRICS))
-      .catch((err: any) => console.error('Failed to load metrics:', err))
+      .then((resp: any) => {
+        const raw = resp.data?.data || resp.data || {};
+        // Deep-merge with defaults so nested property access never crashes
+        setMetrics({
+          messagesHandled: { ...DEFAULT_METRICS.messagesHandled, ...raw.messagesHandled },
+          responseTime: { ...DEFAULT_METRICS.responseTime, ...raw.responseTime },
+          uniqueConversations: { ...DEFAULT_METRICS.uniqueConversations, ...raw.uniqueConversations },
+          sentiment: { ...DEFAULT_METRICS.sentiment, ...raw.sentiment },
+          conversions: { ...DEFAULT_METRICS.conversions, ...raw.conversions },
+          engagement: { ...DEFAULT_METRICS.engagement, ...raw.engagement },
+          peakHours: raw.peakHours || DEFAULT_METRICS.peakHours,
+        });
+      })
+      .catch((err: any) => {
+        console.error('Failed to load metrics:', err);
+        setMetrics(DEFAULT_METRICS);
+      })
       .finally(() => setLoading(false));
   }, [endpoint]);
 
