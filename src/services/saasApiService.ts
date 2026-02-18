@@ -102,14 +102,11 @@ export const saasApi = {
   getWhatsAppStatus: (subdomain: string) =>
     apiCall('GET', `/api/v1/saas/runtime/${subdomain}/whatsapp/status`),
 
-  // Exchange Facebook auth code for Instagram pages list
-  exchangeInstagramCode: (subdomain: string, code: string) =>
-    apiCall('POST', `/api/v1/saas/runtime/${subdomain}/instagram/exchange-code`, { code }),
-
-  // Select a Facebook Page to connect Instagram
-  selectInstagramPage: (subdomain: string, pageId: string) =>
-    apiCall('POST', `/api/v1/saas/runtime/${subdomain}/instagram/select-page`, {
-      page_id: pageId,
+  // Connect Instagram via OAuth code (Instagram Login flow)
+  connectInstagram: (subdomain: string, code: string, redirectUri: string) =>
+    apiCall('POST', `/api/v1/saas/runtime/${subdomain}/instagram/connect`, {
+      code,
+      redirect_uri: redirectUri,
     }),
 
   // Get Instagram connection status for a subdomain

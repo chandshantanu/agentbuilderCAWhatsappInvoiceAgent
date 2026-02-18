@@ -26,6 +26,7 @@ interface ConfigField {
   required?: boolean;
   description?: string;
   options?: Array<{ label: string; value: string }>;
+  default?: string | boolean | number;
 }
 
 export default function SaaSOnboardingPage() {
@@ -54,6 +55,16 @@ export default function SaaSOnboardingPage() {
     const schema = config.configuration_schema;
     if (schema?.required_fields) {
       setFields(schema.required_fields);
+      // Initialize default values for toggle/select fields
+      const defaults: Record<string, string> = {};
+      for (const field of schema.required_fields) {
+        if (field.default !== undefined && field.default !== null) {
+          defaults[field.key] = String(field.default);
+        }
+      }
+      if (Object.keys(defaults).length > 0) {
+        setValues((prev) => ({ ...defaults, ...prev }));
+      }
     } else {
       // Default: WhatsApp-only onboarding
       setFields([
@@ -216,16 +227,15 @@ export default function SaaSOnboardingPage() {
           {/* Field input */}
           {currentField.type === 'instagram_connect' ? (
             <InstagramConnectStep
-              facebookAppId={config.facebook_app_id || ''}
+              instagramAppId={config.facebook_app_id || ''}
               subscriptionId={subscriptionId || ''}
               subdomain={subdomain || ''}
               onConnected={(data) =>
                 setValues((v) => ({
                   ...v,
                   [currentField.key]: JSON.stringify(data),
-                  instagram_page_name: data.page_name,
                   instagram_username: data.instagram_username,
-                  instagram_business_account_id: data.instagram_business_account_id,
+                  instagram_user_id: data.instagram_user_id,
                 }))
               }
               primaryColor={primaryColor}
@@ -270,6 +280,24 @@ export default function SaaSOnboardingPage() {
               }
               primaryColor={primaryColor}
             />
+          ) : currentField.type === 'toggle' ? (
+            <label className="relative inline-flex items-center cursor-pointer mt-2">
+              <input
+                type="checkbox"
+                checked={values[currentField.key] === 'true'}
+                onChange={(e) =>
+                  setValues((v) => ({ ...v, [currentField.key]: e.target.checked ? 'true' : 'false' }))
+                }
+                className="sr-only peer"
+              />
+              <div
+                className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"
+                style={values[currentField.key] === 'true' ? { backgroundColor: primaryColor } : {}}
+              />
+              <span className="ms-3 text-sm font-medium text-gray-700">
+                {values[currentField.key] === 'true' ? 'Enabled' : 'Disabled'}
+              </span>
+            </label>
           ) : currentField.type === 'select' && currentField.options ? (
             <select
               value={values[currentField.key] || ''}

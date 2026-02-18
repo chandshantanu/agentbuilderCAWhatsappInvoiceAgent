@@ -6,7 +6,7 @@
  * 2. SaaS mode (new): subdomain detected → Landing → Signup → Checkout → Onboarding → Dashboard
  */
 
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { useSaaS } from '@/contexts/SaaSContext';
 import { useAuth } from '@/auth/AuthContext';
@@ -76,6 +76,33 @@ function SaaSError({ message }: { message: string }) {
   );
 }
 
+// ── Instagram OAuth Callback (popup) ──
+
+function InstagramCallbackPage() {
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    const error = params.get('error');
+
+    if (window.opener) {
+      window.opener.postMessage(
+        { type: 'instagram_auth', code, error },
+        window.location.origin,
+      );
+      window.close();
+    }
+  }, []);
+
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="text-center">
+        <div className="w-8 h-8 border-2 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-sm text-gray-500">Connecting Instagram... This window will close automatically.</p>
+      </div>
+    </div>
+  );
+}
+
 // ── Direct Mode (existing behavior) ──
 
 function DirectModeApp() {
@@ -140,6 +167,11 @@ function SaaSModeApp() {
 
 export default function App() {
   const { mode } = useSaaS();
+
+  // Instagram OAuth callback route — rendered in popup, no auth needed
+  if (window.location.pathname === '/instagram-callback') {
+    return <InstagramCallbackPage />;
+  }
 
   if (mode === 'loading') return <LoadingScreen />;
   if (mode === 'saas') return <SaaSModeApp />;

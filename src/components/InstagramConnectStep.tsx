@@ -1,49 +1,52 @@
 /**
- * InstagramConnectStep — Facebook OAuth popup for Instagram Business connection.
+ * InstagramConnectStep — Instagram Login OAuth popup flow.
  *
- * Loads the Facebook SDK, opens FB.login() with Instagram permissions,
- * exchanges the returned code via backend, shows a page selector,
- * and finalizes the connection.
+ * Uses Instagram's "Instagram API with Instagram Login" (api.instagram.com)
+ * instead of the old Facebook Login flow. Users log in with their
+ * Instagram username/password — no Facebook Page required, no page selector.
+ *
+ * Flow:
+ * 1. Check existing connection via status endpoint
+ * 2. Open popup to api.instagram.com/oauth/authorize
+ * 3. Instagram redirects popup to /instagram-callback with ?code=xxx
+ * 4. Callback page sends code to parent via postMessage
+ * 5. Parent sends code to backend /instagram/connect endpoint
+ * 6. Backend exchanges code -> tokens -> stores credentials
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { saasApi } from '@/services/saasApiService';
-import { CheckCircle2, Loader2, AlertCircle, RefreshCw, Instagram } from 'lucide-react';
+import { CheckCircle2, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 
-// Window.FB type is declared in WhatsAppConnectStep.tsx
+function InstagramIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
+    </svg>
+  );
+}
 
 interface InstagramConnectStepProps {
-  facebookAppId: string;
+  instagramAppId: string;
   subscriptionId: string;
   subdomain: string;
   onConnected: (data: {
-    page_name: string;
     instagram_username: string;
-    instagram_business_account_id: string;
+    instagram_user_id: string;
   }) => void;
   primaryColor?: string;
-}
-
-interface PageOption {
-  page_id: string;
-  page_name: string;
-  instagram_business_account: {
-    id: string;
-    username: string;
-  };
 }
 
 type ConnectState =
   | 'loading'
   | 'idle'
   | 'connecting'
-  | 'selecting'
   | 'exchanging'
   | 'connected'
   | 'error';
 
 export default function InstagramConnectStep({
-  facebookAppId,
+  instagramAppId,
   subscriptionId,
   subdomain,
   onConnected,
@@ -51,12 +54,12 @@ export default function InstagramConnectStep({
 }: InstagramConnectStepProps) {
   const [state, setState] = useState<ConnectState>('loading');
   const [error, setError] = useState('');
-  const [pages, setPages] = useState<PageOption[]>([]);
   const [connectedData, setConnectedData] = useState<{
-    page_name: string;
     instagram_username: string;
+    instagram_user_id: string;
   } | null>(null);
-  const sdkLoaded = useRef(false);
+  const popupRef = useRef<Window | null>(null);
+  const popupCheckInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Check existing connection on mount
   useEffect(() => {
@@ -65,15 +68,12 @@ export default function InstagramConnectStep({
       try {
         const resp = await saasApi.getInstagramStatus(subdomain);
         if (!cancelled && resp.data?.connected) {
-          setConnectedData({
-            page_name: resp.data.page_name || '',
+          const data = {
             instagram_username: resp.data.instagram_username || '',
-          });
-          onConnected({
-            page_name: resp.data.page_name || '',
-            instagram_username: resp.data.instagram_username || '',
-            instagram_business_account_id: resp.data.instagram_business_account_id || '',
-          });
+            instagram_user_id: resp.data.instagram_user_id || '',
+          };
+          setConnectedData(data);
+          onConnected(data);
           setState('connected');
           return;
         }
@@ -81,7 +81,7 @@ export default function InstagramConnectStep({
         // Not connected yet
       }
       if (!cancelled) {
-        loadFBSdk();
+        setState('idle');
       }
     }
     checkStatus();
@@ -89,44 +89,69 @@ export default function InstagramConnectStep({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subdomain]);
 
-  const loadFBSdk = useCallback(() => {
-    if (sdkLoaded.current || window.FB) {
-      initFB();
-      return;
+  // Listen for postMessage from callback popup
+  useEffect(() => {
+    function handleMessage(event: MessageEvent) {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== 'instagram_auth') return;
+
+      const { code, error: authError } = event.data;
+
+      // Clean up popup
+      if (popupRef.current && !popupRef.current.closed) {
+        popupRef.current.close();
+      }
+      popupRef.current = null;
+      if (popupCheckInterval.current) {
+        clearInterval(popupCheckInterval.current);
+        popupCheckInterval.current = null;
+      }
+
+      if (authError || !code) {
+        setError(authError || 'Instagram authorization was cancelled.');
+        setState('error');
+        return;
+      }
+
+      // Exchange code via backend
+      setState('exchanging');
+      const redirectUri = `${window.location.origin}/instagram-callback`;
+
+      saasApi
+        .connectInstagram(subdomain, code, redirectUri)
+        .then((resp: any) => {
+          const data = resp.data;
+          const connected = {
+            instagram_username: data.instagram_username || '',
+            instagram_user_id: data.instagram_user_id || '',
+          };
+          setConnectedData(connected);
+          onConnected(connected);
+          setState('connected');
+        })
+        .catch((err: any) => {
+          setError(err.message || 'Failed to connect Instagram. Please try again.');
+          setState('error');
+        });
     }
 
-    window.fbAsyncInit = () => {
-      initFB();
-    };
-
-    const script = document.createElement('script');
-    script.src = 'https://connect.facebook.net/en_US/sdk.js';
-    script.async = true;
-    script.defer = true;
-    script.crossOrigin = 'anonymous';
-    script.onerror = () => {
-      setState('error');
-      setError('Failed to load Facebook SDK. Please check your internet connection and try again.');
-    };
-    document.body.appendChild(script);
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [facebookAppId]);
+  }, [subdomain, onConnected]);
 
-  function initFB() {
-    if (!window.FB) return;
-    window.FB.init({
-      appId: facebookAppId,
-      cookie: true,
-      xfbml: false,
-      version: 'v18.0',
-    });
-    sdkLoaded.current = true;
-    setState('idle');
-  }
+  // Clean up popup check interval on unmount
+  useEffect(() => {
+    return () => {
+      if (popupCheckInterval.current) {
+        clearInterval(popupCheckInterval.current);
+      }
+    };
+  }, []);
 
   const handleConnect = useCallback(() => {
-    if (!window.FB) {
-      setError('Facebook SDK not loaded. Please refresh and try again.');
+    if (!instagramAppId) {
+      setError('Instagram App ID not configured. Please contact support.');
       setState('error');
       return;
     }
@@ -134,89 +159,49 @@ export default function InstagramConnectStep({
     setState('connecting');
     setError('');
 
-    window.FB.login(
-      (response) => {
-        const code = response.authResponse?.code;
-        if (!code) {
-          // User cancelled or denied
-          setState('idle');
-          return;
-        }
+    const redirectUri = `${window.location.origin}/instagram-callback`;
+    const scope = 'instagram_business_basic,instagram_business_manage_messages';
+    // Business Login for Instagram uses www.instagram.com (NOT api.instagram.com)
+    // See: https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/business-login
+    const authUrl =
+      `https://www.instagram.com/oauth/authorize` +
+      `?client_id=${encodeURIComponent(instagramAppId)}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&scope=${encodeURIComponent(scope)}` +
+      `&response_type=code` +
+      `&force_reauth=true` +
+      `&enable_fb_login=false` +
+      `&state=${encodeURIComponent(subscriptionId)}`;
 
-        // Exchange code for pages list
-        setState('exchanging');
-        saasApi
-          .exchangeInstagramCode(subdomain, code)
-          .then((resp: any) => {
-            const data = resp.data;
-            if (!data.has_pages || !data.pages?.length) {
-              setError(
-                'No Facebook Pages with Instagram Business accounts found. ' +
-                'Please connect an Instagram Business or Creator account to a Facebook Page first.'
-              );
-              setState('error');
-              return;
-            }
+    // Open popup
+    const width = 500;
+    const height = 700;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
 
-            if (data.pages.length === 1) {
-              // Only one page — auto-select it
-              handleSelectPage(data.pages[0]);
-            } else {
-              // Multiple pages — show selector
-              setPages(data.pages);
-              setState('selecting');
-            }
-          })
-          .catch((err: any) => {
-            setError(err.message || 'Failed to connect Instagram. Please try again.');
-            setState('error');
-          });
-      },
-      {
-        response_type: 'code',
-        override_default_response_type: true,
-        scope: 'instagram_basic,instagram_manage_messages,pages_show_list,pages_read_engagement,pages_manage_metadata',
-      },
+    popupRef.current = window.open(
+      authUrl,
+      'instagram_auth',
+      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,status=yes`,
     );
-  }, [subdomain]);
 
-  const handleSelectPage = useCallback(
-    (page: PageOption) => {
-      setState('exchanging');
-      setError('');
-
-      saasApi
-        .selectInstagramPage(subdomain, page.page_id)
-        .then((resp: any) => {
-          const data = resp.data;
-          setConnectedData({
-            page_name: data.page_name,
-            instagram_username: data.instagram_username || '',
-          });
-          onConnected({
-            page_name: data.page_name,
-            instagram_username: data.instagram_username || '',
-            instagram_business_account_id: data.instagram_business_account_id || '',
-          });
-          setState('connected');
-        })
-        .catch((err: any) => {
-          setError(err.message || 'Failed to connect page. Please try again.');
-          setState('error');
-        });
-    },
-    [subdomain, onConnected],
-  );
+    // Monitor popup close (user might close without completing)
+    popupCheckInterval.current = setInterval(() => {
+      if (popupRef.current && popupRef.current.closed) {
+        if (popupCheckInterval.current) {
+          clearInterval(popupCheckInterval.current);
+          popupCheckInterval.current = null;
+        }
+        popupRef.current = null;
+        // Only reset to idle if we're still in connecting state
+        setState((prev) => (prev === 'connecting' ? 'idle' : prev));
+      }
+    }, 500);
+  }, [instagramAppId, subscriptionId]);
 
   const handleRetry = () => {
     setError('');
-    setPages([]);
-    if (!sdkLoaded.current) {
-      setState('loading');
-      loadFBSdk();
-    } else {
-      setState('idle');
-    }
+    setState('idle');
   };
 
   // Loading state
@@ -244,11 +229,6 @@ export default function InstagramConnectStep({
             )}
           </div>
         </div>
-        {connectedData.page_name && (
-          <p className="text-sm text-gray-600 ml-[52px]">
-            Page: {connectedData.page_name}
-          </p>
-        )}
         <button
           onClick={handleConnect}
           className="mt-4 text-sm text-pink-700 hover:text-pink-900 underline flex items-center gap-1"
@@ -275,52 +255,9 @@ export default function InstagramConnectStep({
         <button
           onClick={handleRetry}
           className="w-full py-3 rounded-xl text-white font-medium text-sm flex items-center justify-center gap-2"
-          style={{ backgroundColor: primaryColor }}
+          style={{ background: 'linear-gradient(135deg, #E1306C, #833AB4)' }}
         >
           <RefreshCw className="w-4 h-4" /> Try Again
-        </button>
-      </div>
-    );
-  }
-
-  // Page selector state
-  if (state === 'selecting' && pages.length > 0) {
-    return (
-      <div className="space-y-4">
-        <p className="text-sm text-gray-600 font-medium">
-          Select the Facebook Page connected to your Instagram account:
-        </p>
-        <div className="space-y-2">
-          {pages.map((page) => (
-            <button
-              key={page.page_id}
-              onClick={() => handleSelectPage(page)}
-              className="w-full text-left p-4 rounded-xl border border-gray-200 hover:border-pink-300 hover:bg-pink-50 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center"
-                  style={{ background: 'linear-gradient(135deg, #E1306C, #833AB4)' }}
-                >
-                  <Instagram className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">{page.page_name}</p>
-                  {page.instagram_business_account.username && (
-                    <p className="text-xs text-gray-500">
-                      @{page.instagram_business_account.username}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
-        <button
-          onClick={handleRetry}
-          className="w-full py-2 text-sm text-gray-500 hover:text-gray-700"
-        >
-          Cancel
         </button>
       </div>
     );
@@ -345,7 +282,7 @@ export default function InstagramConnectStep({
       <div className="flex flex-col items-center py-8 gap-3">
         <Loader2 className="w-8 h-8 animate-spin" style={{ color: primaryColor }} />
         <p className="text-sm text-gray-600 font-medium">
-          Complete authorization in the Facebook popup...
+          Complete authorization in the Instagram popup...
         </p>
         <p className="text-xs text-gray-400">
           If you don't see a popup, check your browser's popup blocker
@@ -363,15 +300,15 @@ export default function InstagramConnectStep({
             className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
             style={{ background: 'linear-gradient(135deg, #E1306C, #833AB4)' }}
           >
-            <Instagram className="w-5 h-5 text-white" />
+            <InstagramIcon className="w-5 h-5 text-white" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-gray-900">
-              Connect your Instagram Business
+              Connect your Instagram Account
             </h3>
             <p className="text-xs text-gray-500 mt-1">
-              A popup will open to connect your Facebook account. You'll need a Facebook
-              Page linked to an Instagram Business or Creator account.
+              A popup will open where you can log in with your Instagram username
+              and password. No Facebook Page is required.
             </p>
           </div>
         </div>
@@ -382,8 +319,8 @@ export default function InstagramConnectStep({
         className="w-full py-3 rounded-xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
         style={{ background: 'linear-gradient(135deg, #E1306C, #833AB4)' }}
       >
-        <Instagram className="w-5 h-5" />
-        Connect Instagram Business
+        <InstagramIcon className="w-5 h-5" />
+        Connect Instagram
       </button>
     </div>
   );
