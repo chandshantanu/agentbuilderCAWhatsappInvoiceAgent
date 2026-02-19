@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { saasApi } from '@/services/saasApiService';
 import { useSaaS } from '@/contexts/SaaSContext';
+import { useSupabaseAuth } from '@/auth/SupabaseAuthContext';
 
 export interface SubscriptionState {
   hasSubscription: boolean;
@@ -20,6 +21,7 @@ export interface SubscriptionState {
 
 export function useSubscription(): SubscriptionState {
   const { subdomain } = useSaaS();
+  const { isAuthenticated } = useSupabaseAuth();
   const [state, setState] = useState<Omit<SubscriptionState, 'refetch'>>({
     hasSubscription: false,
     isConfigured: false,
@@ -31,7 +33,7 @@ export function useSubscription(): SubscriptionState {
   });
 
   const fetchStatus = useCallback(async () => {
-    if (!subdomain) return;
+    if (!subdomain || !isAuthenticated) return;
 
     setState(prev => ({ ...prev, isLoading: true, error: null }));
     try {
@@ -51,13 +53,17 @@ export function useSubscription(): SubscriptionState {
         return;
       }
 
-      // Also fetch config status
+      // Trust platform's is_configured first; only check runtime if platform says false
       let isConfigured = sub.is_configured || false;
-      try {
-        const configResp = await saasApi.getConfigStatus(subdomain);
-        isConfigured = configResp.data?.is_configured || false;
-      } catch {
-        // Use subscription field as fallback
+      if (!isConfigured) {
+        try {
+          const configResp = await saasApi.getConfigStatus(subdomain);
+          if (configResp.data?.is_configured) {
+            isConfigured = true;
+          }
+        } catch {
+          // Use subscription field as fallback
+        }
       }
 
       setState({
@@ -80,7 +86,7 @@ export function useSubscription(): SubscriptionState {
         error: err.message || 'Failed to check subscription',
       });
     }
-  }, [subdomain]);
+  }, [subdomain, isAuthenticated]);
 
   useEffect(() => {
     fetchStatus();

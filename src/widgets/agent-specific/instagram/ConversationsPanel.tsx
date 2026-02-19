@@ -82,14 +82,45 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
   useEffect(() => {
     setLoading(true);
     apiClient.get(endpoint)
-      .then((resp: any) => setConversations(resp.data?.data || resp.data || []))
+      .then((resp: any) => {
+        const raw = resp.data?.data || resp.data || [];
+        // Map flat API response to the nested shape the component expects
+        const mapped = raw.map((conv: any) => ({
+          ...conv,
+          id: conv.id || conv.sender_id || '',
+          sender_id: conv.sender_id || conv.id || '',
+          user: (conv.user && conv.user.username) ? conv.user : {
+            id: conv.user?.id || conv.sender_id || conv.id || '',
+            username: conv.user?.username || conv.username || conv.sender_id || 'unknown',
+            fullName: conv.user?.fullName || conv.full_name || '',
+            avatarUrl: conv.user?.avatarUrl || conv.avatar_url || '',
+            isVerified: conv.user?.isVerified || false,
+            followersCount: conv.user?.followersCount || 0,
+          },
+          lastMessage: conv.lastMessage || '',
+          lastMessageTime: conv.lastMessageTime || conv.updated_at || '',
+          unreadCount: conv.unreadCount || 0,
+          status: conv.status || 'active',
+          messages: (conv.messages || []).map((msg: any) => ({
+            id: msg.id || '',
+            sender: msg.role === 'assistant' ? 'agent' : 'user',
+            text: msg.text || '',
+            timestamp: msg.timestamp || '',
+            status: msg.role === 'assistant' ? 'sent' : undefined,
+            mediaUrl: msg.mediaUrl || undefined,
+          })),
+        }));
+        setConversations(mapped);
+      })
       .catch((err: any) => console.error('Failed to load conversations:', err))
       .finally(() => setLoading(false));
   }, [endpoint]);
 
   const filteredConversations = conversations.filter(conv => {
-    const matchesSearch = conv.user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      conv.lastMessage.toLowerCase().includes(searchQuery.toLowerCase());
+    const username = conv.user?.username || '';
+    const lastMsg = conv.lastMessage || '';
+    const matchesSearch = username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lastMsg.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = filter === 'all' ||
       (filter === 'unread' && conv.unreadCount > 0) ||
       (filter === 'pending' && conv.status === 'pending');
@@ -209,9 +240,9 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                 >
                   <div className="relative flex-shrink-0">
                     <Avatar className="w-12 h-12">
-                      <AvatarImage src={conv.user.avatarUrl} />
+                      {conv.user?.avatarUrl && <AvatarImage src={conv.user.avatarUrl} />}
                       <AvatarFallback className="bg-gradient-to-br from-pink-500 to-purple-600 text-white">
-                        {conv.user.username.slice(0, 2).toUpperCase()}
+                        {(conv.user?.username || '??').slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     {conv.unreadCount > 0 && (
@@ -227,8 +258,8 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                         "font-medium truncate",
                         conv.unreadCount > 0 && "font-semibold"
                       )}>
-                        @{conv.user.username}
-                        {conv.user.isVerified && (
+                        @{conv.user?.username || 'unknown'}
+                        {conv.user?.isVerified && (
                           <Check className="inline w-3 h-3 ml-1 text-blue-500" />
                         )}
                       </span>
@@ -266,15 +297,15 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
             <div className="p-4 border-b border-neutral-100 flex items-center justify-between bg-neutral-50">
               <div className="flex items-center gap-3">
                 <Avatar className="w-10 h-10">
-                  <AvatarImage src={selectedConversation.user.avatarUrl} />
+                  {selectedConversation.user?.avatarUrl && <AvatarImage src={selectedConversation.user.avatarUrl} />}
                   <AvatarFallback className="bg-gradient-to-br from-pink-500 to-purple-600 text-white">
-                    {selectedConversation.user.username.slice(0, 2).toUpperCase()}
+                    {(selectedConversation.user?.username || '??').slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-medium">@{selectedConversation.user.username}</p>
+                  <p className="font-medium">@{selectedConversation.user?.username || 'unknown'}</p>
                   <p className="text-xs text-neutral-500">
-                    {selectedConversation.user.followersCount?.toLocaleString()} followers
+                    {selectedConversation.user?.followersCount?.toLocaleString() || 0} followers
                   </p>
                 </div>
               </div>
@@ -359,7 +390,7 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                         msg.sender === 'agent' ? "text-white/70" : "text-neutral-500"
                       )}>
                         {msg.sender === 'agent' ? <Bot className="w-3 h-3" /> : <User className="w-3 h-3" />}
-                        {msg.sender === 'agent' ? 'AI Agent' : selectedConversation.user.username}
+                        {msg.sender === 'agent' ? 'AI Agent' : (selectedConversation.user?.username || 'User')}
                       </div>
                       {msg.mediaUrl && (
                         <img src={msg.mediaUrl} alt="Media" className="rounded-lg mb-2 max-w-full" />
