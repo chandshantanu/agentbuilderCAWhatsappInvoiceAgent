@@ -3,8 +3,8 @@
  * Shows pricing summary and launches Razorpay checkout.
  */
 
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSaaS } from '@/contexts/SaaSContext';
 import { useSupabaseAuth } from '@/auth/SupabaseAuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -23,11 +23,13 @@ export default function CheckoutPage() {
   const { hasSubscription, refetch } = useSubscription();
   const navigate = useNavigate();
 
+  const [searchParams] = useSearchParams();
   const [couponCode, setCouponCode] = useState('');
   const [couponResult, setCouponResult] = useState<any>(null);
   const [couponError, setCouponError] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const couponAutoApplied = useRef(false);
 
   // Redirect if already subscribed
   useEffect(() => {
@@ -35,6 +37,20 @@ export default function CheckoutPage() {
       navigate('/onboarding');
     }
   }, [hasSubscription, navigate]);
+
+  // Auto-fill and validate coupon from ?coupon= URL param
+  useEffect(() => {
+    if (couponAutoApplied.current) return;
+    const urlCoupon = searchParams.get('coupon');
+    if (urlCoupon && subdomain && !couponCode) {
+      couponAutoApplied.current = true;
+      const code = urlCoupon.toUpperCase();
+      setCouponCode(code);
+      saasApi.validateCoupon(subdomain, code)
+        .then((result) => setCouponResult(result.data))
+        .catch((err: any) => setCouponError(err.message || 'Invalid coupon'));
+    }
+  }, [searchParams, subdomain, couponCode]);
 
   // Load Razorpay script
   useEffect(() => {
