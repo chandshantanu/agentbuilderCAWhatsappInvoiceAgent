@@ -73,8 +73,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Extract token from URL fragment: .../#token=eyJhbGc...
+    // IMPORTANT: Only match #token= (platform direct-mode format).
+    // Do NOT match #access_token= (Supabase auth — recovery, signup confirmation, etc.)
+    // which would falsely trigger and clear the hash fragment needed by SupabaseAuthContext.
     const hash = window.location.hash;
-    const tokenMatch = hash.match(/token=([^&]+)/);
+    const tokenMatch = hash.match(/^#token=([^&]+)/);
 
     if (tokenMatch) {
       const token = decodeURIComponent(tokenMatch[1]);
@@ -97,7 +100,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         token: null,
         isAuthenticated: false,
         isLoading: false,
-        error: 'No authentication token provided. Please access this dashboard from the platform.',
+        error: hash.includes('access_token=')
+          ? null  // Supabase auth hash — let SupabaseAuthContext handle it
+          : 'No authentication token provided. Please access this dashboard from the platform.',
       });
     }
 

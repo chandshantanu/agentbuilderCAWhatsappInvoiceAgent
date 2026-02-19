@@ -71,12 +71,18 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       return;
     }
 
-    // Restore hash fragment if it was captured at module load but cleared by router.
-    // This ensures Supabase's detectSessionInUrl can process recovery tokens
+    // Restore hash fragment if it was captured at module load but cleared by anything
+    // (router, AuthContext, or browser behavior).
+    // This ensures Supabase's detectSessionInUrl can process recovery/signup tokens
     // even when config fetch delays client creation.
-    if (_capturedHash && !window.location.hash && _capturedHash.includes('type=recovery')) {
+    const hasAuthHash = _capturedHash && (
+      _capturedHash.includes('type=recovery') ||
+      _capturedHash.includes('type=signup') ||
+      _capturedHash.includes('access_token=')
+    );
+    if (hasAuthHash && !window.location.hash) {
       window.location.hash = _capturedHash;
-      console.log('[auth] Restored recovery hash fragment');
+      console.log('[auth] Restored auth hash fragment');
     }
 
     const client = createClient(url, key, {
@@ -92,9 +98,9 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       setSession(s);
       setUser(s?.user ?? null);
       setSaaSAuthToken(s?.access_token ?? null);
-      // Don't set isLoading=false yet if we expect a recovery — wait for onAuthStateChange
-      if (!s && _capturedHash && _capturedHash.includes('type=recovery')) {
-        console.log('[auth] Recovery hash present, waiting for onAuthStateChange...');
+      // Don't set isLoading=false yet if we expect an auth hash — wait for onAuthStateChange
+      if (!s && hasAuthHash) {
+        console.log('[auth] Auth hash present, waiting for onAuthStateChange...');
       } else {
         setIsLoading(false);
       }
@@ -114,9 +120,9 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       }
     });
 
-    // Safety timeout: if recovery hash was present but session never arrived, stop loading
+    // Safety timeout: if auth hash was present but session never arrived, stop loading
     let recoveryTimeout: ReturnType<typeof setTimeout> | null = null;
-    if (_capturedHash && _capturedHash.includes('type=recovery')) {
+    if (hasAuthHash) {
       recoveryTimeout = setTimeout(() => setIsLoading(false), 10000);
     }
 
