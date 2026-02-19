@@ -160,7 +160,7 @@ export default function InstagramConnectStep({
     setError('');
 
     const redirectUri = `${window.location.origin}/instagram-callback`;
-    const scope = 'instagram_business_basic,instagram_business_manage_messages';
+    const scope = 'instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments';
     // Business Login for Instagram uses www.instagram.com (NOT api.instagram.com)
     // See: https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/business-login
     const authUrl =
