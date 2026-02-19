@@ -71,15 +71,15 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       return;
     }
 
-    // Restore hash fragment if it was captured at module load but cleared by anything
-    // (router, AuthContext, or browser behavior).
-    // This ensures Supabase's detectSessionInUrl can process recovery/signup tokens
-    // even when config fetch delays client creation.
+    // Check if we captured an auth hash at module load (before any code could clear it)
     const hasAuthHash = _capturedHash && (
       _capturedHash.includes('type=recovery') ||
       _capturedHash.includes('type=signup') ||
       _capturedHash.includes('access_token=')
     );
+
+    // Restore hash fragment if it was cleared between module load and now.
+    // This gives detectSessionInUrl a chance to process it.
     if (hasAuthHash && !window.location.hash) {
       window.location.hash = _capturedHash;
       console.log('[auth] Restored auth hash fragment');
@@ -93,20 +93,9 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
     });
     setSupabase(client);
 
-    // Check existing session
-    client.auth.getSession().then(({ data: { session: s } }) => {
-      setSession(s);
-      setUser(s?.user ?? null);
-      setSaaSAuthToken(s?.access_token ?? null);
-      // Don't set isLoading=false yet if we expect an auth hash — wait for onAuthStateChange
-      if (!s && hasAuthHash) {
-        console.log('[auth] Auth hash present, waiting for onAuthStateChange...');
-      } else {
-        setIsLoading(false);
-      }
-    });
-
-    // Listen for auth changes (including PASSWORD_RECOVERY from reset links)
+    // Listen for auth changes FIRST — before any async session init.
+    // This ensures we catch PASSWORD_RECOVERY / SIGNED_IN events even if they
+    // fire before getSession() resolves.
     const {
       data: { subscription },
     } = client.auth.onAuthStateChange((event, s) => {
@@ -114,11 +103,51 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       setSession(s);
       setUser(s?.user ?? null);
       setSaaSAuthToken(s?.access_token ?? null);
-      // Ensure loading is cleared when recovery session arrives
-      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         setIsLoading(false);
       }
     });
+
+    // Initialize session (async IIFE)
+    (async () => {
+      // Wait for SDK's internal _initialize() — which includes detectSessionInUrl
+      const { data: { session: s } } = await client.auth.getSession();
+
+      if (s) {
+        // Session found (SDK processed hash or restored from storage)
+        setSession(s);
+        setUser(s.user ?? null);
+        setSaaSAuthToken(s.access_token ?? null);
+        setIsLoading(false);
+        return;
+      }
+
+      // SDK returned no session. If we have an auth hash, the SDK's
+      // detectSessionInUrl failed (timing issue with late client creation).
+      // Manually extract tokens and call setSession() as a robust fallback.
+      if (hasAuthHash && _capturedHash) {
+        const hashParams = new URLSearchParams(_capturedHash.substring(1));
+        const access_token = hashParams.get('access_token');
+        const refresh_token = hashParams.get('refresh_token');
+
+        if (access_token && refresh_token) {
+          console.log('[auth] SDK missed hash session, manually calling setSession...');
+          const { error: setErr } = await client.auth.setSession({
+            access_token,
+            refresh_token,
+          });
+          if (setErr) {
+            console.error('[auth] Manual setSession failed:', setErr.message);
+            setIsLoading(false);
+          }
+          // On success, onAuthStateChange fires SIGNED_IN → sets session + isLoading
+          return;
+        }
+      }
+
+      // No hash, no session — unauthenticated
+      setIsLoading(false);
+    })();
 
     // Safety timeout: if auth hash was present but session never arrived, stop loading
     let recoveryTimeout: ReturnType<typeof setTimeout> | null = null;
