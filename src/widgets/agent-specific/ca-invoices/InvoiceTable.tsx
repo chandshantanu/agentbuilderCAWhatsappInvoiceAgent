@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,12 +28,13 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle, Plus, Trash2, Save, CheckCircle, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
+import { AlertTriangle, Plus, Trash2, Save, CheckCircle, ChevronLeft, ChevronRight, Image as ImageIcon, Search, SlidersHorizontal } from 'lucide-react';
 import {
   caInvoiceService,
   type CaInvoice,
   type InvoiceLineItem,
 } from '@/services/caInvoiceService';
+import { apiClient } from '@/lib/apiClient';
 
 const STATUS_COLORS: Record<string, string> = {
   pending_user_confirmation: 'bg-purple-100 text-purple-800',
@@ -75,6 +76,7 @@ function emptyLineItem(): InvoiceLineItem {
   };
 }
 
+/** Recalculate a line item — only called when user explicitly edits a field. */
 function recalcLineItem(item: InvoiceLineItem, isInterState: boolean): InvoiceLineItem {
   const taxable = item.quantity * item.rate;
   const gstAmount = taxable * (item.gst_rate / 100);
@@ -88,24 +90,49 @@ function recalcLineItem(item: InvoiceLineItem, isInterState: boolean): InvoiceLi
   };
 }
 
-function calcTotals(items: InvoiceLineItem[], roundOff: number) {
-  const taxable = items.reduce((s, i) => s + i.taxable_amount, 0);
-  const cgst = items.reduce((s, i) => s + i.cgst_amount, 0);
-  const sgst = items.reduce((s, i) => s + i.sgst_amount, 0);
-  const igst = items.reduce((s, i) => s + i.igst_amount, 0);
-  const cess = items.reduce((s, i) => s + i.cess_amount, 0);
-  return {
-    taxable_amount: taxable,
-    cgst_total: cgst,
-    sgst_total: sgst,
-    igst_total: igst,
-    cess_total: cess,
-    round_off: roundOff,
-    grand_total: taxable + cgst + sgst + igst + cess + roundOff,
-  };
-}
-
 /* ─── Invoice Media Preview ────────────────────────── */
+
+/**
+ * AuthImage — fetches images via apiClient (includes auth headers + correct SaaS baseURL).
+ * Raw <img src="/api/..."> fails in SaaS mode (502) and without auth (401).
+ */
+function AuthImage({ src, alt, className }: { src: string; alt: string; className?: string }) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (!src) return;
+    let cancelled = false;
+    apiClient
+      .get(src, { responseType: 'blob' })
+      .then((resp) => {
+        if (!cancelled) setBlobUrl(URL.createObjectURL(resp.data));
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
+    return () => { cancelled = true; };
+  }, [src]);
+
+  useEffect(() => {
+    return () => { if (blobUrl) URL.revokeObjectURL(blobUrl); };
+  }, [blobUrl]);
+
+  if (failed) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-2 py-12">
+        <ImageIcon className="h-10 w-10" />
+        <p className="text-sm">Failed to load preview</p>
+      </div>
+    );
+  }
+
+  if (!blobUrl) {
+    return <Skeleton className="h-96 w-full" />;
+  }
+
+  return <img src={blobUrl} alt={alt} className={className} loading="lazy" />;
+}
 
 function InvoiceMediaPreview({ invoiceId }: { invoiceId: string }) {
   const [pageCount, setPageCount] = useState(0);
@@ -154,13 +181,10 @@ function InvoiceMediaPreview({ invoiceId }: { invoiceId: string }) {
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center min-h-[400px]">
-        <img
+        <AuthImage
           src={mediaUrl}
           alt={`Invoice page ${currentPage + 1}`}
           className="max-w-full max-h-[70vh] object-contain"
-          onError={(e) => {
-            (e.target as HTMLImageElement).style.display = 'none';
-          }}
         />
       </div>
       {pageCount > 1 && (
@@ -193,27 +217,56 @@ function InvoiceMediaPreview({ invoiceId }: { invoiceId: string }) {
 /* ─── Editable Invoice Detail Dialog ───────────────── */
 
 function InvoiceDetailDialog({
-  invoice,
+  invoice: initialInvoice,
+  allInvoices,
   onClose,
   onApprove,
   onReject,
   onSaved,
 }: {
   invoice: CaInvoice;
+  allInvoices: CaInvoice[];
   onClose: () => void;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
   onSaved: () => void;
 }) {
   const { toast } = useToast();
+
+  // Find sibling invoices from the same message (share wa_message_id or media_file_ids)
+  const siblings = React.useMemo(() => {
+    if (!initialInvoice) return [initialInvoice];
+    const waId = initialInvoice.wa_message_id;
+    const mediaIds = initialInvoice.media_file_ids || [];
+    if (waId) {
+      const group = allInvoices.filter((inv) => inv.wa_message_id === waId);
+      if (group.length > 1) return group;
+    }
+    if (mediaIds.length > 0) {
+      const mediaKey = JSON.stringify([...mediaIds].sort());
+      const group = allInvoices.filter(
+        (inv) => JSON.stringify([...(inv.media_file_ids || [])].sort()) === mediaKey
+      );
+      if (group.length > 1) return group;
+    }
+    return [initialInvoice];
+  }, [initialInvoice, allInvoices]);
+
+  const [currentIdx, setCurrentIdx] = useState(() =>
+    Math.max(0, siblings.findIndex((s) => s.id === initialInvoice.id))
+  );
+  const invoice = siblings[currentIdx] || initialInvoice;
+  const hasBatch = siblings.length > 1;
+
   const isEditable = invoice.status === 'pending_review' || invoice.status === 'pending_user_confirmation';
   const hasMedia = (invoice.media_file_ids?.length ?? 0) > 0;
 
-  // Editable state
+  // Editable state — re-initialised from extracted data when invoice changes
   const [invoiceNumber, setInvoiceNumber] = useState(invoice.invoice_number || '');
   const [invoiceDate, setInvoiceDate] = useState(invoice.invoice_date || '');
   const [voucherType, setVoucherType] = useState(invoice.voucher_type || 'Purchase');
   const [supplyType, setSupplyType] = useState(invoice.supply_type || 'Intra-State');
+  const [reverseCharge, setReverseCharge] = useState(invoice.reverse_charge || false);
   const [sellerName, setSellerName] = useState(invoice.seller_name || '');
   const [sellerGstin, setSellerGstin] = useState(invoice.seller_gstin || '');
   const [sellerStateCode, setSellerStateCode] = useState(invoice.seller_state_code || '');
@@ -224,14 +277,30 @@ function InvoiceDetailDialog({
   const [roundOff, setRoundOff] = useState(invoice.totals?.round_off || 0);
   const [saving, setSaving] = useState(false);
 
+  // Reset editable state when switching between sibling invoices
+  useEffect(() => {
+    setInvoiceNumber(invoice.invoice_number || '');
+    setInvoiceDate(invoice.invoice_date || '');
+    setVoucherType(invoice.voucher_type || 'Purchase');
+    setSupplyType(invoice.supply_type || 'Intra-State');
+    setReverseCharge(invoice.reverse_charge || false);
+    setSellerName(invoice.seller_name || '');
+    setSellerGstin(invoice.seller_gstin || '');
+    setSellerStateCode(invoice.seller_state_code || '');
+    setBuyerName(invoice.buyer_name || '');
+    setBuyerGstin(invoice.buyer_gstin || '');
+    setBuyerStateCode(invoice.buyer_state_code || '');
+    setLineItems(invoice.line_items || []);
+    setRoundOff(invoice.totals?.round_off || 0);
+  }, [invoice.id]);
+
   const isInterState = sellerStateCode !== buyerStateCode && !!sellerStateCode && !!buyerStateCode;
 
-  // Recalc all line items when inter-state status changes
-  useEffect(() => {
-    setLineItems((prev) => prev.map((item) => recalcLineItem(item, isInterState)));
-  }, [isInterState]);
-
-  const totals = useMemo(() => calcTotals(lineItems, roundOff), [lineItems, roundOff]);
+  // Use EXTRACTED totals as source of truth — no recalculation
+  const totals = invoice.totals || {
+    taxable_amount: 0, cgst_total: 0, sgst_total: 0, igst_total: 0,
+    cess_total: 0, round_off: 0, grand_total: 0,
+  };
 
   const updateLineItem = (index: number, field: keyof InvoiceLineItem, value: string | number) => {
     setLineItems((prev) => {
@@ -253,6 +322,7 @@ function InvoiceDetailDialog({
     invoice_date: invoiceDate,
     voucher_type: voucherType,
     supply_type: supplyType,
+    reverse_charge: reverseCharge,
     seller_name: sellerName,
     seller_gstin: sellerGstin,
     seller_state_code: sellerStateCode,
@@ -260,7 +330,7 @@ function InvoiceDetailDialog({
     buyer_gstin: buyerGstin,
     buyer_state_code: buyerStateCode,
     line_items: lineItems,
-    totals: { ...invoice.totals, ...totals },
+    totals: { ...totals, round_off: roundOff },
   });
 
   const handleSave = async () => {
@@ -294,9 +364,39 @@ function InvoiceDetailDialog({
   return (
     <DialogContent className={`${hasMedia ? 'max-w-7xl' : 'max-w-4xl'} max-h-[90vh] overflow-y-auto`}>
       <DialogHeader>
+        {hasBatch && (
+          <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 mb-2">
+            <span className="text-sm text-blue-800 font-medium">
+              {siblings.length} invoices extracted from this message
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2"
+                disabled={currentIdx === 0}
+                onClick={() => setCurrentIdx((i) => i - 1)}
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </Button>
+              <span className="text-sm font-medium text-blue-700 min-w-[60px] text-center">
+                {currentIdx + 1} of {siblings.length}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2"
+                disabled={currentIdx >= siblings.length - 1}
+                onClick={() => setCurrentIdx((i) => i + 1)}
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+        )}
         <div className="flex items-center justify-between">
           <DialogTitle className="flex items-center gap-3">
-            Invoice #{invoice.invoice_number}
+            Invoice #{invoice.invoice_number || 'N/A'}
             <span className={`px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[invoice.status] || ''}`}>
               {invoice.status.replace(/_/g, ' ')}
             </span>
@@ -374,6 +474,42 @@ function InvoiceDetailDialog({
           </div>
         </div>
 
+        {/* Additional header info */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {invoice.invoice_type && (
+            <div>
+              <Label className="text-xs text-gray-500">Invoice Type</Label>
+              <p className="font-medium mt-1">{invoice.invoice_type}</p>
+            </div>
+          )}
+          <div>
+            <Label className="text-xs text-gray-500">Reverse Charge</Label>
+            {isEditable ? (
+              <Select value={reverseCharge ? 'Yes' : 'No'} onValueChange={(v) => setReverseCharge(v === 'Yes')}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="No">No</SelectItem>
+                  <SelectItem value="Yes">Yes</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <p className="font-medium mt-1">{reverseCharge ? 'Yes' : 'No'}</p>
+            )}
+          </div>
+          {invoice.client_name && (
+            <div>
+              <Label className="text-xs text-gray-500">Client</Label>
+              <p className="font-medium mt-1">{invoice.client_name}</p>
+            </div>
+          )}
+          {invoice.sender_phone && (
+            <div>
+              <Label className="text-xs text-gray-500">Sender Phone</Label>
+              <p className="font-medium mt-1 font-mono text-xs">{invoice.sender_phone}</p>
+            </div>
+          )}
+        </div>
+
         {/* Seller / Buyer */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {/* Seller */}
@@ -387,7 +523,7 @@ function InvoiceDetailDialog({
                 <p className="font-medium mt-1">{sellerName}</p>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label className="text-xs text-gray-500">GSTIN</Label>
                 {isEditable ? (
@@ -415,6 +551,12 @@ function InvoiceDetailDialog({
                   <p className="font-medium mt-1">{sellerStateCode || '\u2014'}</p>
                 )}
               </div>
+              {invoice.seller_state_name && (
+                <div>
+                  <Label className="text-xs text-gray-500">State</Label>
+                  <p className="font-medium mt-1">{invoice.seller_state_name}</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -429,7 +571,7 @@ function InvoiceDetailDialog({
                 <p className="font-medium mt-1">{buyerName}</p>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label className="text-xs text-gray-500">GSTIN</Label>
                 {isEditable ? (
@@ -457,6 +599,12 @@ function InvoiceDetailDialog({
                   <p className="font-medium mt-1">{buyerStateCode || '\u2014'}</p>
                 )}
               </div>
+              {invoice.buyer_state_name && (
+                <div>
+                  <Label className="text-xs text-gray-500">State</Label>
+                  <p className="font-medium mt-1">{invoice.buyer_state_name}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -476,13 +624,17 @@ function InvoiceDetailDialog({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="min-w-[180px]">Description</TableHead>
-                  <TableHead className="w-[100px]">HSN/SAC</TableHead>
-                  <TableHead className="w-[70px] text-right">Qty</TableHead>
-                  <TableHead className="w-[60px]">Unit</TableHead>
-                  <TableHead className="w-[100px] text-right">Rate</TableHead>
-                  <TableHead className="w-[70px] text-right">GST %</TableHead>
-                  <TableHead className="w-[110px] text-right">Total</TableHead>
+                  <TableHead className="min-w-[150px]">Description</TableHead>
+                  <TableHead className="w-[80px]">HSN/SAC</TableHead>
+                  <TableHead className="w-[55px] text-right">Qty</TableHead>
+                  <TableHead className="w-[50px]">Unit</TableHead>
+                  <TableHead className="w-[80px] text-right">Rate</TableHead>
+                  <TableHead className="w-[90px] text-right">Taxable</TableHead>
+                  <TableHead className="w-[55px] text-right">GST%</TableHead>
+                  {!isInterState && <TableHead className="w-[80px] text-right">CGST</TableHead>}
+                  {!isInterState && <TableHead className="w-[80px] text-right">SGST</TableHead>}
+                  {isInterState && <TableHead className="w-[80px] text-right">IGST</TableHead>}
+                  <TableHead className="w-[90px] text-right">Total</TableHead>
                   {isEditable && <TableHead className="w-[40px]" />}
                 </TableRow>
               </TableHeader>
@@ -497,7 +649,7 @@ function InvoiceDetailDialog({
                           className="h-8 text-xs"
                         />
                       ) : (
-                        <span className="truncate block max-w-[200px]">{item.description}</span>
+                        <span className="truncate block max-w-[180px]">{item.description}</span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -517,7 +669,7 @@ function InvoiceDetailDialog({
                           type="number"
                           value={item.quantity}
                           onChange={(e) => updateLineItem(i, 'quantity', parseFloat(e.target.value) || 0)}
-                          className="h-8 text-xs text-right w-16"
+                          className="h-8 text-xs text-right w-14"
                           min={0}
                           step="any"
                         />
@@ -536,13 +688,13 @@ function InvoiceDetailDialog({
                         item.unit
                       )}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right font-mono">
                       {isEditable ? (
                         <Input
                           type="number"
                           value={item.rate}
                           onChange={(e) => updateLineItem(i, 'rate', parseFloat(e.target.value) || 0)}
-                          className="h-8 text-xs text-right w-24"
+                          className="h-8 text-xs text-right w-20"
                           min={0}
                           step="any"
                         />
@@ -550,13 +702,16 @@ function InvoiceDetailDialog({
                         formatCurrency(item.rate)
                       )}
                     </TableCell>
+                    <TableCell className="text-right font-mono">
+                      {formatCurrency(item.taxable_amount)}
+                    </TableCell>
                     <TableCell className="text-right">
                       {isEditable ? (
                         <Input
                           type="number"
                           value={item.gst_rate}
                           onChange={(e) => updateLineItem(i, 'gst_rate', parseFloat(e.target.value) || 0)}
-                          className="h-8 text-xs text-right w-16"
+                          className="h-8 text-xs text-right w-14"
                           min={0}
                           max={28}
                           step="any"
@@ -565,7 +720,22 @@ function InvoiceDetailDialog({
                         `${item.gst_rate}%`
                       )}
                     </TableCell>
-                    <TableCell className="text-right font-mono">
+                    {!isInterState && (
+                      <TableCell className="text-right font-mono text-xs">
+                        {formatCurrency(item.cgst_amount)}
+                      </TableCell>
+                    )}
+                    {!isInterState && (
+                      <TableCell className="text-right font-mono text-xs">
+                        {formatCurrency(item.sgst_amount)}
+                      </TableCell>
+                    )}
+                    {isInterState && (
+                      <TableCell className="text-right font-mono text-xs">
+                        {formatCurrency(item.igst_amount)}
+                      </TableCell>
+                    )}
+                    <TableCell className="text-right font-mono font-medium">
                       {formatCurrency(item.total_amount)}
                     </TableCell>
                     {isEditable && (
@@ -583,7 +753,7 @@ function InvoiceDetailDialog({
                 ))}
                 {lineItems.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={isEditable ? 8 : 7} className="text-center text-gray-400 py-6">
+                    <TableCell colSpan={isEditable ? 10 : 9} className="text-center text-gray-400 py-6">
                       No line items
                     </TableCell>
                   </TableRow>
@@ -593,12 +763,12 @@ function InvoiceDetailDialog({
           </div>
         </div>
 
-        {/* Totals */}
+        {/* Totals — extracted values, not recalculated */}
         <div className="border-t pt-4">
           <div className="grid grid-cols-2 gap-2 max-w-xs ml-auto text-sm">
             <span className="text-gray-500">Taxable Amount:</span>
             <span className="text-right font-mono">{formatCurrency(totals.taxable_amount)}</span>
-            {totals.cgst_total > 0 && (
+            {(totals.cgst_total > 0 || totals.sgst_total > 0) && (
               <>
                 <span className="text-gray-500">CGST:</span>
                 <span className="text-right font-mono">{formatCurrency(totals.cgst_total)}</span>
@@ -629,12 +799,15 @@ function InvoiceDetailDialog({
                   step="0.01"
                 />
               ) : (
-                <span className="font-mono">{formatCurrency(roundOff)}</span>
+                <span className="font-mono">{formatCurrency(totals.round_off)}</span>
               )}
             </span>
             <span className="font-bold text-gray-900">Grand Total:</span>
             <span className="text-right font-bold font-mono text-gray-900">{formatCurrency(totals.grand_total)}</span>
           </div>
+          {totals.amount_in_words && (
+            <p className="text-xs text-gray-500 mt-2 text-right italic">{totals.amount_in_words}</p>
+          )}
         </div>
 
         {/* Additional Charges */}
@@ -837,150 +1010,172 @@ export default function InvoiceTable({ config }: { config: Record<string, unknow
     }
   };
 
+  const STATUS_CHIPS = [
+    { value: '', label: 'All' },
+    { value: 'pending_review', label: 'Pending Review' },
+    { value: 'pending_user_confirmation', label: 'Awaiting Confirmation' },
+    { value: 'approved', label: 'Approved' },
+    { value: 'rejected', label: 'Rejected' },
+    { value: 'exported', label: 'Exported' },
+  ];
+
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Invoices</CardTitle>
+    <div className="rounded-xl border bg-white overflow-hidden">
+      {/* Toolbar */}
+      <div className="px-5 pt-5 pb-4 border-b space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400" />
+            <Input
+              placeholder="Search invoices…"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+              className="pl-9 h-9"
+            />
+          </div>
           {selected.size > 0 && (
-            <Button size="sm" onClick={handleBulkApprove}>
+            <Button size="sm" onClick={handleBulkApprove} className="shrink-0">
+              <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
               Approve {selected.size} selected
             </Button>
           )}
         </div>
-        <div className="flex gap-3 mt-3">
-          <Input
-            placeholder="Search invoices..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-            className="max-w-xs"
-          />
-          <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v === 'all' ? '' : v); setPage(0); }}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="All statuses" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="pending_user_confirmation">Awaiting Confirmation</SelectItem>
-              <SelectItem value="pending_review">Pending Review</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
-              <SelectItem value="exported">Exported</SelectItem>
-            </SelectContent>
-          </Select>
+        {/* Status filter chips */}
+        <div className="flex flex-wrap gap-1.5">
+          {STATUS_CHIPS.map((chip) => (
+            <button
+              key={chip.value}
+              onClick={() => { setStatusFilter(chip.value); setPage(0); }}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                statusFilter === chip.value
+                  ? 'bg-neutral-900 text-white'
+                  : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+              }`}
+            >
+              {chip.label}
+            </button>
+          ))}
         </div>
-      </CardHeader>
-      <CardContent>
+      </div>
+
+      {/* Table */}
+      <div className="overflow-x-auto">
         {loading ? (
-          <div className="space-y-3">
-            {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+          <div className="p-5 space-y-3">
+            {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-11 w-full" />)}
           </div>
         ) : (
-          <>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-10">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-neutral-50/70">
+                <TableHead className="w-10 pl-5">
+                  <input
+                    type="checkbox"
+                    className="rounded border-neutral-300 accent-neutral-900"
+                    checked={selected.size === invoices.length && invoices.length > 0}
+                    onChange={toggleSelectAll}
+                  />
+                </TableHead>
+                <TableHead className="font-medium text-neutral-600">Invoice #</TableHead>
+                <TableHead className="font-medium text-neutral-600">Date</TableHead>
+                <TableHead className="font-medium text-neutral-600">Seller</TableHead>
+                <TableHead className="font-medium text-neutral-600">Type</TableHead>
+                <TableHead className="text-right font-medium text-neutral-600">Amount</TableHead>
+                <TableHead className="font-medium text-neutral-600">Status</TableHead>
+                <TableHead className="font-medium text-neutral-600">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {invoices.map((inv) => (
+                <TableRow key={inv.id} className="hover:bg-neutral-50/60 transition-colors">
+                  <TableCell className="pl-5">
                     <input
                       type="checkbox"
-                      checked={selected.size === invoices.length && invoices.length > 0}
-                      onChange={toggleSelectAll}
+                      className="rounded border-neutral-300 accent-neutral-900"
+                      checked={selected.has(inv.id)}
+                      onChange={() => toggleSelect(inv.id)}
                     />
-                  </TableHead>
-                  <TableHead>Invoice #</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Seller</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
+                  </TableCell>
+                  <TableCell>
+                    <button
+                      className="text-indigo-600 hover:text-indigo-800 hover:underline font-medium text-sm"
+                      onClick={() => setDetailInvoice(inv)}
+                    >
+                      {inv.invoice_number || '—'}
+                    </button>
+                  </TableCell>
+                  <TableCell className="text-sm text-neutral-600">{inv.invoice_date || '—'}</TableCell>
+                  <TableCell className="text-sm text-neutral-700 max-w-[200px] truncate">{inv.seller_name}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-xs">
+                      {inv.voucher_type || inv.invoice_type}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right font-mono text-sm font-medium text-neutral-900">
+                    {formatCurrency(inv.totals?.grand_total || 0)}
+                  </TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[inv.status] || ''}`}>
+                      {inv.status.replace(/_/g, ' ')}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    {(inv.status === 'pending_review' || inv.status === 'pending_user_confirmation') && (
+                      <div className="flex gap-1">
+                        <Button size="sm" variant="ghost" className="h-7 text-xs text-emerald-700 hover:bg-emerald-50" onClick={() => handleApprove(inv.id)}>
+                          Approve
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-7 text-xs text-red-600 hover:bg-red-50" onClick={() => handleReject(inv.id)}>
+                          Reject
+                        </Button>
+                      </div>
+                    )}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invoices.map((inv) => (
-                  <TableRow key={inv.id}>
-                    <TableCell>
-                      <input
-                        type="checkbox"
-                        checked={selected.has(inv.id)}
-                        onChange={() => toggleSelect(inv.id)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <button
-                        className="text-blue-600 hover:underline font-medium"
-                        onClick={() => setDetailInvoice(inv)}
-                      >
-                        {inv.invoice_number || '\u2014'}
-                      </button>
-                    </TableCell>
-                    <TableCell className="text-sm">{inv.invoice_date || '\u2014'}</TableCell>
-                    <TableCell className="text-sm max-w-[200px] truncate">{inv.seller_name}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-xs">
-                        {inv.voucher_type || inv.invoice_type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right font-mono text-sm">
-                      {formatCurrency(inv.totals?.grand_total || 0)}
-                    </TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[inv.status] || ''}`}>
-                        {inv.status.replace(/_/g, ' ')}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {(inv.status === 'pending_review' || inv.status === 'pending_user_confirmation') && (
-                        <div className="flex gap-1">
-                          <Button size="sm" variant="ghost" onClick={() => handleApprove(inv.id)}>
-                            Approve
-                          </Button>
-                          <Button size="sm" variant="ghost" className="text-red-600" onClick={() => handleReject(inv.id)}>
-                            Reject
-                          </Button>
-                        </div>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {invoices.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center text-gray-500 py-8">
-                      No invoices found
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-
-            {total > pageSize && (
-              <div className="flex items-center justify-between mt-4">
-                <span className="text-sm text-gray-500">
-                  Showing {page * pageSize + 1}&ndash;{Math.min((page + 1) * pageSize, total)} of {total}
-                </span>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(page - 1)}>
-                    Previous
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={(page + 1) * pageSize >= total}
-                    onClick={() => setPage(page + 1)}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
-            )}
-          </>
+              ))}
+              {invoices.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-16">
+                    <div className="flex flex-col items-center gap-2 text-neutral-400">
+                      <SlidersHorizontal className="h-8 w-8" />
+                      <p className="text-sm font-medium">No invoices found</p>
+                      <p className="text-xs">Try adjusting your search or status filter</p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         )}
-      </CardContent>
+      </div>
+
+      {/* Pagination */}
+      {total > pageSize && (
+        <div className="flex items-center justify-between px-5 py-3 border-t bg-neutral-50/50">
+          <span className="text-xs text-neutral-500">
+            Showing {page * pageSize + 1}–{Math.min((page + 1) * pageSize, total)} of {total}
+          </span>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(page - 1)}>
+              <ChevronLeft className="h-3.5 w-3.5 mr-1" /> Prev
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={(page + 1) * pageSize >= total}
+              onClick={() => setPage(page + 1)}
+            >
+              Next <ChevronRight className="h-3.5 w-3.5 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       <Dialog open={!!detailInvoice} onOpenChange={() => setDetailInvoice(null)}>
         {detailInvoice && (
           <InvoiceDetailDialog
             invoice={detailInvoice}
+            allInvoices={invoices}
             onClose={() => setDetailInvoice(null)}
             onApprove={handleApprove}
             onReject={handleReject}
@@ -988,6 +1183,6 @@ export default function InvoiceTable({ config }: { config: Record<string, unknow
           />
         )}
       </Dialog>
-    </Card>
+    </div>
   );
 }

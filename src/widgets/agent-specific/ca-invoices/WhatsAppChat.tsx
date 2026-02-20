@@ -5,7 +5,7 @@
  * Right panel: message thread with human + bot reply
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { motion } from 'framer-motion';
 import {
   MessageSquare,
@@ -63,6 +63,67 @@ interface Conversation {
   incoming_count: number;
   outgoing_count: number;
 }
+
+/**
+ * AuthImage — loads images via apiClient (includes auth headers + correct SaaS baseURL).
+ * In SaaS mode, <img src="/api/..."> would hit the saas-dashboard nginx (502).
+ * This component fetches via apiClient as a blob and creates an object URL.
+ */
+const AuthImage = memo(function AuthImage({
+  src,
+  alt,
+  className,
+  onClick,
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+  onClick?: () => void;
+}) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (!src) return;
+    let cancelled = false;
+    apiClient
+      .get(src, { responseType: 'blob' })
+      .then((resp) => {
+        if (!cancelled) setBlobUrl(URL.createObjectURL(resp.data));
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [src]);
+
+  // Revoke blob URL on unmount
+  useEffect(() => {
+    return () => {
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
+  }, [blobUrl]);
+
+  if (failed || !blobUrl) {
+    return (
+      <div className={cn("flex items-center gap-1.5 text-xs py-1 italic text-neutral-400", className)}>
+        <ImageIcon className="w-3 h-3" /> {failed ? 'Image unavailable' : 'Loading...'}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={blobUrl}
+      alt={alt}
+      className={className}
+      loading="lazy"
+      onClick={onClick}
+    />
+  );
+});
 
 export default function WhatsAppChat({ config }: { config: Record<string, unknown> }) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -486,23 +547,11 @@ export default function WhatsAppChat({ config }: { config: Record<string, unknow
                       {/* Media preview */}
                       {msg.type === 'image' && msg.media_url && (
                         <div className="mb-1.5 rounded-lg overflow-hidden">
-                          <img
+                          <AuthImage
                             src={msg.media_url}
                             alt="Shared image"
                             className="max-w-full max-h-[240px] rounded-lg object-contain bg-neutral-100 cursor-pointer"
-                            loading="lazy"
-                            onClick={() => window.open(msg.media_url, '_blank')}
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                              (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
-                            }}
                           />
-                          <div className={cn(
-                            "hidden flex items-center gap-1.5 text-xs py-1 italic",
-                            msg.direction === 'outgoing' && msg.source !== 'bot' ? "text-green-100" : "text-neutral-400"
-                          )}>
-                            <ImageIcon className="w-3 h-3" /> Image
-                          </div>
                         </div>
                       )}
 
@@ -519,14 +568,20 @@ export default function WhatsAppChat({ config }: { config: Record<string, unknow
                           <FileText className="w-4 h-4 flex-shrink-0" />
                           <span className="truncate">{msg.media_filename || 'Document'}</span>
                           {msg.media_url && (
-                            <a
-                              href={msg.media_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="ml-auto underline flex-shrink-0"
+                            <button
+                              onClick={() => {
+                                apiClient.get(msg.media_url!, { responseType: 'blob' })
+                                  .then(resp => {
+                                    const url = URL.createObjectURL(resp.data);
+                                    window.open(url, '_blank');
+                                    setTimeout(() => URL.revokeObjectURL(url), 60000);
+                                  })
+                                  .catch(() => console.error('Failed to load document'));
+                              }}
+                              className="ml-auto underline flex-shrink-0 hover:opacity-80"
                             >
                               View
-                            </a>
+                            </button>
                           )}
                         </div>
                       )}

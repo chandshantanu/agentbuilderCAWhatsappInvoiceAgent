@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -105,9 +104,9 @@ function ClientStats({ clientId }: { clientId: string }) {
   return (
     <div className="grid grid-cols-2 gap-3">
       {items.map((item) => (
-        <div key={item.label} className="bg-gray-50 rounded-lg p-3">
-          <p className="text-xs text-gray-500">{item.label}</p>
-          <p className="font-semibold text-gray-900 mt-0.5">{item.value}</p>
+        <div key={item.label} className="bg-neutral-50/80 rounded-lg p-3 border border-neutral-100">
+          <p className="text-xs text-neutral-500">{item.label}</p>
+          <p className="font-semibold text-neutral-900 mt-0.5">{item.value}</p>
         </div>
       ))}
     </div>
@@ -128,37 +127,37 @@ function BranchCard({
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="border border-gray-200 rounded-lg">
+    <div className="border border-neutral-200 rounded-lg">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors rounded-lg"
+        className="w-full flex items-center justify-between p-3 text-left hover:bg-neutral-50 transition-colors rounded-lg"
       >
         <div className="flex items-center gap-2.5">
-          <Building2 className="h-4 w-4 text-gray-400" />
+          <Building2 className="h-4 w-4 text-neutral-400" />
           <div>
-            <p className="text-sm font-medium text-gray-900">{branch.name}</p>
-            {branch.address && <p className="text-xs text-gray-500">{branch.address}</p>}
+            <p className="text-sm font-medium text-neutral-900">{branch.name}</p>
+            {branch.address && <p className="text-xs text-neutral-500">{branch.address}</p>}
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-xs">{branch.phone_numbers?.length || 0} phones</Badge>
-          {expanded ? <ChevronDown className="h-4 w-4 text-gray-400" /> : <ChevronRight className="h-4 w-4 text-gray-400" />}
+          {expanded ? <ChevronDown className="h-4 w-4 text-neutral-400" /> : <ChevronRight className="h-4 w-4 text-neutral-400" />}
         </div>
       </button>
       {expanded && (
-        <div className="px-3 pb-3 border-t border-gray-100">
+        <div className="px-3 pb-3 border-t border-neutral-100">
           <div className="mt-2 space-y-1.5">
             {branch.state_code && (
-              <p className="text-xs text-gray-500 flex items-center gap-1.5">
+              <p className="text-xs text-neutral-500 flex items-center gap-1.5">
                 <MapPin className="h-3 w-3" /> State Code: {branch.state_code}
               </p>
             )}
             {(branch.phone_numbers || []).length > 0 ? (
               <div className="space-y-1">
                 {branch.phone_numbers.map((phone) => (
-                  <div key={phone} className="flex items-center justify-between bg-gray-50 rounded px-2.5 py-1.5">
-                    <span className="text-xs font-mono text-gray-700 flex items-center gap-1.5">
-                      <Phone className="h-3 w-3 text-gray-400" /> {phone}
+                  <div key={phone} className="flex items-center justify-between bg-neutral-50 rounded px-2.5 py-1.5">
+                    <span className="text-xs font-mono text-neutral-700 flex items-center gap-1.5">
+                      <Phone className="h-3 w-3 text-neutral-400" /> {phone}
                     </span>
                     <button
                       onClick={() => onRemovePhone(branch.id, phone)}
@@ -171,7 +170,7 @@ function BranchCard({
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-gray-400 italic">No phone numbers mapped</p>
+              <p className="text-xs text-neutral-400 italic">No phone numbers mapped</p>
             )}
             <Button
               size="sm"
@@ -210,11 +209,11 @@ function RecentInvoices({ clientId }: { clientId: string }) {
   }, [clientId]);
 
   if (loading) return <Skeleton className="h-24" />;
-  if (invoices.length === 0) return <p className="text-xs text-gray-400 italic py-3">No invoices yet</p>;
+  if (invoices.length === 0) return <p className="text-xs text-neutral-400 italic py-3">No invoices yet</p>;
 
   const STATUS_COLORS: Record<string, string> = {
-    pending_review: 'bg-orange-100 text-orange-800',
-    approved: 'bg-green-100 text-green-800',
+    pending_review: 'bg-amber-100 text-amber-800',
+    approved: 'bg-emerald-100 text-emerald-800',
     rejected: 'bg-red-100 text-red-800',
     exported: 'bg-blue-100 text-blue-800',
   };
@@ -222,19 +221,19 @@ function RecentInvoices({ clientId }: { clientId: string }) {
   return (
     <div className="space-y-1.5">
       {invoices.map((inv) => (
-        <div key={inv.id} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+        <div key={inv.id} className="flex items-center justify-between bg-neutral-50/80 rounded-lg px-3 py-2">
           <div className="flex items-center gap-2.5 min-w-0">
-            <FileText className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+            <FileText className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
             <div className="min-w-0">
-              <p className="text-xs font-medium text-gray-900 truncate">{inv.invoice_number || 'No #'}</p>
-              <p className="text-[10px] text-gray-500">{inv.invoice_date}</p>
+              <p className="text-xs font-medium text-neutral-900 truncate">{inv.invoice_number || 'No #'}</p>
+              <p className="text-[10px] text-neutral-500">{inv.invoice_date}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs font-mono text-gray-700">
+            <span className="text-xs font-mono text-neutral-700">
               {formatCurrency(inv.totals?.grand_total || 0)}
             </span>
-            <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${STATUS_COLORS[inv.status] || ''}`}>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${STATUS_COLORS[inv.status] || 'bg-neutral-100 text-neutral-600'}`}>
               {inv.status.replace('_', ' ')}
             </span>
           </div>
@@ -365,8 +364,8 @@ function ClientDetail({
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div className="flex-1 min-w-0">
-          <h2 className="text-lg font-semibold text-gray-900 truncate">{client.name}</h2>
-          {client.gstin && <p className="text-xs font-mono text-gray-500">{client.gstin}</p>}
+          <h2 className="text-lg font-semibold text-neutral-900 truncate">{client.name}</h2>
+          {client.gstin && <p className="text-xs font-mono text-neutral-500">{client.gstin}</p>}
         </div>
         <Button
           size="sm"
@@ -381,8 +380,7 @@ function ClientDetail({
 
       {/* Info Section */}
       {editing ? (
-        <Card>
-          <CardContent className="pt-4 space-y-3">
+        <div className="rounded-xl border bg-white p-4 space-y-3">
             <div>
               <Label className="text-xs">Company Name</Label>
               <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="mt-1" />
@@ -409,26 +407,25 @@ function ClientDetail({
               <Button size="sm" onClick={handleSaveInfo}>Save</Button>
               <Button size="sm" variant="outline" onClick={() => setEditing(false)}>Cancel</Button>
             </div>
-          </CardContent>
-        </Card>
+        </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 text-sm">
           {client.pan && (
             <div>
-              <p className="text-xs text-gray-500">PAN</p>
-              <p className="font-mono text-xs">{client.pan}</p>
+              <p className="text-xs text-neutral-500">PAN</p>
+              <p className="font-mono text-xs text-neutral-900">{client.pan}</p>
             </div>
           )}
           {client.address && (
             <div className="col-span-2">
-              <p className="text-xs text-gray-500">Address</p>
-              <p className="text-sm">{client.address}</p>
+              <p className="text-xs text-neutral-500">Address</p>
+              <p className="text-sm text-neutral-900">{client.address}</p>
             </div>
           )}
           {client.state_code && (
             <div>
-              <p className="text-xs text-gray-500">State Code</p>
-              <p>{client.state_code}</p>
+              <p className="text-xs text-neutral-500">State Code</p>
+              <p className="text-neutral-900">{client.state_code}</p>
             </div>
           )}
         </div>
@@ -436,14 +433,14 @@ function ClientDetail({
 
       {/* Stats */}
       <div>
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Statistics</p>
+        <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-3">Statistics</p>
         <ClientStats clientId={client.id} />
       </div>
 
       {/* Branches */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Branches</p>
+          <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Branches</p>
           <Button size="sm" variant="outline" onClick={() => setShowAddBranch(true)} className="gap-1 text-xs">
             <Plus className="h-3 w-3" /> Add Branch
           </Button>
@@ -462,24 +459,24 @@ function ClientDetail({
             ))}
           </div>
         ) : (
-          <div className="text-center py-6 bg-gray-50 rounded-lg">
-            <Building2 className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-            <p className="text-sm text-gray-500">No branches yet</p>
-            <p className="text-xs text-gray-400 mt-1">Add a branch to organize phone numbers by location</p>
+          <div className="text-center py-6 bg-neutral-50 rounded-xl border border-dashed border-neutral-200">
+            <Building2 className="h-8 w-8 text-neutral-300 mx-auto mb-2" />
+            <p className="text-sm text-neutral-500">No branches yet</p>
+            <p className="text-xs text-neutral-400 mt-1">Add a branch to organize phone numbers by location</p>
           </div>
         )}
 
         {/* Direct phones (not mapped to branches) */}
         {(client.phones || []).filter((p) => !p.branch_id).length > 0 && (
           <div className="mt-3">
-            <p className="text-xs text-gray-500 mb-1.5">Direct phones (no branch)</p>
+            <p className="text-xs text-neutral-500 mb-1.5">Direct phones (no branch)</p>
             <div className="space-y-1">
               {client.phones!
                 .filter((p) => !p.branch_id)
                 .map((p) => (
-                  <div key={p.number} className="flex items-center gap-2 bg-gray-50 rounded px-2.5 py-1.5">
-                    <Phone className="h-3 w-3 text-gray-400" />
-                    <span className="text-xs font-mono text-gray-700">{p.number}</span>
+                  <div key={p.number} className="flex items-center gap-2 bg-neutral-50 rounded px-2.5 py-1.5">
+                    <Phone className="h-3 w-3 text-neutral-400" />
+                    <span className="text-xs font-mono text-neutral-700">{p.number}</span>
                     <Badge variant="outline" className="text-[10px]">{p.label}</Badge>
                   </div>
                 ))}
@@ -490,7 +487,7 @@ function ClientDetail({
 
       {/* Recent Invoices */}
       <div>
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Recent Invoices</p>
+        <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-3">Recent Invoices</p>
         <RecentInvoices clientId={client.id} />
       </div>
 
@@ -559,27 +556,27 @@ function ClientCard({
       onClick={onClick}
       className={`w-full text-left p-3.5 rounded-lg border transition-all ${
         isSelected
-          ? 'border-blue-300 bg-blue-50/50 shadow-sm'
-          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+          ? 'border-indigo-300 bg-indigo-50/40 shadow-sm'
+          : 'border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50'
       }`}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="font-medium text-sm text-gray-900 truncate">{client.name}</p>
+          <p className="font-medium text-sm text-neutral-900 truncate">{client.name}</p>
           {client.gstin && (
-            <p className="text-[10px] font-mono text-gray-500 mt-0.5">{client.gstin}</p>
+            <p className="text-[10px] font-mono text-neutral-500 mt-0.5">{client.gstin}</p>
           )}
         </div>
-        <ChevronRight className="h-4 w-4 text-gray-300 shrink-0 mt-0.5" />
+        <ChevronRight className="h-4 w-4 text-neutral-300 shrink-0 mt-0.5" />
       </div>
       <div className="flex items-center gap-3 mt-2">
         {phoneCount > 0 && (
-          <span className="flex items-center gap-1 text-[10px] text-gray-500">
+          <span className="flex items-center gap-1 text-[10px] text-neutral-500">
             <Phone className="h-3 w-3" /> {phoneCount}
           </span>
         )}
         {client.state_code && (
-          <span className="flex items-center gap-1 text-[10px] text-gray-500">
+          <span className="flex items-center gap-1 text-[10px] text-neutral-500">
             <MapPin className="h-3 w-3" /> {client.state_code}
           </span>
         )}
@@ -709,40 +706,39 @@ export default function ClientManagement({ config }: { config: Record<string, un
     <div className="space-y-4">
       {/* Unknown Senders Banner */}
       {unknownSenders.length > 0 && (
-        <Card className="border-orange-500/50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-orange-500" />
-              Unknown Senders
-              <Badge variant="destructive" className="text-xs">{unknownSenders.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {unknownSenders.map((sender) => (
-                <div key={sender.id} className="flex items-center justify-between bg-orange-50/50 rounded-lg px-3 py-2.5">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Phone className="h-4 w-4 text-orange-500 shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-mono font-medium text-gray-900">{sender.phone_number}</p>
-                      <p className="text-xs text-gray-500">
-                        {sender.sender_name || 'Unknown'} &middot; {sender.message_count} messages &middot; Last: {new Date(sender.last_message_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-1.5 shrink-0">
-                    <Button size="sm" variant="outline" className="text-xs" onClick={() => setShowAssign(sender)}>
-                      Assign
-                    </Button>
-                    <Button size="sm" variant="ghost" className="text-xs text-gray-500" onClick={() => handleIgnoreSender(sender)}>
-                      Ignore
-                    </Button>
+        <div className="rounded-xl border border-amber-200 bg-amber-50/60 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-amber-200/70">
+            <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
+            <span className="text-sm font-semibold text-amber-900">Unknown Senders</span>
+            <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-200 text-amber-900">
+              {unknownSenders.length}
+            </span>
+            <p className="text-xs text-amber-700 ml-1">Phones sending invoices not yet mapped to a client</p>
+          </div>
+          <div className="p-3 space-y-2">
+            {unknownSenders.map((sender) => (
+              <div key={sender.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2.5 border border-amber-100">
+                <div className="flex items-center gap-3 min-w-0">
+                  <Phone className="h-4 w-4 text-amber-500 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-mono font-medium text-neutral-900">{sender.phone_number}</p>
+                    <p className="text-xs text-neutral-500">
+                      {sender.sender_name || 'Unknown'} &middot; {sender.message_count} messages &middot; Last: {new Date(sender.last_message_at).toLocaleDateString()}
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <div className="flex gap-1.5 shrink-0">
+                  <Button size="sm" variant="outline" className="text-xs border-amber-300 hover:bg-amber-50" onClick={() => setShowAssign(sender)}>
+                    Assign
+                  </Button>
+                  <Button size="sm" variant="ghost" className="text-xs text-neutral-500" onClick={() => handleIgnoreSender(sender)}>
+                    Ignore
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Main Two-Panel Layout */}
@@ -753,20 +749,20 @@ export default function ClientManagement({ config }: { config: Record<string, un
             selectedClient ? 'hidden md:flex' : 'flex'
           } flex-col w-full md:w-[340px] md:min-w-[340px] shrink-0`}
         >
-          <Card className="flex-1 flex flex-col">
-            <CardHeader className="pb-3">
+          <div className="flex-1 flex flex-col rounded-xl border bg-white overflow-hidden">
+            <div className="px-4 pt-4 pb-3 border-b border-neutral-100">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Clients
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-neutral-500" />
+                  <span className="text-sm font-semibold text-neutral-900">Clients</span>
                   <Badge variant="outline" className="text-xs">{clients.length}</Badge>
-                </CardTitle>
+                </div>
                 <Button size="sm" onClick={() => setShowCreate(true)} className="gap-1 text-xs">
                   <Plus className="h-3 w-3" /> Add
                 </Button>
               </div>
-              <div className="relative mt-2">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+              <div className="relative mt-3">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400" />
                 <Input
                   placeholder="Search clients..."
                   value={search}
@@ -774,8 +770,8 @@ export default function ClientManagement({ config }: { config: Record<string, un
                   className="pl-8 h-9"
                 />
               </div>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto space-y-2 pb-4">
+            </div>
+            <div className="flex-1 overflow-y-auto p-3 space-y-2">
               {loading ? (
                 <div className="space-y-2">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-16" />)}</div>
               ) : clients.length > 0 ? (
@@ -789,16 +785,16 @@ export default function ClientManagement({ config }: { config: Record<string, un
                 ))
               ) : (
                 <div className="text-center py-10">
-                  <Users className="h-10 w-10 text-gray-200 mx-auto mb-3" />
-                  <p className="text-sm text-gray-500">No clients yet</p>
-                  <p className="text-xs text-gray-400 mt-1">Add your first client to start mapping phone numbers</p>
+                  <Users className="h-10 w-10 text-neutral-200 mx-auto mb-3" />
+                  <p className="text-sm text-neutral-500">No clients yet</p>
+                  <p className="text-xs text-neutral-400 mt-1">Add your first client to start mapping phone numbers</p>
                   <Button size="sm" variant="outline" className="mt-4" onClick={() => setShowCreate(true)}>
                     Add Client
                   </Button>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
 
         {/* Right Panel — Client Detail */}
@@ -807,24 +803,22 @@ export default function ClientManagement({ config }: { config: Record<string, un
             selectedClient ? 'flex' : 'hidden md:flex'
           } flex-col flex-1`}
         >
-          <Card className="flex-1">
-            <CardContent className="pt-5">
-              {selectedClient ? (
-                <ClientDetail
-                  key={selectedClient.id}
-                  client={selectedClient}
-                  onBack={() => setSelectedClient(null)}
-                  onRefresh={fetchData}
-                />
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
-                  <Users className="h-12 w-12 text-gray-200 mb-3" />
-                  <p className="text-sm text-gray-500">Select a client to view details</p>
-                  <p className="text-xs text-gray-400 mt-1">Client info, branches, phones, and invoices will appear here</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <div className="flex-1 rounded-xl border bg-white overflow-y-auto p-5">
+            {selectedClient ? (
+              <ClientDetail
+                key={selectedClient.id}
+                client={selectedClient}
+                onBack={() => setSelectedClient(null)}
+                onRefresh={fetchData}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
+                <Users className="h-12 w-12 text-neutral-200 mb-3" />
+                <p className="text-sm text-neutral-500">Select a client to view details</p>
+                <p className="text-xs text-neutral-400 mt-1">Client info, branches, phones, and invoices will appear here</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

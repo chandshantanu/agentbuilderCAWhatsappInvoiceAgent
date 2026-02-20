@@ -16,7 +16,7 @@ declare global {
     FB?: {
       init: (params: { appId: string; cookie?: boolean; xfbml?: boolean; version: string }) => void;
       login: (
-        callback: (response: { authResponse?: { code?: string }; status?: string }) => void,
+        callback: (response: { authResponse?: { code?: string; accessToken?: string; userID?: string }; status?: string }) => void,
         params: Record<string, any>,
       ) => void;
     };

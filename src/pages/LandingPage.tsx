@@ -234,7 +234,7 @@ export default function LandingPage() {
 
             {/* Trust pills — WHITE text for maximum contrast */}
             <motion.div variants={fadeUp} className="flex items-center justify-center gap-3 sm:gap-5 mb-9 flex-wrap">
-              {['AI-Powered', 'GST Compliant', 'Tally Ready'].map((label) => (
+              {(landing_page.hero_badges || ['AI-Powered', '24/7 Availability', 'Multi-language']).map((label: string) => (
                 <span
                   key={label}
                   className="inline-flex items-center gap-2 text-[13px] font-medium tracking-wide text-white/80"

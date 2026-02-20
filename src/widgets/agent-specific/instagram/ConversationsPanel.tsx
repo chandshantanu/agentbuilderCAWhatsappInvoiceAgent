@@ -685,6 +685,9 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [showIntel, setShowIntel] = useState(true);
+  const [noteText, setNoteText] = useState('');
+  const [savingNote, setSavingNote] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
   const [runningAnalysis, setRunningAnalysis] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
@@ -721,31 +724,79 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [selected?.messages]);
 
+  const reloadSelectedConversation = useCallback(async (sid: string) => {
+    try {
+      const resp = await apiClient.get(`/api/conversations/${sid}/messages`);
+      const { conversation, messages } = resp.data;
+      const updated = { ...conversation, messages };
+      setSelected(updated);
+      setConversations(prev => prev.map(c => (c.sender_id || c.id) === sid ? { ...c, ...conversation } : c));
+    } catch (err) {
+      console.error('Reload failed:', err);
+    }
+  }, []);
+
   const handleSend = useCallback(async () => {
     if (!selected || !replyText.trim()) return;
+    const sid = selected.sender_id || selected.id;
+    const optimisticMsg: InstagramMessage = {
+      id: `opt-${Date.now()}`,
+      role: 'assistant',
+      text: replyText,
+      timestamp: new Date().toISOString(),
+      source: 'human',
+    };
+    // Optimistic update — show message immediately
+    setSelected(prev => prev ? { ...prev, messages: [...prev.messages, optimisticMsg] } : prev);
+    setReplyText('');
     setSending(true);
     try {
-      const sid = selected.sender_id || selected.id;
-      await apiClient.post(`/api/conversations/${sid}/reply`, { message: replyText });
-      setReplyText('');
+      await apiClient.post(`/api/conversations/${sid}/reply`, { message: optimisticMsg.text });
+      // Reload from server to get authoritative state
+      await reloadSelectedConversation(sid);
     } catch (err) {
       console.error('Send failed:', err);
+      // Rollback optimistic update on failure
+      setSelected(prev => prev ? { ...prev, messages: prev.messages.filter(m => m.id !== optimisticMsg.id) } : prev);
     } finally {
       setSending(false);
     }
-  }, [selected, replyText]);
+  }, [selected, replyText, reloadSelectedConversation]);
 
   const handleAiToggle = useCallback(async () => {
     if (!selected) return;
     const sid = selected.sender_id || selected.id;
     const newState = !selected.ai_paused;
+    // Optimistic update
+    setSelected(prev => prev ? { ...prev, ai_paused: newState } : prev);
+    setConversations(prev => prev.map(c => (c.sender_id || c.id) === sid ? { ...c, ai_paused: newState } : c));
     try {
       await apiClient.put(`/api/conversations/${sid}/handoff`, { ai_paused: newState });
-      setSelected({ ...selected, ai_paused: newState });
     } catch (err) {
       console.error('Handoff failed:', err);
+      // Rollback on failure
+      setSelected(prev => prev ? { ...prev, ai_paused: !newState } : prev);
+      setConversations(prev => prev.map(c => (c.sender_id || c.id) === sid ? { ...c, ai_paused: !newState } : c));
     }
   }, [selected]);
+
+  const handleAddNote = useCallback(async () => {
+    if (!selected || !noteText.trim()) return;
+    const sid = selected.sender_id || selected.id;
+    setSavingNote(true);
+    try {
+      const resp = await apiClient.put(`/api/conversations/${sid}/notes`, { text: noteText });
+      const note = resp.data?.note;
+      if (note) {
+        setSelected(prev => prev ? { ...prev, notes: [...(prev.notes || []), note] } : prev);
+      }
+      setNoteText('');
+    } catch (err) {
+      console.error('Add note failed:', err);
+    } finally {
+      setSavingNote(false);
+    }
+  }, [selected, noteText]);
 
   const handleRunAnalysis = useCallback(async () => {
     setRunningAnalysis(true);
@@ -764,6 +815,21 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
     }
   }, [endpoint]);
 
+  const loadConversations = useCallback(async () => {
+    try {
+      const resp = await apiClient.get(endpoint);
+      setConversations(resp.data?.data || resp.data || []);
+    } catch (err) {
+      console.error('Load conversations failed:', err);
+    }
+  }, [endpoint]);
+
+  // Auto-refresh every 30s
+  useEffect(() => {
+    const interval = setInterval(loadConversations, 30000);
+    return () => clearInterval(interval);
+  }, [loadConversations]);
+
   const filteredConvs = conversations.filter(c => {
     const u = c.username || c.sender_id || '';
     return u.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -780,6 +846,13 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
             <Instagram className="w-4 h-4 text-pink-500" />
             <span className="font-semibold text-sm">Conversations</span>
             <Badge variant="secondary" className="ml-auto text-xs">{conversations.length}</Badge>
+            <button
+              onClick={loadConversations}
+              title="Refresh conversation list"
+              className="p-1 rounded text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 transition-colors"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+            </button>
             <button
               onClick={handleRunAnalysis}
               disabled={runningAnalysis}
@@ -821,7 +894,7 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                 return (
                   <button
                     key={sid}
-                    onClick={() => setSelected(conv)}
+                    onClick={() => { setSelected(conv); setShowNotes(false); setNoteText(''); }}
                     className={cn(
                       'w-full p-3 flex items-start gap-2.5 text-left hover:bg-neutral-50 transition-colors',
                       selected?.sender_id === sid && 'bg-violet-50 border-r-2 border-violet-500'
@@ -903,6 +976,15 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                 <Button
                   variant="ghost"
                   size="sm"
+                  className={cn('h-7 text-xs', showNotes ? 'bg-amber-50 text-amber-700' : '')}
+                  onClick={() => setShowNotes(v => !v)}
+                >
+                  <MessageSquare className="w-3 h-3 mr-1" />
+                  Notes{selected.notes && selected.notes.length > 0 ? ` (${selected.notes.length})` : ''}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="h-7 text-xs"
                   onClick={() => setShowIntel(v => !v)}
                 >
@@ -949,6 +1031,55 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                 <div ref={messagesEndRef} />
               </div>
             </ScrollArea>
+
+            {/* Notes panel */}
+            <AnimatePresence>
+              {showNotes && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="border-t border-amber-100 bg-amber-50 overflow-hidden"
+                >
+                  <div className="p-3 space-y-2">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-amber-700">
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      Internal Notes
+                    </div>
+                    {(selected.notes || []).length > 0 ? (
+                      <div className="space-y-1.5 max-h-28 overflow-y-auto">
+                        {(selected.notes || []).map(note => (
+                          <div key={note.id} className="bg-white rounded-lg px-3 py-2 text-xs border border-amber-100">
+                            <p className="text-neutral-700">{note.text}</p>
+                            <p className="text-neutral-400 mt-0.5">{formatTime(note.created_at)}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-amber-600 italic">No notes yet</p>
+                    )}
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Add a note…"
+                        value={noteText}
+                        onChange={e => setNoteText(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') handleAddNote(); }}
+                        className="h-7 text-xs bg-white border-amber-200 flex-1"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={handleAddNote}
+                        disabled={!noteText.trim() || savingNote}
+                        className="h-7 text-xs px-3 bg-amber-500 hover:bg-amber-600"
+                      >
+                        {savingNote ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Reply box */}
             <div className="p-3 border-t border-neutral-100">

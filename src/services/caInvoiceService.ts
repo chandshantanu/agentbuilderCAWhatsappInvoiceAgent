@@ -79,6 +79,7 @@ export interface CaInvoice {
   confidence_score: number;
   extraction_notes?: string;
   media_file_ids?: string[];
+  wa_message_id?: string;
   wa_confirmed?: boolean;
   wa_confirmed_at?: string;
   created_at: string;
@@ -134,6 +135,44 @@ export interface DashboardStats {
   total_gst: number;
 }
 
+export interface DashboardOverview {
+  kpis: {
+    total_invoices: number;
+    pending_review: number;
+    total_amount: number;
+    active_clients: number;
+  };
+  status_breakdown: Array<{ status: string; count: number; label: string }>;
+  invoice_trend: Array<{ date: string; count: number }>;
+  gst_summary: {
+    cgst_total: number;
+    sgst_total: number;
+    igst_total: number;
+    total_gst: number;
+  };
+  action_items: Array<{
+    type: string;
+    count: number;
+    label: string;
+    severity: 'error' | 'warning' | 'info';
+    tab: string;
+  }>;
+  recent_invoices: Array<{
+    id: string;
+    invoice_number: string;
+    invoice_date: string;
+    seller_name: string;
+    grand_total: number;
+    status: string;
+  }>;
+  system_health: {
+    whatsapp_connected: boolean;
+    queue_stats: Record<string, number>;
+    blocked_phones_count: number;
+    last_message_at: string | null;
+  };
+}
+
 export interface DlqItem {
   id: string;
   operation: string;
@@ -150,6 +189,11 @@ export interface DlqItem {
 
 async function getDashboardStats(): Promise<DashboardStats> {
   const resp = await apiClient.get('/api/dashboard/stats');
+  return resp.data?.data || resp.data;
+}
+
+async function getDashboardOverview(): Promise<DashboardOverview> {
+  const resp = await apiClient.get('/api/dashboard/overview');
   return resp.data?.data || resp.data;
 }
 
@@ -321,6 +365,7 @@ async function dismissDlqItem(itemId: string): Promise<void> {
 
 export const caInvoiceService = {
   getDashboardStats,
+  getDashboardOverview,
   listClients,
   getClient,
   createClient,

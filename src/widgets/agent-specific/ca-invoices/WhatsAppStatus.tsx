@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { apiClient } from '@/lib/apiClient';
 import {
@@ -280,62 +280,6 @@ export default function WhatsAppStatus({ config }: { config: Record<string, unkn
         </Card>
       )}
 
-      {/* How It Works */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">How It Works</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ol className="space-y-3 text-sm text-neutral-500 list-decimal list-inside">
-            <li>
-              <strong className="text-neutral-900">Send Invoice</strong> — Your
-              clients send invoice photos or PDFs to your WhatsApp Business number.
-            </li>
-            <li>
-              <strong className="text-neutral-900">Auto-Extract</strong> — AI reads
-              the invoice and extracts all GST details: GSTIN, HSN/SAC codes,
-              CGST/SGST/IGST amounts, additional charges, and discounts.
-            </li>
-            <li>
-              <strong className="text-neutral-900">Confirm via WhatsApp</strong> —
-              A summary is sent back for confirmation. Users can correct any field
-              by replying with corrections.
-            </li>
-            <li>
-              <strong className="text-neutral-900">Review &amp; Export</strong> —
-              Review confirmed invoices in the Invoices tab. Export as Tally Prime
-              XML or CSV.
-            </li>
-          </ol>
-        </CardContent>
-      </Card>
-
-      {/* Supported Formats */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Supported Formats</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-            <div className="border rounded-lg p-3 text-center">
-              <div className="font-medium">JPEG / PNG</div>
-              <div className="text-neutral-500 text-xs">Invoice photos</div>
-            </div>
-            <div className="border rounded-lg p-3 text-center">
-              <div className="font-medium">PDF</div>
-              <div className="text-neutral-500 text-xs">Multi-page invoices</div>
-            </div>
-            <div className="border rounded-lg p-3 text-center">
-              <div className="font-medium">B2B / B2C</div>
-              <div className="text-neutral-500 text-xs">All invoice types</div>
-            </div>
-            <div className="border rounded-lg p-3 text-center">
-              <div className="font-medium">GST Compliant</div>
-              <div className="text-neutral-500 text-xs">GSTIN checksum validation</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

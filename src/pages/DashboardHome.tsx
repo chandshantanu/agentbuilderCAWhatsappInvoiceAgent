@@ -6,7 +6,7 @@
  * Tab switches use framer-motion AnimatePresence for smooth transitions.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useConfig } from '@/config/ConfigProvider';
 import LayoutSelector from '@/layouts/LayoutSelector';
@@ -16,6 +16,18 @@ export default function DashboardHome() {
   const { dashboardConfig } = useConfig();
   const tabs = dashboardConfig?.tabs || [];
   const [activeTab, setActiveTab] = useState(tabs[0]?.id || '');
+
+  // Listen for tab navigation events dispatched by widgets (e.g. DashboardOverview action items)
+  useEffect(() => {
+    function handleNavigate(e: Event) {
+      const tabId = (e as CustomEvent<{ tabId: string }>).detail?.tabId;
+      if (tabId && tabs.some((t) => t.id === tabId)) {
+        setActiveTab(tabId);
+      }
+    }
+    window.addEventListener('dashboard:navigate-tab', handleNavigate);
+    return () => window.removeEventListener('dashboard:navigate-tab', handleNavigate);
+  }, [tabs]);
 
   const currentTab = tabs.find((t) => t.id === activeTab) || tabs[0];
 
