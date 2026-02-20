@@ -1,26 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  MessageCircle,
-  Send,
-  Image,
-  Smile,
-  MoreHorizontal,
-  Check,
-  CheckCheck,
-  Clock,
-  Bot,
-  User,
-  Instagram,
-  Search,
-  Loader2,
-  X,
-  Pause,
-  Play,
-  Tag,
-  Flame,
-  Brain,
-  ChevronDown,
+  MessageCircle, Send, Bot, User, Instagram, Search, Loader2, X,
+  Pause, Play, Brain, ChevronDown, ChevronRight, Flame, Target,
+  TrendingUp, AlertCircle, Clock, Zap, Star, ArrowRight,
+  Calendar, MessageSquare, CheckCircle, XCircle, Lightbulb,
+  BarChart2, Heart, DollarSign, Eye, RefreshCw, Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,14 +13,10 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { apiClient } from '@/lib/apiClient';
+
+// ── Types ─────────────────────────────────────────────────────
 
 interface MessageMetadata {
   response_mode?: string;
@@ -47,451 +28,943 @@ interface MessageMetadata {
   kb_articles_used?: string[];
   tags?: string[];
   trigger?: string;
+  internal_assessment?: string;
+  selling_strategy?: string;
+  suggested_question?: string;
+  emotional_state?: string;
+  lead_priority?: string;
 }
 
 interface InstagramMessage {
   id: string;
-  sender: 'user' | 'agent';
+  role: 'user' | 'assistant';
   text: string;
   timestamp: string;
-  status?: 'sending' | 'sent' | 'delivered' | 'read';
-  mediaUrl?: string;
+  source?: string;
   metadata?: MessageMetadata;
 }
 
 interface InstagramConversation {
   id: string;
   sender_id?: string;
-  user: {
-    id: string;
-    username: string;
-    fullName?: string;
-    avatarUrl?: string;
-    isVerified?: boolean;
-    followersCount?: number;
-  };
-  lastMessage: string;
-  lastMessageTime: string;
-  unreadCount: number;
-  status: 'active' | 'resolved' | 'pending';
+  username?: string;
+  full_name?: string;
+  lastMessage?: string;
+  updated_at?: string;
   messages: InstagramMessage[];
   tags?: string[];
-  sentiment?: 'positive' | 'neutral' | 'negative';
+  sentiment?: string;
   lead_score?: number;
   deal_stage?: string;
   ai_paused?: boolean;
+  conversation_stage?: string;
   notes?: Array<{ id: string; text: string; created_at: string }>;
+}
+
+interface Qualification {
+  completeness: number;
+  business_type: string;
+  niche: string;
+  instagram_followers: string;
+  daily_dm_volume: string;
+  current_pain: string;
+  purchase_timeline: string;
+  budget_signals: string;
+  buying_readiness: number;
+  communication_style: string;
+  price_sensitivity: string;
+  key_motivator: string;
+  objections: string[];
+  interests: string[];
+  personal_details: string;
+}
+
+interface NextAction {
+  next_question_topic: string;
+  latest_strategy: string;
+  latest_assessment: string;
+  suggested_question: string;
+  emotional_state: string;
+  lead_priority: string;
+}
+
+interface FollowUpEntry {
+  scheduled_at: string;
+  follow_up_number: number;
+  stage: string;
+  source: string;
+}
+
+interface ScorePoint {
+  timestamp: string;
+  score: number;
+  stage: string;
+}
+
+interface StrategistEntry {
+  timestamp: string;
+  text_preview: string;
+  internal_assessment: string;
+  selling_strategy: string;
+  suggested_question: string;
+  emotional_state: string;
+  lead_priority: string;
+  stage: string;
+  intent: string;
+}
+
+interface Intelligence {
+  sender_id: string;
+  username: string;
+  lead_score: number;
+  conversation_stage: string;
+  qualification: Qualification;
+  next_action: NextAction;
+  follow_up_schedule: FollowUpEntry[];
+  score_trajectory: ScorePoint[];
+  stage_progression: Array<{ stage: string; timestamp: string }>;
+  strategist_log: StrategistEntry[];
+  opted_out: boolean;
+  disengaged: boolean;
+  ai_paused: boolean;
+  tags: string[];
+  last_sender: string;
+  last_agent_message_at: string;
+}
+
+// ── Helpers ────────────────────────────────────────────────────
+
+const formatTime = (dateStr: string) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  if (minutes < 1) return 'now';
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days < 7) return `${days}d ago`;
+  return date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+};
+
+const scoreColor = (score: number) =>
+  score >= 70 ? 'text-emerald-600' : score >= 40 ? 'text-amber-600' : 'text-neutral-500';
+
+const scoreBg = (score: number) =>
+  score >= 70 ? 'bg-emerald-50 border-emerald-200' : score >= 40 ? 'bg-amber-50 border-amber-200' : 'bg-neutral-50 border-neutral-200';
+
+const priorityColor = (p?: string) => {
+  switch (p) {
+    case 'high': return 'bg-red-100 text-red-700';
+    case 'medium': return 'bg-amber-100 text-amber-700';
+    default: return 'bg-neutral-100 text-neutral-600';
+  }
+};
+
+const emotionIcon = (e?: string) => {
+  switch (e) {
+    case 'excited': return '🔥';
+    case 'hesitant': return '🤔';
+    case 'frustrated': return '😤';
+    case 'curious': return '🧐';
+    case 'impatient': return '⚡';
+    case 'skeptical': return '🤨';
+    default: return '😐';
+  }
+};
+
+const stageColor = (stage?: string) => {
+  const map: Record<string, string> = {
+    greeting: 'bg-neutral-100 text-neutral-600',
+    discovery: 'bg-blue-100 text-blue-700',
+    recommendation: 'bg-purple-100 text-purple-700',
+    objection_handling: 'bg-orange-100 text-orange-700',
+    closing: 'bg-green-100 text-green-700',
+    follow_up: 'bg-sky-100 text-sky-700',
+    nurturing: 'bg-pink-100 text-pink-700',
+    win_back: 'bg-violet-100 text-violet-700',
+    churned: 'bg-red-100 text-red-700',
+  };
+  return map[stage || ''] || 'bg-neutral-100 text-neutral-600';
+};
+
+// ── Intelligence Sidebar ───────────────────────────────────────
+
+function IntelligenceSidebar({
+  conversation,
+  intelligence,
+  loadingIntel,
+}: {
+  conversation: InstagramConversation;
+  intelligence: Intelligence | null;
+  loadingIntel: boolean;
+}) {
+  const [activeSection, setActiveSection] = useState<string>('plan');
+
+  if (loadingIntel) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="w-5 h-5 animate-spin text-neutral-400" />
+      </div>
+    );
+  }
+
+  const q = intelligence?.qualification;
+  const next = intelligence?.next_action;
+  const stage = intelligence?.conversation_stage || conversation.conversation_stage;
+  const score = intelligence?.lead_score ?? conversation.lead_score ?? 0;
+
+  const sections = [
+    { id: 'plan', label: "Agent's Plan", icon: Brain },
+    { id: 'profile', label: 'Lead Profile', icon: User },
+    { id: 'followups', label: 'Follow-ups', icon: Calendar },
+    { id: 'reasoning', label: 'Reasoning Log', icon: BarChart2 },
+  ];
+
+  return (
+    <div className="flex flex-col h-full bg-neutral-50">
+      {/* Score header */}
+      <div className={cn('p-4 border-b', scoreBg(score))}>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-medium text-neutral-500 uppercase tracking-wide">Lead Intelligence</span>
+          <Badge className={cn('text-xs', stageColor(stage))}>
+            {stage?.replace('_', ' ') || 'greeting'}
+          </Badge>
+        </div>
+        <div className="flex items-end gap-3">
+          <div>
+            <div className={cn('text-3xl font-bold', scoreColor(score))}>{score}</div>
+            <div className="text-xs text-neutral-500">Lead Score</div>
+          </div>
+          {score > 0 && (
+            <div className="flex-1 mb-1">
+              <div className="h-2 bg-white rounded-full overflow-hidden border border-neutral-200">
+                <div
+                  className={cn('h-full rounded-full transition-all duration-700',
+                    score >= 70 ? 'bg-emerald-500' : score >= 40 ? 'bg-amber-500' : 'bg-neutral-300'
+                  )}
+                  style={{ width: `${score}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-xs text-neutral-400 mt-0.5">
+                <span>Cold</span><span>Warm</span><span>Hot</span>
+              </div>
+            </div>
+          )}
+        </div>
+        {q && q.completeness > 0 && (
+          <div className="mt-2 text-xs text-neutral-500">
+            Qualification: <span className="font-medium text-neutral-700">{q.completeness}% complete</span>
+          </div>
+        )}
+        {intelligence?.opted_out && (
+          <Badge className="mt-2 bg-red-100 text-red-700 text-xs">Opted Out</Badge>
+        )}
+        {intelligence?.disengaged && !intelligence.opted_out && (
+          <Badge className="mt-2 bg-orange-100 text-orange-700 text-xs">Disengaged</Badge>
+        )}
+        {intelligence?.last_sender === 'assistant' && intelligence?.last_agent_message_at && (
+          <div className="mt-2 flex items-center gap-1 text-xs text-amber-600">
+            <Clock className="w-3 h-3" />
+            Agent waiting — {formatTime(intelligence.last_agent_message_at)}
+          </div>
+        )}
+      </div>
+
+      {/* Section tabs */}
+      <div className="flex border-b bg-white overflow-x-auto">
+        {sections.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            onClick={() => setActiveSection(id)}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-2 text-xs font-medium whitespace-nowrap transition-colors border-b-2',
+              activeSection === id
+                ? 'border-violet-500 text-violet-700 bg-violet-50'
+                : 'border-transparent text-neutral-500 hover:text-neutral-700'
+            )}
+          >
+            <Icon className="w-3 h-3" />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <ScrollArea className="flex-1">
+        <div className="p-4 space-y-4">
+
+          {/* ── Agent's Plan ── */}
+          {activeSection === 'plan' && (
+            <div className="space-y-3">
+              {next?.latest_assessment && (
+                <div className="bg-white rounded-xl border border-violet-100 p-3">
+                  <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-violet-700">
+                    <Eye className="w-3.5 h-3.5" />
+                    Internal Assessment
+                  </div>
+                  <p className="text-xs text-neutral-700 leading-relaxed italic">
+                    "{next.latest_assessment}"
+                  </p>
+                  {next.lead_priority && (
+                    <Badge className={cn('mt-2 text-xs', priorityColor(next.lead_priority))}>
+                      {next.lead_priority} priority
+                    </Badge>
+                  )}
+                </div>
+              )}
+
+              {next?.latest_strategy && (
+                <div className="bg-white rounded-xl border border-blue-100 p-3">
+                  <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-blue-700">
+                    <Target className="w-3.5 h-3.5" />
+                    Current Strategy
+                  </div>
+                  <p className="text-xs text-neutral-700 leading-relaxed">{next.latest_strategy}</p>
+                </div>
+              )}
+
+              {next?.suggested_question && (
+                <div className="bg-amber-50 rounded-xl border border-amber-200 p-3">
+                  <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-amber-700">
+                    <Lightbulb className="w-3.5 h-3.5" />
+                    Next Question to Ask
+                  </div>
+                  <p className="text-xs text-amber-900 leading-relaxed font-medium">
+                    "{next.suggested_question}"
+                  </p>
+                </div>
+              )}
+
+              {next?.emotional_state && next.emotional_state !== 'neutral' && (
+                <div className="bg-white rounded-xl border border-neutral-200 p-3">
+                  <div className="text-xs font-medium text-neutral-600 mb-1">Customer Mood</div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{emotionIcon(next.emotional_state)}</span>
+                    <span className="text-sm font-medium text-neutral-800 capitalize">
+                      {next.emotional_state}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {!next?.latest_assessment && !next?.latest_strategy && (
+                <div className="text-center py-8 text-neutral-400">
+                  <Brain className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-xs">Agent reasoning will appear here after the next conversation.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Lead Profile ── */}
+          {activeSection === 'profile' && (
+            <div className="space-y-3">
+              {q?.business_type && (
+                <div className="bg-white rounded-xl border border-neutral-200 p-3 space-y-2">
+                  <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wide">Business</div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    {q.business_type && <Row label="Type" value={q.business_type} />}
+                    {q.niche && <Row label="Niche" value={q.niche} />}
+                    {q.instagram_followers && <Row label="Followers" value={q.instagram_followers} />}
+                    {q.daily_dm_volume && <Row label="Daily DMs" value={q.daily_dm_volume} />}
+                  </div>
+                </div>
+              )}
+
+              {(q?.current_pain || q?.purchase_timeline) && (
+                <div className="bg-white rounded-xl border border-neutral-200 p-3 space-y-2">
+                  <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wide">Buying Signals</div>
+                  {q.current_pain && (
+                    <div>
+                      <div className="text-xs text-neutral-500 mb-0.5">Pain Point</div>
+                      <div className="text-xs text-neutral-800 font-medium">{q.current_pain}</div>
+                    </div>
+                  )}
+                  {q.purchase_timeline && (
+                    <div>
+                      <div className="text-xs text-neutral-500 mb-0.5">Timeline</div>
+                      <div className="text-xs text-neutral-800 font-medium">{q.purchase_timeline}</div>
+                    </div>
+                  )}
+                  {q.budget_signals && (
+                    <div>
+                      <div className="text-xs text-neutral-500 mb-0.5">Budget</div>
+                      <div className="text-xs text-neutral-800 font-medium">{q.budget_signals}</div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {q?.buying_readiness != null && q.buying_readiness > 0 && (
+                <div className="bg-white rounded-xl border border-neutral-200 p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wide">Buying Readiness</div>
+                    <span className={cn('text-sm font-bold',
+                      q.buying_readiness >= 7 ? 'text-emerald-600' :
+                      q.buying_readiness >= 4 ? 'text-amber-600' : 'text-neutral-500'
+                    )}>
+                      {q.buying_readiness}/10
+                    </span>
+                  </div>
+                  <div className="flex gap-1">
+                    {Array.from({ length: 10 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className={cn('flex-1 h-1.5 rounded-full',
+                          i < q.buying_readiness
+                            ? q.buying_readiness >= 7 ? 'bg-emerald-500' : q.buying_readiness >= 4 ? 'bg-amber-500' : 'bg-neutral-300'
+                            : 'bg-neutral-100'
+                        )}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {(q?.communication_style || q?.price_sensitivity || q?.key_motivator) && (
+                <div className="bg-white rounded-xl border border-neutral-200 p-3 space-y-2">
+                  <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wide">Psychology</div>
+                  <div className="grid grid-cols-1 gap-1.5 text-xs">
+                    {q.communication_style && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-neutral-500">Style</span>
+                        <Badge variant="outline" className="text-xs capitalize">{q.communication_style}</Badge>
+                      </div>
+                    )}
+                    {q.price_sensitivity && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-neutral-500">Price Sensitivity</span>
+                        <Badge variant="outline" className={cn('text-xs capitalize',
+                          q.price_sensitivity === 'high' ? 'border-red-300 text-red-600' :
+                          q.price_sensitivity === 'low' ? 'border-green-300 text-green-600' : ''
+                        )}>{q.price_sensitivity}</Badge>
+                      </div>
+                    )}
+                    {q.key_motivator && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-neutral-500">Motivated By</span>
+                        <Badge variant="outline" className="text-xs capitalize">{q.key_motivator}</Badge>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {q?.objections && q.objections.length > 0 && (
+                <div className="bg-white rounded-xl border border-red-100 p-3">
+                  <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-red-700">
+                    <XCircle className="w-3.5 h-3.5" />
+                    Objections Raised
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {q.objections.map((obj, i) => (
+                      <Badge key={i} className="bg-red-50 text-red-700 border-red-200 text-xs">{obj}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {q?.interests && q.interests.length > 0 && (
+                <div className="bg-white rounded-xl border border-emerald-100 p-3">
+                  <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-emerald-700">
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    Interests & Hooks
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {q.interests.map((int, i) => (
+                      <Badge key={i} className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs">{int}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {q?.personal_details && (
+                <div className="bg-neutral-50 rounded-xl border border-neutral-200 p-3">
+                  <div className="text-xs font-medium text-neutral-600 mb-1">Personal Context</div>
+                  <p className="text-xs text-neutral-700">{q.personal_details}</p>
+                </div>
+              )}
+
+              {!q?.business_type && !q?.current_pain && (
+                <div className="text-center py-8 text-neutral-400">
+                  <User className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-xs">Qualification data collected as the conversation progresses.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Follow-ups ── */}
+          {activeSection === 'followups' && (
+            <div className="space-y-3">
+              {/* Stage timeline */}
+              {intelligence?.stage_progression && intelligence.stage_progression.length > 0 && (
+                <div className="bg-white rounded-xl border border-neutral-200 p-3">
+                  <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wide mb-3">Stage Journey</div>
+                  <div className="relative">
+                    {intelligence.stage_progression.map((s, i) => (
+                      <div key={i} className="flex items-start gap-2 mb-2 last:mb-0">
+                        <div className={cn('w-2 h-2 rounded-full mt-0.5 flex-shrink-0', stageColor(s.stage).replace('text-', 'bg-').split(' ')[0])} />
+                        <div className="flex-1">
+                          <span className={cn('text-xs font-medium capitalize px-1.5 py-0.5 rounded', stageColor(s.stage))}>
+                            {s.stage.replace('_', ' ')}
+                          </span>
+                        </div>
+                        <span className="text-xs text-neutral-400">{formatTime(s.timestamp)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Active follow-ups */}
+              <div className="bg-white rounded-xl border border-neutral-200 p-3">
+                <div className="flex items-center gap-1.5 mb-3 text-xs font-semibold text-neutral-700 uppercase tracking-wide">
+                  <Calendar className="w-3.5 h-3.5" />
+                  Scheduled Follow-ups
+                </div>
+                {intelligence?.follow_up_schedule && intelligence.follow_up_schedule.length > 0 ? (
+                  <div className="space-y-2">
+                    {intelligence.follow_up_schedule.map((fu, i) => (
+                      <div key={i} className="flex items-center justify-between text-xs bg-violet-50 rounded-lg px-3 py-2">
+                        <div>
+                          <div className="font-medium text-violet-800">Follow-up #{fu.follow_up_number}</div>
+                          <div className="text-violet-600 capitalize">{fu.stage.replace('_', ' ')} stage</div>
+                          {fu.source === 'watchdog' && (
+                            <Badge className="mt-1 bg-amber-100 text-amber-700 text-xs">Proactive nudge</Badge>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <div className="text-violet-700 font-medium">{formatTime(fu.scheduled_at)}</div>
+                          <div className="text-violet-500">scheduled</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-neutral-400">
+                    <Clock className="w-6 h-6 mx-auto mb-1 opacity-30" />
+                    <p className="text-xs">No follow-ups queued</p>
+                    <p className="text-xs mt-0.5 text-neutral-300">Watchdog will queue a nudge if the lead goes cold</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Score trajectory mini chart */}
+              {intelligence?.score_trajectory && intelligence.score_trajectory.length > 1 && (
+                <div className="bg-white rounded-xl border border-neutral-200 p-3">
+                  <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wide mb-3">Score Trajectory</div>
+                  <div className="flex items-end gap-1 h-12">
+                    {intelligence.score_trajectory.slice(-12).map((pt, i) => (
+                      <div
+                        key={i}
+                        className="flex-1 rounded-sm transition-all"
+                        style={{
+                          height: `${Math.max(8, pt.score)}%`,
+                          backgroundColor: pt.score >= 70 ? '#10b981' : pt.score >= 40 ? '#f59e0b' : '#d1d5db',
+                        }}
+                        title={`${pt.score} — ${pt.stage}`}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex justify-between text-xs text-neutral-400 mt-1">
+                    <span>Start</span>
+                    <span>Latest: {intelligence.score_trajectory[intelligence.score_trajectory.length - 1]?.score ?? 0}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Reasoning Log ── */}
+          {activeSection === 'reasoning' && (
+            <div className="space-y-2">
+              {intelligence?.strategist_log && intelligence.strategist_log.length > 0 ? (
+                [...intelligence.strategist_log].reverse().map((entry, i) => (
+                  <div key={i} className="bg-white rounded-xl border border-neutral-200 p-3 text-xs space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-lg">{emotionIcon(entry.emotional_state)}</span>
+                        <Badge className={cn('text-xs', stageColor(entry.stage))}>
+                          {entry.stage?.replace('_', ' ')}
+                        </Badge>
+                        <Badge className={cn('text-xs', priorityColor(entry.lead_priority))}>
+                          {entry.lead_priority}
+                        </Badge>
+                      </div>
+                      <span className="text-neutral-400">{formatTime(entry.timestamp)}</span>
+                    </div>
+
+                    {entry.text_preview && (
+                      <div className="bg-neutral-50 rounded-lg px-2 py-1.5 text-neutral-600 italic">
+                        "{entry.text_preview}…"
+                      </div>
+                    )}
+
+                    {entry.internal_assessment && (
+                      <div>
+                        <span className="font-medium text-violet-700">Assessment: </span>
+                        <span className="text-neutral-700">{entry.internal_assessment}</span>
+                      </div>
+                    )}
+
+                    {entry.selling_strategy && (
+                      <div>
+                        <span className="font-medium text-blue-700">Strategy: </span>
+                        <span className="text-neutral-700">{entry.selling_strategy}</span>
+                      </div>
+                    )}
+
+                    {entry.suggested_question && (
+                      <div className="bg-amber-50 rounded px-2 py-1 border border-amber-100">
+                        <span className="font-medium text-amber-700">Asked: </span>
+                        <span className="text-amber-900">{entry.suggested_question}</span>
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-neutral-400">
+                  <BarChart2 className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-xs">Reasoning log appears as the agent works through conversations.</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-neutral-400">{label}</div>
+      <div className="font-medium text-neutral-800 truncate">{value}</div>
+    </div>
+  );
+}
+
+// ── Main Component ─────────────────────────────────────────────
+
+interface AnalysisStats {
+  total_scanned: number;
+  backfilled: number;
+  already_complete: number;
+  nudges_queued: number;
+  nudges_skipped_already_queued: number;
+  nudges_skipped_too_recent: number;
+  nudges_skipped_low_score: number;
+  backfill_details: Array<{ sender_id: string; username: string; fields: string[] }>;
+  nudge_details: Array<{
+    sender_id: string;
+    username: string;
+    stage: string;
+    lead_score: number;
+    silence_hours: number;
+    threshold_hours: number;
+  }>;
+}
+
+interface AnalysisResult {
+  success: boolean;
+  ran_at: string;
+  stats: AnalysisStats;
 }
 
 export default function ConversationsPanel({ config }: { config: Record<string, unknown> }) {
   const [conversations, setConversations] = useState<InstagramConversation[]>([]);
-  const [selectedConversation, setSelectedConversation] = useState<InstagramConversation | null>(null);
+  const [selected, setSelected] = useState<InstagramConversation | null>(null);
+  const [intelligence, setIntelligence] = useState<Intelligence | null>(null);
+  const [loadingIntel, setLoadingIntel] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [sending, setSending] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filter, setFilter] = useState<'all' | 'unread' | 'pending'>('all');
   const [loading, setLoading] = useState(true);
-  const [expandedMeta, setExpandedMeta] = useState<Record<string, boolean>>({});
-  const toggleMetadata = (id: string) => setExpandedMeta(prev => ({ ...prev, [id]: !prev[id] }));
+  const [showIntel, setShowIntel] = useState(true);
+  const [runningAnalysis, setRunningAnalysis] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const endpoint = (config?.endpoint as string) || '/api/conversations';
 
+  // Load conversations
   useEffect(() => {
     setLoading(true);
     apiClient.get(endpoint)
       .then((resp: any) => {
         const raw = resp.data?.data || resp.data || [];
-        // Map flat API response to the nested shape the component expects
-        const mapped = raw.map((conv: any) => ({
-          ...conv,
-          id: conv.id || conv.sender_id || '',
-          sender_id: conv.sender_id || conv.id || '',
-          user: (conv.user && conv.user.username) ? conv.user : {
-            id: conv.user?.id || conv.sender_id || conv.id || '',
-            username: conv.user?.username || conv.username || conv.sender_id || 'unknown',
-            fullName: conv.user?.fullName || conv.full_name || '',
-            avatarUrl: conv.user?.avatarUrl || conv.avatar_url || '',
-            isVerified: conv.user?.isVerified || false,
-            followersCount: conv.user?.followersCount || 0,
-          },
-          lastMessage: conv.lastMessage || '',
-          lastMessageTime: conv.lastMessageTime || conv.updated_at || '',
-          unreadCount: conv.unreadCount || 0,
-          status: conv.status || 'active',
-          messages: (conv.messages || []).map((msg: any) => ({
-            id: msg.id || '',
-            sender: msg.role === 'assistant' ? 'agent' : 'user',
-            text: msg.text || '',
-            timestamp: msg.timestamp || '',
-            status: msg.role === 'assistant' ? 'sent' : undefined,
-            mediaUrl: msg.mediaUrl || undefined,
-            metadata: msg.metadata || undefined,
-          })),
-        }));
-        setConversations(mapped);
+        setConversations(raw);
       })
-      .catch((err: any) => console.error('Failed to load conversations:', err))
+      .catch(console.error)
       .finally(() => setLoading(false));
   }, [endpoint]);
 
-  const filteredConversations = conversations.filter(conv => {
-    const username = conv.user?.username || '';
-    const lastMsg = conv.lastMessage || '';
-    const matchesSearch = username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lastMsg.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = filter === 'all' ||
-      (filter === 'unread' && conv.unreadCount > 0) ||
-      (filter === 'pending' && conv.status === 'pending');
-    return matchesSearch && matchesFilter;
-  });
+  // Load intelligence when conversation selected
+  useEffect(() => {
+    if (!selected) { setIntelligence(null); return; }
+    const sid = selected.sender_id || selected.id;
+    if (!sid) return;
+    setLoadingIntel(true);
+    apiClient.get(`/api/conversations/${sid}/intelligence`)
+      .then((resp: any) => setIntelligence(resp.data))
+      .catch(() => setIntelligence(null))
+      .finally(() => setLoadingIntel(false));
+  }, [selected]);
 
-  const handleSendReply = useCallback(async () => {
-    if (!selectedConversation || !replyText.trim()) return;
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [selected?.messages]);
+
+  const handleSend = useCallback(async () => {
+    if (!selected || !replyText.trim()) return;
     setSending(true);
     try {
-      await apiClient.post(`/api/conversations/${selectedConversation.id}/reply`, {
-        message: replyText,
-      });
+      const sid = selected.sender_id || selected.id;
+      await apiClient.post(`/api/conversations/${sid}/reply`, { message: replyText });
       setReplyText('');
     } catch (err) {
-      console.error('Failed to send reply:', err);
+      console.error('Send failed:', err);
     } finally {
       setSending(false);
     }
-  }, [selectedConversation, replyText]);
+  }, [selected, replyText]);
 
-  const formatTime = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    if (minutes < 1) return 'now';
-    if (minutes < 60) return `${minutes}m`;
-    if (hours < 24) return `${hours}h`;
-    if (days < 7) return `${days}d`;
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
-
-  const getSentimentColor = (sentiment?: string) => {
-    switch (sentiment) {
-      case 'positive': return 'bg-emerald-100 text-emerald-700';
-      case 'negative': return 'bg-red-100 text-red-700';
-      default: return 'bg-neutral-100 text-neutral-700';
+  const handleAiToggle = useCallback(async () => {
+    if (!selected) return;
+    const sid = selected.sender_id || selected.id;
+    const newState = !selected.ai_paused;
+    try {
+      await apiClient.put(`/api/conversations/${sid}/handoff`, { ai_paused: newState });
+      setSelected({ ...selected, ai_paused: newState });
+    } catch (err) {
+      console.error('Handoff failed:', err);
     }
-  };
+  }, [selected]);
 
-  const getStatusIcon = (status?: string) => {
-    switch (status) {
-      case 'read': return <CheckCheck className="w-3 h-3 text-blue-500" />;
-      case 'delivered': return <CheckCheck className="w-3 h-3 text-neutral-400" />;
-      case 'sent': return <Check className="w-3 h-3 text-neutral-400" />;
-      case 'sending': return <Clock className="w-3 h-3 text-neutral-400" />;
-      default: return null;
+  const handleRunAnalysis = useCallback(async () => {
+    setRunningAnalysis(true);
+    try {
+      const resp = await apiClient.post('/api/admin/run-analysis');
+      const result: AnalysisResult = resp.data;
+      setAnalysisResult(result);
+      setShowAnalysisModal(true);
+      // Reload conversations list to reflect backfilled data
+      const convResp = await apiClient.get(endpoint);
+      setConversations(convResp.data?.data || convResp.data || []);
+    } catch (err) {
+      console.error('Analysis failed:', err);
+    } finally {
+      setRunningAnalysis(false);
     }
-  };
+  }, [endpoint]);
+
+  const filteredConvs = conversations.filter(c => {
+    const u = c.username || c.sender_id || '';
+    return u.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.lastMessage || '').toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 h-[calc(100vh-12rem)] min-h-[500px] max-h-[900px] bg-white rounded-xl border border-neutral-200 overflow-hidden">
-      {/* Conversations List */}
-      <div className="lg:col-span-1 border-r border-neutral-200 flex flex-col overflow-hidden min-h-0">
+    <div className="flex h-[calc(100vh-10rem)] min-h-[550px] max-h-[920px] bg-white rounded-xl border border-neutral-200 overflow-hidden">
+
+      {/* ── Column 1: Conversation List ── */}
+      <div className="w-72 flex-shrink-0 border-r border-neutral-200 flex flex-col">
         <div className="p-4 border-b border-neutral-100">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold flex items-center gap-2">
-              <Instagram className="w-5 h-5 text-pink-500" />
-              Conversations
-            </h3>
-            <Badge variant="secondary">{conversations.length}</Badge>
+          <div className="flex items-center gap-2 mb-3">
+            <Instagram className="w-4 h-4 text-pink-500" />
+            <span className="font-semibold text-sm">Conversations</span>
+            <Badge variant="secondary" className="ml-auto text-xs">{conversations.length}</Badge>
+            <button
+              onClick={handleRunAnalysis}
+              disabled={runningAnalysis}
+              title="Run on-demand analysis: backfill missing data + queue follow-ups for cold leads"
+              className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-gradient-to-r from-violet-500 to-pink-500 text-white hover:opacity-90 disabled:opacity-50 transition-opacity shadow-sm"
+            >
+              {runningAnalysis
+                ? <Loader2 className="w-3 h-3 animate-spin" />
+                : <Sparkles className="w-3 h-3" />}
+              {runningAnalysis ? 'Analysing…' : 'Analyse'}
+            </button>
           </div>
-
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
             <Input
-              placeholder="Search conversations..."
+              placeholder="Search..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-9"
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-9 h-8 text-sm"
             />
-          </div>
-
-          <div className="flex gap-2 mt-3">
-            {(['all', 'unread', 'pending'] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={cn(
-                  "px-3 py-1 rounded-full text-xs font-medium transition-colors",
-                  filter === f
-                    ? "bg-neutral-900 text-white"
-                    : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
-                )}
-              >
-                {f.charAt(0).toUpperCase() + f.slice(1)}
-              </button>
-            ))}
           </div>
         </div>
 
         <ScrollArea className="flex-1">
           {loading ? (
-            <div className="flex items-center justify-center h-32">
-              <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
+            <div className="flex justify-center items-center h-24">
+              <Loader2 className="w-5 h-5 animate-spin text-neutral-400" />
             </div>
-          ) : filteredConversations.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-32 text-neutral-500">
-              <MessageCircle className="w-8 h-8 mb-2" />
-              <p className="text-sm">No conversations found</p>
+          ) : filteredConvs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-24 text-neutral-400">
+              <MessageCircle className="w-6 h-6 mb-1" />
+              <p className="text-xs">No conversations</p>
             </div>
           ) : (
             <div className="divide-y divide-neutral-100">
-              {filteredConversations.map((conv) => (
-                <motion.button
-                  key={conv.id}
-                  onClick={() => setSelectedConversation(conv)}
-                  whileHover={{ backgroundColor: 'rgba(0,0,0,0.02)' }}
-                  className={cn(
-                    "w-full p-4 flex items-start gap-3 text-left transition-colors",
-                    selectedConversation?.id === conv.id && "bg-neutral-50"
-                  )}
-                >
-                  <div className="relative flex-shrink-0">
-                    <Avatar className="w-12 h-12">
-                      {conv.user?.avatarUrl && <AvatarImage src={conv.user.avatarUrl} />}
-                      <AvatarFallback className="bg-gradient-to-br from-pink-500 to-purple-600 text-white">
-                        {(conv.user?.username || '??').slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    {conv.unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-blue-500 text-white text-xs rounded-full flex items-center justify-center">
-                        {conv.unreadCount}
-                      </span>
+              {filteredConvs.map(conv => {
+                const sid = conv.sender_id || conv.id;
+                const score = conv.lead_score ?? 0;
+                return (
+                  <button
+                    key={sid}
+                    onClick={() => setSelected(conv)}
+                    className={cn(
+                      'w-full p-3 flex items-start gap-2.5 text-left hover:bg-neutral-50 transition-colors',
+                      selected?.sender_id === sid && 'bg-violet-50 border-r-2 border-violet-500'
                     )}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className={cn(
-                        "font-medium truncate",
-                        conv.unreadCount > 0 && "font-semibold"
-                      )}>
-                        @{conv.user?.username || 'unknown'}
-                        {conv.user?.isVerified && (
-                          <Check className="inline w-3 h-3 ml-1 text-blue-500" />
-                        )}
-                      </span>
-                      <span className="text-xs text-neutral-500">
-                        {formatTime(conv.lastMessageTime)}
-                      </span>
+                  >
+                    <div className="relative flex-shrink-0">
+                      <Avatar className="w-9 h-9">
+                        <AvatarFallback className="bg-gradient-to-br from-pink-500 to-purple-600 text-white text-xs">
+                          {(conv.username || '??').slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      {score >= 70 && (
+                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border border-white" />
+                      )}
+                      {score >= 40 && score < 70 && (
+                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-amber-500 rounded-full border border-white" />
+                      )}
                     </div>
-                    <p className={cn(
-                      "text-sm truncate",
-                      conv.unreadCount > 0 ? "text-neutral-900" : "text-neutral-500"
-                    )}>
-                      {conv.lastMessage}
-                    </p>
-                    {conv.tags && conv.tags.length > 0 && (
-                      <div className="flex gap-1 mt-1.5">
-                        {conv.tags.slice(0, 2).map((tag) => (
-                          <Badge key={tag} variant="outline" className="text-xs px-1.5 py-0">
-                            {tag}
-                          </Badge>
-                        ))}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-xs font-semibold text-neutral-800 truncate">@{conv.username || sid?.slice(-6)}</span>
+                        <span className="text-xs text-neutral-400 flex-shrink-0">{formatTime(conv.updated_at || '')}</span>
                       </div>
-                    )}
-                  </div>
-                </motion.button>
-              ))}
+                      <p className="text-xs text-neutral-500 truncate">{conv.lastMessage || '—'}</p>
+                      <div className="flex items-center gap-1 mt-1">
+                        {conv.conversation_stage && (
+                          <Badge className={cn('text-xs px-1.5 py-0', stageColor(conv.conversation_stage))}>
+                            {conv.conversation_stage?.replace('_', ' ')}
+                          </Badge>
+                        )}
+                        {score > 0 && (
+                          <span className={cn('text-xs font-bold', scoreColor(score))}>{score}</span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           )}
         </ScrollArea>
       </div>
 
-      {/* Conversation Detail */}
-      <div className="lg:col-span-2 flex flex-col overflow-hidden min-h-0">
-        {selectedConversation ? (
+      {/* ── Column 2: Chat ── */}
+      <div className="flex-1 flex flex-col min-w-0 border-r border-neutral-200">
+        {selected ? (
           <>
-            <div className="p-4 border-b border-neutral-100 flex items-center justify-between bg-neutral-50">
-              <div className="flex items-center gap-3">
-                <Avatar className="w-10 h-10">
-                  {selectedConversation.user?.avatarUrl && <AvatarImage src={selectedConversation.user.avatarUrl} />}
-                  <AvatarFallback className="bg-gradient-to-br from-pink-500 to-purple-600 text-white">
-                    {(selectedConversation.user?.username || '??').slice(0, 2).toUpperCase()}
+            {/* Chat header */}
+            <div className="px-4 py-3 border-b border-neutral-100 bg-neutral-50 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <Avatar className="w-8 h-8">
+                  <AvatarFallback className="bg-gradient-to-br from-pink-500 to-purple-600 text-white text-xs">
+                    {(selected.username || '??').slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-medium">@{selectedConversation.user?.username || 'unknown'}</p>
-                  <p className="text-xs text-neutral-500">
-                    {selectedConversation.user?.followersCount?.toLocaleString() || 0} followers
-                  </p>
+                  <p className="text-sm font-semibold">@{selected.username || selected.sender_id}</p>
+                  <div className="flex items-center gap-1">
+                    {selected.conversation_stage && (
+                      <Badge className={cn('text-xs px-1.5 py-0', stageColor(selected.conversation_stage))}>
+                        {selected.conversation_stage?.replace('_', ' ')}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {selectedConversation.lead_score != null && (
-                  <Badge className={
-                    selectedConversation.lead_score >= 70 ? 'bg-emerald-100 text-emerald-700' :
-                    selectedConversation.lead_score >= 30 ? 'bg-amber-100 text-amber-700' :
-                    'bg-neutral-100 text-neutral-600'
-                  }>
-                    <Flame className="w-3 h-3 mr-1" />
-                    {selectedConversation.lead_score}
-                  </Badge>
-                )}
-                <Badge className={getSentimentColor(selectedConversation.sentiment)}>
-                  {selectedConversation.sentiment || 'neutral'}
-                </Badge>
                 <Button
-                  variant={selectedConversation.ai_paused ? "default" : "outline"}
+                  variant={selected.ai_paused ? 'default' : 'outline'}
                   size="sm"
-                  className={selectedConversation.ai_paused ? "bg-orange-500 hover:bg-orange-600 text-white" : ""}
-                  onClick={async () => {
-                    const senderId = selectedConversation.sender_id || selectedConversation.id;
-                    const newState = !selectedConversation.ai_paused;
-                    try {
-                      await apiClient.put(`/api/conversations/${senderId}/handoff`, { ai_paused: newState });
-                      setSelectedConversation({ ...selectedConversation, ai_paused: newState });
-                    } catch (err) {
-                      console.error('Handoff toggle failed:', err);
-                    }
-                  }}
+                  className={cn('h-7 text-xs', selected.ai_paused ? 'bg-orange-500 hover:bg-orange-600 text-white' : '')}
+                  onClick={handleAiToggle}
                 >
-                  {selectedConversation.ai_paused ? (
-                    <><Play className="w-3 h-3 mr-1" /> Resume AI</>
-                  ) : (
-                    <><Pause className="w-3 h-3 mr-1" /> Pause AI</>
-                  )}
+                  {selected.ai_paused
+                    ? <><Play className="w-3 h-3 mr-1" />Resume AI</>
+                    : <><Pause className="w-3 h-3 mr-1" />Pause AI</>
+                  }
                 </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreHorizontal className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>Mark as resolved</DropdownMenuItem>
-                    <DropdownMenuItem>Add tag</DropdownMenuItem>
-                    <DropdownMenuItem>View profile</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
                 <Button
                   variant="ghost"
-                  size="icon"
-                  onClick={() => setSelectedConversation(null)}
-                  className="lg:hidden"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => setShowIntel(v => !v)}
                 >
-                  <X className="w-4 h-4" />
+                  <Brain className="w-3 h-3 mr-1" />
+                  {showIntel ? 'Hide' : 'Intel'}
                 </Button>
               </div>
             </div>
 
+            {/* Messages */}
             <ScrollArea className="flex-1 p-4">
-              <div className="space-y-4">
-                {selectedConversation.messages.map((msg) => (
-                  <motion.div
-                    key={msg.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={cn(
-                      "flex flex-col",
-                      msg.sender === 'agent' ? "items-end" : "items-start"
-                    )}
-                  >
+              <div className="space-y-3">
+                {(selected.messages || []).map(msg => (
+                  <div key={msg.id} className={cn('flex flex-col', msg.role === 'assistant' ? 'items-end' : 'items-start')}>
                     <div className={cn(
-                      "max-w-[70%] rounded-2xl px-4 py-2",
-                      msg.sender === 'agent'
-                        ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white"
-                        : "bg-neutral-100 text-neutral-900"
+                      'max-w-[78%] rounded-2xl px-3.5 py-2.5',
+                      msg.role === 'assistant'
+                        ? 'bg-gradient-to-br from-violet-500 to-purple-600 text-white'
+                        : 'bg-neutral-100 text-neutral-900'
                     )}>
-                      <div className={cn(
-                        "flex items-center gap-1 text-xs mb-1",
-                        msg.sender === 'agent' ? "text-white/70" : "text-neutral-500"
-                      )}>
-                        {msg.sender === 'agent' ? <Bot className="w-3 h-3" /> : <User className="w-3 h-3" />}
-                        {msg.sender === 'agent' ? 'AI Agent' : (selectedConversation.user?.username || 'User')}
+                      <div className={cn('flex items-center gap-1 text-xs mb-1 opacity-70')}>
+                        {msg.role === 'assistant' ? <Bot className="w-3 h-3" /> : <User className="w-3 h-3" />}
+                        <span>{msg.role === 'assistant' ? 'AI Agent' : `@${selected.username || 'user'}`}</span>
                       </div>
-                      {msg.mediaUrl && (
-                        <img src={msg.mediaUrl} alt="Media" className="rounded-lg mb-2 max-w-full" />
-                      )}
-                      <p className="text-sm">{msg.text}</p>
-                      <div className={cn(
-                        "flex items-center justify-end gap-1 mt-1 text-xs",
-                        msg.sender === 'agent' ? "text-white/70" : "text-neutral-500"
-                      )}>
-                        {formatTime(msg.timestamp)}
-                        {msg.sender === 'agent' && getStatusIcon(msg.status)}
-                      </div>
+                      <p className="text-sm leading-relaxed">{msg.text}</p>
+                      <div className="text-right text-xs opacity-60 mt-1">{formatTime(msg.timestamp)}</div>
                     </div>
-                    {msg.sender === 'agent' && msg.metadata && (
-                      <button
-                        onClick={() => toggleMetadata(msg.id)}
-                        className="text-xs text-neutral-400 hover:text-neutral-600 flex items-center gap-1 mt-1 mr-1"
-                      >
-                        <Brain className="w-3 h-3" />
-                        AI Reasoning
-                        <ChevronDown className={cn("w-3 h-3 transition-transform", expandedMeta[msg.id] && "rotate-180")} />
-                      </button>
-                    )}
-                    {expandedMeta[msg.id] && msg.metadata && (
-                      <div className="mt-1 p-2 rounded-lg bg-neutral-50 border border-neutral-100 text-xs space-y-1 max-w-[70%]">
-                        {msg.metadata.governor_reason && (
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-neutral-400">Route:</span>
-                            <Badge variant="outline" className="text-xs">{msg.metadata.response_mode}</Badge>
-                            <span className="text-neutral-500">{msg.metadata.governor_reason}</span>
-                          </div>
-                        )}
-                        {msg.metadata.intent && (
-                          <div><span className="text-neutral-400">Intent:</span> <span className="text-neutral-700">{msg.metadata.intent}</span></div>
-                        )}
-                        {msg.metadata.stage && (
-                          <div><span className="text-neutral-400">Stage:</span> <span className="text-neutral-700">{msg.metadata.stage}</span></div>
-                        )}
-                        {msg.metadata.lead_score != null && (
-                          <div><span className="text-neutral-400">Lead Score:</span> <span className="text-neutral-700">{msg.metadata.lead_score}</span></div>
-                        )}
-                        {msg.metadata.products_referenced && msg.metadata.products_referenced.length > 0 && (
-                          <div><span className="text-neutral-400">Products:</span> <span className="text-neutral-700">{msg.metadata.products_referenced.join(', ')}</span></div>
-                        )}
-                        {msg.metadata.kb_articles_used && msg.metadata.kb_articles_used.length > 0 && (
-                          <div><span className="text-neutral-400">KB:</span> <span className="text-neutral-700">{msg.metadata.kb_articles_used.join(', ')}</span></div>
-                        )}
+
+                    {/* Inline reasoning pill below agent messages */}
+                    {msg.role === 'assistant' && msg.metadata?.internal_assessment && (
+                      <div className="mt-1 mr-1 flex items-center gap-1.5 text-xs text-neutral-400">
+                        <Eye className="w-3 h-3" />
+                        <span className="italic">{msg.metadata.internal_assessment}</span>
                       </div>
                     )}
-                  </motion.div>
+                    {msg.role === 'assistant' && !msg.metadata?.internal_assessment && msg.metadata?.governor_reason && (
+                      <div className="mt-1 mr-1 flex items-center gap-1 text-xs text-neutral-400">
+                        <Zap className="w-3 h-3" />
+                        <span>{msg.metadata.response_mode} · {msg.metadata.governor_reason}</span>
+                      </div>
+                    )}
+                  </div>
                 ))}
+                <div ref={messagesEndRef} />
               </div>
             </ScrollArea>
 
-            <div className="p-4 border-t border-neutral-100 bg-white">
+            {/* Reply box */}
+            <div className="p-3 border-t border-neutral-100">
               <div className="flex items-end gap-2">
-                <div className="flex-1 relative">
-                  <Textarea
-                    placeholder="Type a message..."
-                    value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendReply();
-                      }
-                    }}
-                    className="min-h-[44px] max-h-[120px] resize-none pr-20"
-                    rows={1}
-                  />
-                  <div className="absolute right-2 bottom-2 flex items-center gap-1">
-                    <Button variant="ghost" size="icon" className="w-8 h-8">
-                      <Image className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="w-8 h-8">
-                      <Smile className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
+                <Textarea
+                  placeholder="Type a reply..."
+                  value={replyText}
+                  onChange={e => setReplyText(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                  className="min-h-[40px] max-h-[100px] resize-none text-sm"
+                  rows={1}
+                />
                 <Button
-                  onClick={handleSendReply}
+                  onClick={handleSend}
                   disabled={!replyText.trim() || sending}
-                  className="h-11 px-4 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700"
+                  className="h-10 px-3 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700"
                 >
                   {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </Button>
@@ -499,15 +972,157 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
             </div>
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-neutral-500">
-            <div className="w-16 h-16 rounded-full bg-neutral-100 flex items-center justify-center mb-4">
-              <MessageCircle className="w-8 h-8" />
+          <div className="flex-1 flex flex-col items-center justify-center text-neutral-400">
+            <div className="w-14 h-14 rounded-full bg-neutral-100 flex items-center justify-center mb-3">
+              <MessageCircle className="w-7 h-7" />
             </div>
-            <p className="font-medium mb-1">Select a conversation</p>
-            <p className="text-sm">Choose a conversation from the list to view messages</p>
+            <p className="font-medium text-sm">Select a conversation</p>
+            <p className="text-xs mt-1">Choose from the list to view messages and lead intelligence</p>
           </div>
         )}
       </div>
+
+      {/* ── Column 3: Intelligence Sidebar ── */}
+      <AnimatePresence>
+        {selected && showIntel && (
+          <motion.div
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 300, opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="flex-shrink-0 border-l border-neutral-200 overflow-hidden"
+            style={{ width: 300 }}
+          >
+            <IntelligenceSidebar
+              conversation={selected}
+              intelligence={intelligence}
+              loadingIntel={loadingIntel}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Analysis Result Modal ── */}
+      <AnimatePresence>
+        {showAnalysisModal && analysisResult && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            onClick={() => setShowAnalysisModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="bg-gradient-to-r from-violet-500 to-pink-500 px-6 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <Sparkles className="w-5 h-5 text-white" />
+                  <h2 className="text-white font-semibold text-base">Analysis Complete</h2>
+                </div>
+                <button onClick={() => setShowAnalysisModal(false)} className="text-white/80 hover:text-white">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-5">
+                {/* KPI grid */}
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: 'Conversations scanned', value: analysisResult.stats.total_scanned, color: 'bg-neutral-50 text-neutral-700', icon: <Search className="w-4 h-4" /> },
+                    { label: 'Records backfilled', value: analysisResult.stats.backfilled, color: 'bg-blue-50 text-blue-700', icon: <RefreshCw className="w-4 h-4" /> },
+                    { label: 'Follow-ups queued', value: analysisResult.stats.nudges_queued, color: 'bg-emerald-50 text-emerald-700', icon: <Zap className="w-4 h-4" /> },
+                    { label: 'Already up-to-date', value: analysisResult.stats.already_complete, color: 'bg-neutral-50 text-neutral-500', icon: <CheckCircle className="w-4 h-4" /> },
+                  ].map(({ label, value, color, icon }) => (
+                    <div key={label} className={`rounded-xl px-4 py-3 ${color}`}>
+                      <div className="flex items-center gap-1.5 mb-1 opacity-60">{icon}<span className="text-xs font-medium">{label}</span></div>
+                      <p className="text-2xl font-bold">{value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Skipped nudges breakdown */}
+                {(analysisResult.stats.nudges_skipped_too_recent > 0 || analysisResult.stats.nudges_skipped_low_score > 0 || analysisResult.stats.nudges_skipped_already_queued > 0) && (
+                  <div className="rounded-xl border border-neutral-100 bg-neutral-50 px-4 py-3">
+                    <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">Nudges Skipped</p>
+                    <div className="space-y-1 text-xs text-neutral-600">
+                      {analysisResult.stats.nudges_skipped_too_recent > 0 && (
+                        <div className="flex justify-between"><span>Silence threshold not met</span><span className="font-semibold">{analysisResult.stats.nudges_skipped_too_recent}</span></div>
+                      )}
+                      {analysisResult.stats.nudges_skipped_low_score > 0 && (
+                        <div className="flex justify-between"><span>Lead score too low (&lt;25)</span><span className="font-semibold">{analysisResult.stats.nudges_skipped_low_score}</span></div>
+                      )}
+                      {analysisResult.stats.nudges_skipped_already_queued > 0 && (
+                        <div className="flex justify-between"><span>Already in follow-up queue</span><span className="font-semibold">{analysisResult.stats.nudges_skipped_already_queued}</span></div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Follow-up detail list */}
+                {analysisResult.stats.nudge_details.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">
+                      Queued Follow-ups
+                    </p>
+                    <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                      {analysisResult.stats.nudge_details.map((n, i) => (
+                        <div key={i} className="flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2 text-xs">
+                          <span className="font-medium text-emerald-800">
+                            @{n.username || n.sender_id.slice(-6)}
+                          </span>
+                          <div className="flex items-center gap-2 text-emerald-600">
+                            <span className="capitalize">{n.stage}</span>
+                            <span>·</span>
+                            <span className="flex items-center gap-0.5"><Clock className="w-3 h-3" />{n.silence_hours}h silent</span>
+                            <span>·</span>
+                            <span className="flex items-center gap-0.5"><Flame className="w-3 h-3" />{n.lead_score}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Backfill detail */}
+                {analysisResult.stats.backfill_details.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">
+                      Backfilled Records
+                    </p>
+                    <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                      {analysisResult.stats.backfill_details.map((b, i) => (
+                        <div key={i} className="flex items-center justify-between rounded-lg bg-blue-50 px-3 py-2 text-xs">
+                          <span className="font-medium text-blue-800">@{b.username || b.sender_id.slice(-6)}</span>
+                          <span className="text-blue-600">{b.fields.join(', ')}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Empty state */}
+                {analysisResult.stats.nudges_queued === 0 && analysisResult.stats.backfilled === 0 && (
+                  <div className="text-center py-4 text-sm text-neutral-500">
+                    <CheckCircle className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
+                    All conversations are up-to-date. No cold leads found that need nudging yet.
+                  </div>
+                )}
+
+                <p className="text-xs text-neutral-400 text-right">
+                  Ran at {new Date(analysisResult.ran_at).toLocaleTimeString()}
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
