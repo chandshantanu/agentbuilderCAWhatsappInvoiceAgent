@@ -19,6 +19,8 @@ import {
   Play,
   Tag,
   Flame,
+  Brain,
+  ChevronDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +37,18 @@ import {
 import { cn } from '@/lib/utils';
 import { apiClient } from '@/lib/apiClient';
 
+interface MessageMetadata {
+  response_mode?: string;
+  governor_reason?: string;
+  intent?: string;
+  stage?: string;
+  lead_score?: number;
+  products_referenced?: string[];
+  kb_articles_used?: string[];
+  tags?: string[];
+  trigger?: string;
+}
+
 interface InstagramMessage {
   id: string;
   sender: 'user' | 'agent';
@@ -42,6 +56,7 @@ interface InstagramMessage {
   timestamp: string;
   status?: 'sending' | 'sent' | 'delivered' | 'read';
   mediaUrl?: string;
+  metadata?: MessageMetadata;
 }
 
 interface InstagramConversation {
@@ -76,6 +91,8 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'unread' | 'pending'>('all');
   const [loading, setLoading] = useState(true);
+  const [expandedMeta, setExpandedMeta] = useState<Record<string, boolean>>({});
+  const toggleMetadata = (id: string) => setExpandedMeta(prev => ({ ...prev, [id]: !prev[id] }));
 
   const endpoint = (config?.endpoint as string) || '/api/conversations';
 
@@ -108,6 +125,7 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
             timestamp: msg.timestamp || '',
             status: msg.role === 'assistant' ? 'sent' : undefined,
             mediaUrl: msg.mediaUrl || undefined,
+            metadata: msg.metadata || undefined,
           })),
         }));
         setConversations(mapped);
@@ -176,9 +194,9 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 h-[600px] bg-white rounded-xl border border-neutral-200 overflow-hidden">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 h-[calc(100vh-12rem)] min-h-[500px] max-h-[900px] bg-white rounded-xl border border-neutral-200 overflow-hidden">
       {/* Conversations List */}
-      <div className="lg:col-span-1 border-r border-neutral-200 flex flex-col">
+      <div className="lg:col-span-1 border-r border-neutral-200 flex flex-col overflow-hidden min-h-0">
         <div className="p-4 border-b border-neutral-100">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold flex items-center gap-2">
@@ -291,7 +309,7 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
       </div>
 
       {/* Conversation Detail */}
-      <div className="lg:col-span-2 flex flex-col">
+      <div className="lg:col-span-2 flex flex-col overflow-hidden min-h-0">
         {selectedConversation ? (
           <>
             <div className="p-4 border-b border-neutral-100 flex items-center justify-between bg-neutral-50">
@@ -375,8 +393,8 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className={cn(
-                      "flex",
-                      msg.sender === 'agent' ? "justify-end" : "justify-start"
+                      "flex flex-col",
+                      msg.sender === 'agent' ? "items-end" : "items-start"
                     )}
                   >
                     <div className={cn(
@@ -404,6 +422,42 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                         {msg.sender === 'agent' && getStatusIcon(msg.status)}
                       </div>
                     </div>
+                    {msg.sender === 'agent' && msg.metadata && (
+                      <button
+                        onClick={() => toggleMetadata(msg.id)}
+                        className="text-xs text-neutral-400 hover:text-neutral-600 flex items-center gap-1 mt-1 mr-1"
+                      >
+                        <Brain className="w-3 h-3" />
+                        AI Reasoning
+                        <ChevronDown className={cn("w-3 h-3 transition-transform", expandedMeta[msg.id] && "rotate-180")} />
+                      </button>
+                    )}
+                    {expandedMeta[msg.id] && msg.metadata && (
+                      <div className="mt-1 p-2 rounded-lg bg-neutral-50 border border-neutral-100 text-xs space-y-1 max-w-[70%]">
+                        {msg.metadata.governor_reason && (
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-neutral-400">Route:</span>
+                            <Badge variant="outline" className="text-xs">{msg.metadata.response_mode}</Badge>
+                            <span className="text-neutral-500">{msg.metadata.governor_reason}</span>
+                          </div>
+                        )}
+                        {msg.metadata.intent && (
+                          <div><span className="text-neutral-400">Intent:</span> <span className="text-neutral-700">{msg.metadata.intent}</span></div>
+                        )}
+                        {msg.metadata.stage && (
+                          <div><span className="text-neutral-400">Stage:</span> <span className="text-neutral-700">{msg.metadata.stage}</span></div>
+                        )}
+                        {msg.metadata.lead_score != null && (
+                          <div><span className="text-neutral-400">Lead Score:</span> <span className="text-neutral-700">{msg.metadata.lead_score}</span></div>
+                        )}
+                        {msg.metadata.products_referenced && msg.metadata.products_referenced.length > 0 && (
+                          <div><span className="text-neutral-400">Products:</span> <span className="text-neutral-700">{msg.metadata.products_referenced.join(', ')}</span></div>
+                        )}
+                        {msg.metadata.kb_articles_used && msg.metadata.kb_articles_used.length > 0 && (
+                          <div><span className="text-neutral-400">KB:</span> <span className="text-neutral-700">{msg.metadata.kb_articles_used.join(', ')}</span></div>
+                        )}
+                      </div>
+                    )}
                   </motion.div>
                 ))}
               </div>
