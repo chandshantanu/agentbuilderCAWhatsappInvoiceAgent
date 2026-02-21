@@ -42,6 +42,9 @@ interface InstagramMessage {
   timestamp: string;
   source?: string;
   metadata?: MessageMetadata;
+  send_status?: 'sent' | 'failed' | 'unknown';
+  send_error?: string;
+  send_error_code?: number;
 }
 
 interface InstagramConversation {
@@ -101,6 +104,18 @@ interface ScorePoint {
   stage: string;
 }
 
+interface ReasoningTrace {
+  decision_factors?: string[];
+  alternatives_considered?: string[];
+  research_basis?: string;
+  confidence_level?: number;
+  next_best_action?: string;
+  lead_temperature?: string;
+  avg_response_hours?: number;
+  temperature_reasoning?: string;
+  context_snapshot?: Record<string, unknown>;
+}
+
 interface StrategistEntry {
   timestamp: string;
   text_preview: string;
@@ -109,8 +124,12 @@ interface StrategistEntry {
   suggested_question: string;
   emotional_state: string;
   lead_priority: string;
+  lead_temperature?: string;
   stage: string;
   intent: string;
+  source?: string;
+  reasoning_trace?: ReasoningTrace;
+  timing_reasoning?: string;
 }
 
 interface Intelligence {
@@ -130,6 +149,9 @@ interface Intelligence {
   tags: string[];
   last_sender: string;
   last_agent_message_at: string;
+  scope?: string;
+  messages_analysed?: number;
+  total_messages?: number;
 }
 
 // ── Helpers ────────────────────────────────────────────────────
@@ -229,9 +251,18 @@ function IntelligenceSidebar({
       <div className={cn('p-4 border-b', scoreBg(score))}>
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-medium text-neutral-500 uppercase tracking-wide">Lead Intelligence</span>
-          <Badge className={cn('text-xs', stageColor(stage))}>
-            {stage?.replace('_', ' ') || 'greeting'}
-          </Badge>
+          <div className="flex items-center gap-1">
+            {intelligence?.scope && (
+              <span className="text-xs px-1.5 py-0.5 rounded bg-violet-100 text-violet-600 font-medium">
+                {intelligence.scope === 'all'
+                  ? `all ${intelligence.total_messages || ''}msgs`
+                  : `last ${intelligence.messages_analysed || 50}`}
+              </span>
+            )}
+            <Badge className={cn('text-xs', stageColor(stage))}>
+              {stage?.replace('_', ' ') || 'greeting'}
+            </Badge>
+          </div>
         </div>
         <div className="flex items-end gap-3">
           <div>
@@ -623,6 +654,51 @@ function IntelligenceSidebar({
                         <span className="text-amber-900">{entry.suggested_question}</span>
                       </div>
                     )}
+
+                    {/* Full reasoning trace (v5.0+) */}
+                    {entry.reasoning_trace && (
+                      <details className="mt-1">
+                        <summary className="text-xs text-neutral-400 cursor-pointer hover:text-neutral-600 select-none">
+                          Why this answer? ({entry.reasoning_trace.confidence_level ?? '?'}% confidence)
+                        </summary>
+                        <div className="mt-2 space-y-2 text-xs border-l-2 border-violet-200 pl-2">
+                          {entry.reasoning_trace.decision_factors && entry.reasoning_trace.decision_factors.length > 0 && (
+                            <div>
+                              <p className="font-medium text-neutral-500 mb-0.5">Data used:</p>
+                              {entry.reasoning_trace.decision_factors.map((f, i) => (
+                                <p key={i} className="text-neutral-600">• {f}</p>
+                              ))}
+                            </div>
+                          )}
+                          {entry.reasoning_trace.alternatives_considered && entry.reasoning_trace.alternatives_considered.length > 0 && (
+                            <div>
+                              <p className="font-medium text-neutral-500 mb-0.5">Alternatives rejected:</p>
+                              {entry.reasoning_trace.alternatives_considered.map((a, i) => (
+                                <p key={i} className="text-neutral-500 line-through decoration-neutral-300">• {a}</p>
+                              ))}
+                            </div>
+                          )}
+                          {entry.reasoning_trace.research_basis && (
+                            <div className="bg-blue-50 rounded px-2 py-1 text-blue-700">
+                              <p className="font-medium mb-0.5">Research basis:</p>
+                              <p>{entry.reasoning_trace.research_basis}</p>
+                            </div>
+                          )}
+                          {entry.reasoning_trace.next_best_action && (
+                            <div className="bg-emerald-50 rounded px-2 py-1 text-emerald-700">
+                              <p className="font-medium mb-0.5">If no reply:</p>
+                              <p>{entry.reasoning_trace.next_best_action}</p>
+                            </div>
+                          )}
+                          {entry.timing_reasoning && (
+                            <div className="bg-violet-50 rounded px-2 py-1 text-violet-700">
+                              <p className="font-medium mb-0.5">Follow-up timing:</p>
+                              <p>{entry.timing_reasoning}</p>
+                            </div>
+                          )}
+                        </div>
+                      </details>
+                    )}
                   </div>
                 ))
               ) : (
@@ -688,9 +764,9 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
   const [noteText, setNoteText] = useState('');
   const [savingNote, setSavingNote] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
+  const [analyseScope, setAnalyseScope] = useState<'recent' | 'all'>('recent');
   const [runningAnalysis, setRunningAnalysis] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const [showScopeMenu, setShowScopeMenu] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const endpoint = (config?.endpoint as string) || '/api/conversations';
@@ -798,22 +874,23 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
     }
   }, [selected, noteText]);
 
-  const handleRunAnalysis = useCallback(async () => {
+  // Per-conversation analyse — loads intelligence for the selected conversation
+  const handleRunAnalysis = useCallback(async (scope: 'recent' | 'all') => {
+    if (!selected) return;
+    const sid = selected.sender_id || selected.id;
+    setAnalyseScope(scope);
+    setShowScopeMenu(false);
     setRunningAnalysis(true);
+    setShowIntel(true); // ensure sidebar is visible
     try {
-      const resp = await apiClient.post('/api/admin/run-analysis');
-      const result: AnalysisResult = resp.data;
-      setAnalysisResult(result);
-      setShowAnalysisModal(true);
-      // Reload conversations list to reflect backfilled data
-      const convResp = await apiClient.get(endpoint);
-      setConversations(convResp.data?.data || convResp.data || []);
+      const resp = await apiClient.get(`/api/conversations/${sid}/intelligence?scope=${scope}`);
+      setIntelligence(resp.data);
     } catch (err) {
       console.error('Analysis failed:', err);
     } finally {
       setRunningAnalysis(false);
     }
-  }, [endpoint]);
+  }, [selected]);
 
   const loadConversations = useCallback(async () => {
     try {
@@ -852,17 +929,6 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
               className="p-1 rounded text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 transition-colors"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={handleRunAnalysis}
-              disabled={runningAnalysis}
-              title="Run on-demand analysis: backfill missing data + queue follow-ups for cold leads"
-              className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-gradient-to-r from-violet-500 to-pink-500 text-white hover:opacity-90 disabled:opacity-50 transition-opacity shadow-sm"
-            >
-              {runningAnalysis
-                ? <Loader2 className="w-3 h-3 animate-spin" />
-                : <Sparkles className="w-3 h-3" />}
-              {runningAnalysis ? 'Analysing…' : 'Analyse'}
             </button>
           </div>
           <div className="relative">
@@ -982,6 +1048,47 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                   <MessageSquare className="w-3 h-3 mr-1" />
                   Notes{selected.notes && selected.notes.length > 0 ? ` (${selected.notes.length})` : ''}
                 </Button>
+                {/* Analyse button with scope dropdown — per conversation */}
+                <div className="relative">
+                  <div className="flex items-center rounded-md overflow-hidden shadow-sm">
+                    <button
+                      onClick={() => handleRunAnalysis(analyseScope)}
+                      disabled={runningAnalysis}
+                      className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-gradient-to-r from-violet-500 to-pink-500 text-white hover:opacity-90 disabled:opacity-50 transition-opacity h-7"
+                    >
+                      {runningAnalysis
+                        ? <Loader2 className="w-3 h-3 animate-spin" />
+                        : <Sparkles className="w-3 h-3" />}
+                      {runningAnalysis ? 'Analysing…' : `Analyse (${analyseScope})`}
+                    </button>
+                    <button
+                      onClick={() => setShowScopeMenu(v => !v)}
+                      disabled={runningAnalysis}
+                      className="px-1.5 py-1 text-xs font-medium bg-gradient-to-r from-pink-500 to-violet-600 text-white hover:opacity-90 disabled:opacity-50 transition-opacity h-7 border-l border-white/20"
+                    >
+                      <ChevronDown className="w-3 h-3" />
+                    </button>
+                  </div>
+                  {showScopeMenu && (
+                    <div className="absolute right-0 top-8 z-20 bg-white rounded-lg shadow-lg border border-neutral-200 py-1 min-w-[140px]">
+                      {(['recent', 'all'] as const).map(s => (
+                        <button
+                          key={s}
+                          onClick={() => handleRunAnalysis(s)}
+                          className={cn(
+                            'w-full text-left px-3 py-2 text-xs hover:bg-neutral-50 flex items-center gap-2',
+                            s === analyseScope ? 'text-violet-600 font-medium' : 'text-neutral-700'
+                          )}
+                        >
+                          {s === 'recent'
+                            ? <><Clock className="w-3 h-3" /> Recent (last 50 msgs)</>
+                            : <><Eye className="w-3 h-3" /> All messages</>
+                          }
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -1012,6 +1119,14 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                       <p className="text-sm leading-relaxed">{msg.text}</p>
                       <div className="text-right text-xs opacity-60 mt-1">{formatTime(msg.timestamp)}</div>
                     </div>
+
+                    {/* Delivery failure indicator */}
+                    {msg.role === 'assistant' && msg.send_status === 'failed' && (
+                      <div className="flex items-center gap-1 text-xs text-red-400 mt-0.5">
+                        <AlertCircle className="w-3 h-3" />
+                        <span>Not delivered{msg.send_error ? `: ${msg.send_error}` : ''}</span>
+                      </div>
+                    )}
 
                     {/* Inline reasoning pill below agent messages */}
                     {msg.role === 'assistant' && msg.metadata?.internal_assessment && (
@@ -1133,127 +1248,7 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
         )}
       </AnimatePresence>
 
-      {/* ── Analysis Result Modal ── */}
-      <AnimatePresence>
-        {showAnalysisModal && analysisResult && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-            onClick={() => setShowAnalysisModal(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
-              onClick={e => e.stopPropagation()}
-            >
-              {/* Header */}
-              <div className="bg-gradient-to-r from-violet-500 to-pink-500 px-6 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <Sparkles className="w-5 h-5 text-white" />
-                  <h2 className="text-white font-semibold text-base">Analysis Complete</h2>
-                </div>
-                <button onClick={() => setShowAnalysisModal(false)} className="text-white/80 hover:text-white">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="p-6 space-y-5">
-                {/* KPI grid */}
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { label: 'Conversations scanned', value: analysisResult.stats.total_scanned, color: 'bg-neutral-50 text-neutral-700', icon: <Search className="w-4 h-4" /> },
-                    { label: 'Records backfilled', value: analysisResult.stats.backfilled, color: 'bg-blue-50 text-blue-700', icon: <RefreshCw className="w-4 h-4" /> },
-                    { label: 'Follow-ups queued', value: analysisResult.stats.nudges_queued, color: 'bg-emerald-50 text-emerald-700', icon: <Zap className="w-4 h-4" /> },
-                    { label: 'Already up-to-date', value: analysisResult.stats.already_complete, color: 'bg-neutral-50 text-neutral-500', icon: <CheckCircle className="w-4 h-4" /> },
-                  ].map(({ label, value, color, icon }) => (
-                    <div key={label} className={`rounded-xl px-4 py-3 ${color}`}>
-                      <div className="flex items-center gap-1.5 mb-1 opacity-60">{icon}<span className="text-xs font-medium">{label}</span></div>
-                      <p className="text-2xl font-bold">{value}</p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Skipped nudges breakdown */}
-                {(analysisResult.stats.nudges_skipped_too_recent > 0 || analysisResult.stats.nudges_skipped_low_score > 0 || analysisResult.stats.nudges_skipped_already_queued > 0) && (
-                  <div className="rounded-xl border border-neutral-100 bg-neutral-50 px-4 py-3">
-                    <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">Nudges Skipped</p>
-                    <div className="space-y-1 text-xs text-neutral-600">
-                      {analysisResult.stats.nudges_skipped_too_recent > 0 && (
-                        <div className="flex justify-between"><span>Silence threshold not met</span><span className="font-semibold">{analysisResult.stats.nudges_skipped_too_recent}</span></div>
-                      )}
-                      {analysisResult.stats.nudges_skipped_low_score > 0 && (
-                        <div className="flex justify-between"><span>Lead score too low (&lt;25)</span><span className="font-semibold">{analysisResult.stats.nudges_skipped_low_score}</span></div>
-                      )}
-                      {analysisResult.stats.nudges_skipped_already_queued > 0 && (
-                        <div className="flex justify-between"><span>Already in follow-up queue</span><span className="font-semibold">{analysisResult.stats.nudges_skipped_already_queued}</span></div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Follow-up detail list */}
-                {analysisResult.stats.nudge_details.length > 0 && (
-                  <div>
-                    <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">
-                      Queued Follow-ups
-                    </p>
-                    <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-                      {analysisResult.stats.nudge_details.map((n, i) => (
-                        <div key={i} className="flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2 text-xs">
-                          <span className="font-medium text-emerald-800">
-                            @{n.username || n.sender_id.slice(-6)}
-                          </span>
-                          <div className="flex items-center gap-2 text-emerald-600">
-                            <span className="capitalize">{n.stage}</span>
-                            <span>·</span>
-                            <span className="flex items-center gap-0.5"><Clock className="w-3 h-3" />{n.silence_hours}h silent</span>
-                            <span>·</span>
-                            <span className="flex items-center gap-0.5"><Flame className="w-3 h-3" />{n.lead_score}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Backfill detail */}
-                {analysisResult.stats.backfill_details.length > 0 && (
-                  <div>
-                    <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">
-                      Backfilled Records
-                    </p>
-                    <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
-                      {analysisResult.stats.backfill_details.map((b, i) => (
-                        <div key={i} className="flex items-center justify-between rounded-lg bg-blue-50 px-3 py-2 text-xs">
-                          <span className="font-medium text-blue-800">@{b.username || b.sender_id.slice(-6)}</span>
-                          <span className="text-blue-600">{b.fields.join(', ')}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Empty state */}
-                {analysisResult.stats.nudges_queued === 0 && analysisResult.stats.backfilled === 0 && (
-                  <div className="text-center py-4 text-sm text-neutral-500">
-                    <CheckCircle className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
-                    All conversations are up-to-date. No cold leads found that need nudging yet.
-                  </div>
-                )}
-
-                <p className="text-xs text-neutral-400 text-right">
-                  Ran at {new Date(analysisResult.ran_at).toLocaleTimeString()}
-                </p>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Analysis now shown inline in Intelligence sidebar — no modal needed */}
     </div>
   );
 }
