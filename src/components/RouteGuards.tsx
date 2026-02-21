@@ -1,7 +1,7 @@
 /**
  * Route guards for SaaS mode.
  * - RequireAuth: redirect to /login if not authenticated
- * - RequireSubscription: redirect to /checkout if no active subscription
+ * - RequireSubscription: redirect to /trial-expired or /checkout if no active subscription
  * - RequireConfigured: redirect to /onboarding if not configured
  */
 
@@ -27,21 +27,31 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 
 export function RequireSubscription({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading: authLoading } = useSupabaseAuth();
-  const { hasSubscription, isLoading: subLoading } = useSubscription();
+  const { hasSubscription, trialExpired, expiryReason, isLoading: subLoading } = useSubscription();
 
   if (authLoading || subLoading) return <LoadingSpinner />;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (!hasSubscription) return <Navigate to="/checkout" replace />;
+  if (!hasSubscription) {
+    if (trialExpired || expiryReason) {
+      return <Navigate to="/trial-expired" replace />;
+    }
+    return <Navigate to="/checkout" replace />;
+  }
   return <>{children}</>;
 }
 
 export function RequireConfigured({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading: authLoading } = useSupabaseAuth();
-  const { hasSubscription, isConfigured, isLoading: subLoading } = useSubscription();
+  const { hasSubscription, isConfigured, trialExpired, expiryReason, isLoading: subLoading } = useSubscription();
 
   if (authLoading || subLoading) return <LoadingSpinner />;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (!hasSubscription) return <Navigate to="/checkout" replace />;
+  if (!hasSubscription) {
+    if (trialExpired || expiryReason) {
+      return <Navigate to="/trial-expired" replace />;
+    }
+    return <Navigate to="/checkout" replace />;
+  }
   if (!isConfigured) return <Navigate to="/onboarding" replace />;
   return <>{children}</>;
 }

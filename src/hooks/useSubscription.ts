@@ -1,6 +1,7 @@
 /**
  * Subscription state hook for SaaS mode.
  * Fetches and tracks the CA's subscription status.
+ * Detects trial expiry both server-side (status=expired) and client-side (trial_end check).
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -14,6 +15,8 @@ export interface SubscriptionState {
   subscriptionId: string | null;
   status: string | null;
   serviceStatus: string | null;
+  trialExpired: boolean;
+  expiryReason: string | null;
   isLoading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
@@ -28,6 +31,8 @@ export function useSubscription(): SubscriptionState {
     subscriptionId: null,
     status: null,
     serviceStatus: null,
+    trialExpired: false,
+    expiryReason: null,
     isLoading: true,
     error: null,
   });
@@ -47,10 +52,47 @@ export function useSubscription(): SubscriptionState {
           subscriptionId: null,
           status: null,
           serviceStatus: null,
+          trialExpired: false,
+          expiryReason: null,
           isLoading: false,
           error: null,
         });
         return;
+      }
+
+      // Server-side expiry detection (backend now returns status="expired")
+      if (sub.status === 'expired') {
+        setState({
+          hasSubscription: false,
+          isConfigured: false,
+          subscriptionId: sub.id || sub.subscription_id,
+          status: 'expired',
+          serviceStatus: sub.service_status,
+          trialExpired: sub.expiry_reason === 'trial_ended',
+          expiryReason: sub.expiry_reason || 'expired',
+          isLoading: false,
+          error: null,
+        });
+        return;
+      }
+
+      // Client-side safety net: check trial_end date
+      if (sub.is_trial && sub.trial_end) {
+        const trialEnd = new Date(sub.trial_end);
+        if (trialEnd < new Date()) {
+          setState({
+            hasSubscription: false,
+            isConfigured: false,
+            subscriptionId: sub.id || sub.subscription_id,
+            status: 'expired',
+            serviceStatus: sub.service_status,
+            trialExpired: true,
+            expiryReason: 'trial_ended',
+            isLoading: false,
+            error: null,
+          });
+          return;
+        }
       }
 
       // Trust platform's is_configured first; only check runtime if platform says false
@@ -72,6 +114,8 @@ export function useSubscription(): SubscriptionState {
         subscriptionId: sub.id || sub.subscription_id,
         status: sub.status,
         serviceStatus: sub.service_status,
+        trialExpired: false,
+        expiryReason: null,
         isLoading: false,
         error: null,
       });
@@ -82,6 +126,8 @@ export function useSubscription(): SubscriptionState {
         subscriptionId: null,
         status: null,
         serviceStatus: null,
+        trialExpired: false,
+        expiryReason: null,
         isLoading: false,
         error: err.message || 'Failed to check subscription',
       });
