@@ -54,16 +54,22 @@ export function SaaSProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const hostname = window.location.hostname;
+    const subdomain = hostname.split('.')[0];
+
+    // Operator dashboards are at {subscriptionId}.agents.chatslytics.com
+    // Subscription IDs are 24-char MongoDB ObjectId hex strings — treat as direct mode.
+    // SaaS white-label sites have custom slug subdomains (not hex ObjectIds).
+    const isSubscriptionId = /^[0-9a-f]{24}$/.test(subdomain);
     const isSaaSSubdomain =
       hostname.endsWith('.agents.chatslytics.com') &&
-      hostname !== 'agents.chatslytics.com';
+      hostname !== 'agents.chatslytics.com' &&
+      !isSubscriptionId;
 
     // Also allow localhost testing with ?saas_subdomain= query param
     const params = new URLSearchParams(window.location.search);
     const testSubdomain = params.get('saas_subdomain');
 
     if (isSaaSSubdomain) {
-      const subdomain = hostname.split('.')[0];
       fetchConfig(subdomain);
     } else if (testSubdomain) {
       fetchConfig(testSubdomain);

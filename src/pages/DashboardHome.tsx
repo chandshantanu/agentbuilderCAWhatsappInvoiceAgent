@@ -51,8 +51,8 @@ export default function DashboardHome() {
       <div className="space-y-6">
         {/* Page header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-foreground">{currentTab?.label}</h2>
-          <p className="text-xs text-muted-foreground hidden sm:block">{today}</p>
+          <h2 className="text-3xl font-semibold text-foreground">{currentTab?.label}</h2>
+          <p className="text-base text-muted-foreground hidden sm:block">{today}</p>
         </div>
 
         {/* Tab content with animation */}

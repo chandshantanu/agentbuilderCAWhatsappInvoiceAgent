@@ -60,16 +60,17 @@ export function useSubscription(): SubscriptionState {
         return;
       }
 
-      // Server-side expiry detection (backend now returns status="expired")
-      if (sub.status === 'expired') {
+      // Server-side expiry detection
+      // 'expired' = legacy status; 'trial_expired' = our new explicit trial-ended status
+      if (sub.status === 'expired' || sub.status === 'trial_expired') {
         setState({
           hasSubscription: false,
           isConfigured: false,
           subscriptionId: sub.id || sub.subscription_id,
-          status: 'expired',
+          status: sub.status,
           serviceStatus: sub.service_status,
-          trialExpired: sub.expiry_reason === 'trial_ended',
-          expiryReason: sub.expiry_reason || 'expired',
+          trialExpired: sub.status === 'trial_expired' || sub.expiry_reason === 'trial_ended',
+          expiryReason: sub.status === 'trial_expired' ? 'trial_ended' : (sub.expiry_reason || 'expired'),
           isLoading: false,
           error: null,
         });

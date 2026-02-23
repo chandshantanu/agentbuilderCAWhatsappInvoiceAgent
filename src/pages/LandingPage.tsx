@@ -65,6 +65,24 @@ const scaleUp = {
 
 const FEATURE_ICONS = [FileText, Zap, Shield, BarChart3, Users, Clock];
 
+/* ─── Default SaaS images (Azure CDN) ────────────── */
+
+const CDN_BASE = 'https://stagentbuilderwidgets.blob.core.windows.net/widgets/saas-images';
+
+const DEFAULT_IMAGES = {
+  hero: `${CDN_BASE}/hero-automation.jpg`,
+  features: [
+    `${CDN_BASE}/feature-ai-chatbot.jpg`,
+    `${CDN_BASE}/feature-analytics.jpg`,
+    `${CDN_BASE}/feature-lead-scoring.jpg`,
+    `${CDN_BASE}/feature-brand-protection.jpg`,
+    `${CDN_BASE}/feature-follow-ups.jpg`,
+    `${CDN_BASE}/feature-ai-chatbot.jpg`,
+  ],
+  humanEntrepreneur: `${CDN_BASE}/human-entrepreneur.jpg`,
+  humanTeam: `${CDN_BASE}/human-team-celebrating.jpg`,
+};
+
 /* ─── Hero Atmosphere (bezier curves + orbs) ──────── */
 
 function HeroAtmosphere({ rgb }: { rgb: string }) {
@@ -220,7 +238,7 @@ export default function LandingPage() {
       </header>
 
       {/* ═══════════ HERO ═══════════ */}
-      <section className="relative pt-[100px] pb-24 sm:pt-[130px] sm:pb-32 overflow-hidden">
+      <section className="relative pt-[100px] pb-24 sm:pt-[130px] sm:pb-36 overflow-hidden">
         {/* Dark background */}
         <div
           className="absolute inset-0"
@@ -228,67 +246,98 @@ export default function LandingPage() {
         />
         <HeroAtmosphere rgb={rgb} />
 
-        {/* Content */}
-        <div className="relative z-10 max-w-3xl mx-auto px-5 sm:px-8 text-center">
-          <motion.div initial="hidden" animate="show" variants={stagger}>
+        {/* Content — split layout: text left, image right */}
+        <div className="relative z-10 max-w-6xl mx-auto px-5 sm:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
 
-            {/* Trust pills — WHITE text for maximum contrast */}
-            <motion.div variants={fadeUp} className="flex items-center justify-center gap-3 sm:gap-5 mb-9 flex-wrap">
-              {(landing_page.hero_badges || ['AI-Powered', '24/7 Availability', 'Multi-language']).map((label: string) => (
-                <span
-                  key={label}
-                  className="inline-flex items-center gap-2 text-[13px] font-medium tracking-wide text-white/80"
-                >
+            {/* Left — text content */}
+            <motion.div initial="hidden" animate="show" variants={stagger}>
+
+              {/* Trust pills */}
+              <motion.div variants={fadeUp} className="flex items-center gap-3 sm:gap-5 mb-9 flex-wrap">
+                {(landing_page.hero_badges || ['AI-Powered', '24/7 Availability', 'Multi-language']).map((label: string) => (
                   <span
-                    className="w-[18px] h-[18px] rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: `rgba(${rgb}, 0.25)`, border: `1px solid rgba(${rgb}, 0.4)` }}
+                    key={label}
+                    className="inline-flex items-center gap-2 text-[13px] font-medium tracking-wide text-white/80"
                   >
-                    <Check className="h-2.5 w-2.5" style={{ color: lightAccent }} />
+                    <span
+                      className="w-[18px] h-[18px] rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: `rgba(${rgb}, 0.25)`, border: `1px solid rgba(${rgb}, 0.4)` }}
+                    >
+                      <Check className="h-2.5 w-2.5" style={{ color: lightAccent }} />
+                    </span>
+                    {label}
                   </span>
-                  {label}
-                </span>
-              ))}
-            </motion.div>
+                ))}
+              </motion.div>
 
-            {/* Headline */}
-            <motion.h1
-              variants={fadeUp}
-              className="text-[2.4rem] sm:text-[3.2rem] lg:text-[3.6rem] font-extrabold text-white leading-[1.08] tracking-[-0.025em] mb-6"
-            >
-              {landing_page.hero_title || 'Automate Your Practice'}
-            </motion.h1>
-
-            {/* Subtitle */}
-            <motion.p
-              variants={fadeUp}
-              className="text-[1.05rem] sm:text-lg text-gray-300 leading-relaxed max-w-xl mx-auto mb-10"
-            >
-              {landing_page.hero_subtitle || 'AI-powered automation for modern professionals'}
-            </motion.p>
-
-            {/* CTA buttons */}
-            <motion.div variants={fadeUp} className="flex items-center justify-center gap-3 sm:gap-4 flex-wrap">
-              <button
-                onClick={handleCta}
-                className="group inline-flex items-center gap-2.5 h-[52px] px-8 rounded-xl text-white font-semibold text-[15px] transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
-                style={{
-                  background: `linear-gradient(135deg, ${primary}, ${lightenColor(primary, 0.12)})`,
-                  boxShadow: `0 0 0 1px rgba(${rgb}, 0.3), 0 8px 32px rgba(${rgb}, 0.35), 0 2px 6px rgba(0,0,0,0.15)`,
-                }}
+              {/* Headline */}
+              <motion.h1
+                variants={fadeUp}
+                className="text-[2.4rem] sm:text-[3.2rem] lg:text-[3.6rem] font-extrabold text-white leading-[1.08] tracking-[-0.025em] mb-6"
               >
-                {landing_page.cta_text || 'Start Your Free Trial'}
-                <ArrowRight className="w-[18px] h-[18px] transition-transform group-hover:translate-x-0.5" />
-              </button>
-              {!isAuthenticated && (
+                {landing_page.hero_title || 'Automate Your Practice'}
+              </motion.h1>
+
+              {/* Subtitle */}
+              <motion.p
+                variants={fadeUp}
+                className="text-[1.05rem] sm:text-lg text-gray-300 leading-relaxed max-w-xl mb-10"
+              >
+                {landing_page.hero_subtitle || 'AI-powered automation for modern professionals'}
+              </motion.p>
+
+              {/* CTA buttons */}
+              <motion.div variants={fadeUp} className="flex items-center gap-3 sm:gap-4 flex-wrap">
                 <button
-                  onClick={() => navigate('/login')}
-                  className="inline-flex items-center gap-2 h-[52px] px-7 rounded-xl text-gray-300 font-medium text-[15px] border border-white/15 hover:border-white/30 hover:text-white hover:bg-white/5 transition-all duration-300"
+                  onClick={handleCta}
+                  className="group inline-flex items-center gap-2.5 h-[52px] px-8 rounded-xl text-white font-semibold text-[15px] transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
+                  style={{
+                    background: `linear-gradient(135deg, ${primary}, ${lightenColor(primary, 0.12)})`,
+                    boxShadow: `0 0 0 1px rgba(${rgb}, 0.3), 0 8px 32px rgba(${rgb}, 0.35), 0 2px 6px rgba(0,0,0,0.15)`,
+                  }}
                 >
-                  Sign in
+                  {landing_page.cta_text || 'Start Your Free Trial'}
+                  <ArrowRight className="w-[18px] h-[18px] transition-transform group-hover:translate-x-0.5" />
                 </button>
-              )}
+                {!isAuthenticated && (
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="inline-flex items-center gap-2 h-[52px] px-7 rounded-xl text-gray-300 font-medium text-[15px] border border-white/15 hover:border-white/30 hover:text-white hover:bg-white/5 transition-all duration-300"
+                  >
+                    Sign in
+                  </button>
+                )}
+              </motion.div>
             </motion.div>
-          </motion.div>
+
+            {/* Right — hero image */}
+            <motion.div
+              initial={{ opacity: 0, x: 40, scale: 0.95 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              transition={{ duration: 0.8, ease, delay: 0.3 }}
+              className="hidden lg:block"
+            >
+              <div
+                className="relative rounded-2xl overflow-hidden shadow-2xl"
+                style={{ boxShadow: `0 20px 60px rgba(0,0,0,0.4), 0 0 80px rgba(${rgb}, 0.15)` }}
+              >
+                <img
+                  src={landing_page.hero_image || DEFAULT_IMAGES.hero}
+                  alt="AI-powered automation"
+                  className="w-full h-auto object-cover rounded-2xl"
+                  loading="eager"
+                />
+                <div
+                  className="absolute inset-0 rounded-2xl"
+                  style={{
+                    background: `linear-gradient(135deg, rgba(${rgb}, 0.08) 0%, transparent 60%)`,
+                    border: `1px solid rgba(${rgb}, 0.15)`,
+                  }}
+                />
+              </div>
+            </motion.div>
+          </div>
         </div>
 
         {/* Wave transition → features */}
@@ -334,23 +383,41 @@ export default function LandingPage() {
               variants={stagger}
               className={`grid gap-5 ${features.length <= 4 ? 'sm:grid-cols-2' : 'sm:grid-cols-2 lg:grid-cols-3'}`}
             >
-              {features.map((f, i) => {
+              {features.map((f: any, i) => {
                 const Icon = FEATURE_ICONS[i % FEATURE_ICONS.length];
+                const featureImage = f.image || (landing_page.feature_images?.[i]) || DEFAULT_IMAGES.features[i % DEFAULT_IMAGES.features.length];
                 return (
                   <motion.div
                     key={i}
                     variants={fadeUp}
                     whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                    className="bg-white rounded-2xl border border-gray-200/70 p-6 sm:p-7 transition-shadow duration-300 hover:shadow-lg cursor-default"
+                    className="bg-white rounded-2xl border border-gray-200/70 overflow-hidden transition-shadow duration-300 hover:shadow-lg cursor-default"
                   >
-                    <div
-                      className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
-                      style={{ backgroundColor: `rgba(${rgb}, 0.08)` }}
-                    >
-                      <Icon className="w-5 h-5" style={{ color: primary }} />
+                    {/* Feature image */}
+                    <div className="relative h-40 overflow-hidden bg-gray-50">
+                      <img
+                        src={featureImage}
+                        alt={f.title}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                      <div
+                        className="absolute inset-0"
+                        style={{ background: `linear-gradient(to top, rgba(255,255,255,0.6) 0%, transparent 50%)` }}
+                      />
                     </div>
-                    <h3 className="font-semibold text-gray-900 mb-1.5 text-[15px]">{f.title}</h3>
-                    <p className="text-sm text-gray-500 leading-relaxed">{f.description}</p>
+                    <div className="p-6 sm:p-7">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div
+                          className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                          style={{ backgroundColor: `rgba(${rgb}, 0.08)` }}
+                        >
+                          <Icon className="w-4 h-4" style={{ color: primary }} />
+                        </div>
+                        <h3 className="font-semibold text-gray-900 text-[15px]">{f.title}</h3>
+                      </div>
+                      <p className="text-sm text-gray-500 leading-relaxed">{f.description}</p>
+                    </div>
                   </motion.div>
                 );
               })}
@@ -456,6 +523,118 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ═══════════ SOCIAL PROOF BANNER ═══════════ */}
+      <section className="py-16 sm:py-20 px-5 sm:px-8 bg-slate-50 overflow-hidden">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.2 }}
+            variants={stagger}
+            className="grid md:grid-cols-2 gap-8 items-center"
+          >
+            {/* Image */}
+            <motion.div variants={scaleUp} className="relative">
+              <img
+                src={landing_page.social_proof_image || DEFAULT_IMAGES.humanEntrepreneur}
+                alt="Business owner using the platform"
+                className="w-full rounded-2xl shadow-xl object-cover aspect-square"
+                loading="lazy"
+              />
+              <div
+                className="absolute -bottom-4 -right-4 bg-white rounded-xl shadow-lg px-5 py-3 border border-gray-100"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="flex -space-x-2">
+                    {[1, 2, 3].map((n) => (
+                      <div
+                        key={n}
+                        className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold text-white"
+                        style={{ backgroundColor: lightenColor(primary, (n - 1) * 0.15) }}
+                      >
+                        {['S', 'A', 'R'][n - 1]}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="ml-1">
+                    <p className="text-sm font-semibold text-gray-900">500+ businesses</p>
+                    <p className="text-xs text-gray-500">trust our platform</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Text */}
+            <motion.div variants={fadeUp}>
+              <div className="inline-flex items-center gap-1.5 mb-4">
+                <Users className="w-4 h-4" style={{ color: primary }} />
+                <span className="text-xs font-bold uppercase tracking-[0.15em]" style={{ color: primary }}>
+                  Trusted by businesses
+                </span>
+              </div>
+              <h2 className="text-3xl sm:text-[2.5rem] font-bold text-gray-900 tracking-[-0.02em] mb-4">
+                Join hundreds of growing businesses
+              </h2>
+              <p className="text-gray-500 text-lg leading-relaxed mb-6">
+                From solo entrepreneurs to fast-scaling teams, businesses use our AI agent to convert more DM conversations into paying customers — automatically.
+              </p>
+              <div className="grid grid-cols-3 gap-4">
+                {[
+                  { value: '3x', label: 'More conversions' },
+                  { value: '24/7', label: 'Always-on support' },
+                  { value: '< 5s', label: 'Response time' },
+                ].map((stat) => (
+                  <div key={stat.label} className="text-center p-3 bg-white rounded-xl border border-gray-100">
+                    <p className="text-xl font-bold text-gray-900">{stat.value}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ═══════════ TEAM BANNER ═══════════ */}
+      <section className="relative overflow-hidden">
+        <div className="relative">
+          <img
+            src={landing_page.team_banner_image || DEFAULT_IMAGES.humanTeam}
+            alt="Team celebrating success"
+            className="w-full h-[300px] sm:h-[400px] object-cover"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-gray-900/80 to-gray-900/40 flex items-center">
+            <div className="max-w-6xl mx-auto px-5 sm:px-8 w-full">
+              <motion.div
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true }}
+                variants={fadeUp}
+              >
+                <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3 max-w-lg">
+                  Ready to transform your DM sales?
+                </h2>
+                <p className="text-gray-300 text-lg mb-6 max-w-md">
+                  Start your free trial today. No credit card required.
+                </p>
+                <button
+                  onClick={handleCta}
+                  className="inline-flex items-center gap-2 h-12 px-7 rounded-xl text-white font-semibold text-[15px] transition-all hover:brightness-110 hover:shadow-lg"
+                  style={{
+                    background: `linear-gradient(135deg, ${primary}, ${lightenColor(primary, 0.12)})`,
+                    boxShadow: `0 4px 20px rgba(${rgb}, 0.4)`,
+                  }}
+                >
+                  {landing_page.cta_text || 'Get Started Free'}
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+              </motion.div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ═══════════ TESTIMONIALS ═══════════ */}
       {landing_page.testimonials?.length > 0 && (
         <section className="py-16 sm:py-20 px-5 sm:px-8 bg-slate-50">
@@ -482,10 +661,22 @@ export default function LandingPage() {
                   variants={fadeUp}
                   className="bg-white rounded-2xl border border-gray-200/70 p-6"
                 >
-                  <p className="text-gray-700 mb-4 leading-relaxed text-[15px]">"{t.quote}"</p>
-                  <div className="border-t border-gray-100 pt-3">
-                    <p className="font-semibold text-gray-900 text-sm">{t.name}</p>
-                    {t.role && <p className="text-xs text-gray-500 mt-0.5">{t.role}</p>}
+                  <p className="text-gray-700 mb-4 leading-relaxed text-[15px]">"{t.quote || t.text}"</p>
+                  <div className="border-t border-gray-100 pt-3 flex items-center gap-3">
+                    {t.avatar ? (
+                      <img src={t.avatar} alt={t.name} className="w-10 h-10 rounded-full object-cover" />
+                    ) : (
+                      <div
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm"
+                        style={{ backgroundColor: lightenColor(primary, (i % 3) * 0.12) }}
+                      >
+                        {t.name?.charAt(0) || 'U'}
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm">{t.name}</p>
+                      {t.role && <p className="text-xs text-gray-500 mt-0.5">{t.role}</p>}
+                    </div>
                   </div>
                 </motion.div>
               ))}

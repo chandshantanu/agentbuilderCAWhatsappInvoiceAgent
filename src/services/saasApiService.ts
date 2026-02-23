@@ -165,4 +165,19 @@ export const saasApi = {
   // Proxy a request to the agent runtime through the SaaS proxy
   runtimeProxy: (subdomain: string, path: string, options?: { method?: string; body?: any }) =>
     apiCall(options?.method || 'POST', `/api/v1/saas/runtime/${subdomain}/proxy${path}`, options?.body ? JSON.parse(options.body) : undefined),
+
+  // Get Instagram token health status (🟢/🟡/🔴) for a subscription
+  getInstagramTokenStatus: (subscriptionId: string) =>
+    apiCall('GET', `/api/v1/instagram-oauth/token-status?subscription_id=${subscriptionId}`),
+
+  // Create Razorpay order to resume a trial_expired subscription
+  createResumeOrder: (subscriptionId: string) =>
+    apiCall('POST', `/api/v1/subscriptions/create-resume-order`, { subscription_id: subscriptionId }),
+
+  // Verify payment and reactivate a trial_expired subscription
+  verifyResumePayment: (subscriptionId: string, data: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+  }) => apiCall('POST', `/api/v1/subscriptions/${subscriptionId}/resume`, data),
 };

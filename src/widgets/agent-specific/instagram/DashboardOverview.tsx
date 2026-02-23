@@ -69,36 +69,36 @@ export default function DashboardOverview({ config }: { config: Record<string, u
     <div className="space-y-6">
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-neutral-200 p-4">
-          <div className="flex items-center gap-2 text-neutral-500 mb-2">
-            <MessageCircle className="w-4 h-4" />
-            <span className="text-xs font-medium">Conversations</span>
+        <div className="bg-white rounded-xl border border-neutral-200 p-5">
+          <div className="flex items-center gap-2 text-neutral-500 mb-3">
+            <MessageCircle className="w-6 h-6" />
+            <span className="text-base font-medium">Conversations</span>
           </div>
-          <p className="text-2xl font-bold text-neutral-900">{kpis.total_conversations}</p>
+          <p className="text-4xl font-bold text-neutral-900">{kpis.total_conversations}</p>
         </div>
 
-        <div className="bg-white rounded-xl border border-neutral-200 p-4">
-          <div className="flex items-center gap-2 text-neutral-500 mb-2">
-            <ShoppingBag className="w-4 h-4" />
-            <span className="text-xs font-medium">Products</span>
+        <div className="bg-white rounded-xl border border-neutral-200 p-5">
+          <div className="flex items-center gap-2 text-neutral-500 mb-3">
+            <ShoppingBag className="w-6 h-6" />
+            <span className="text-base font-medium">Products</span>
           </div>
-          <p className="text-2xl font-bold text-neutral-900">{kpis.total_products}</p>
+          <p className="text-4xl font-bold text-neutral-900">{kpis.total_products}</p>
         </div>
 
-        <div className="bg-white rounded-xl border border-neutral-200 p-4">
-          <div className="flex items-center gap-2 text-neutral-500 mb-2">
-            <BookOpen className="w-4 h-4" />
-            <span className="text-xs font-medium">KB Articles</span>
+        <div className="bg-white rounded-xl border border-neutral-200 p-5">
+          <div className="flex items-center gap-2 text-neutral-500 mb-3">
+            <BookOpen className="w-6 h-6" />
+            <span className="text-base font-medium">KB Articles</span>
           </div>
-          <p className="text-2xl font-bold text-neutral-900">{kpis.total_kb_articles}</p>
+          <p className="text-4xl font-bold text-neutral-900">{kpis.total_kb_articles}</p>
         </div>
 
-        <div className="bg-white rounded-xl border border-neutral-200 p-4">
-          <div className="flex items-center gap-2 text-neutral-500 mb-2">
-            <Instagram className="w-4 h-4" />
-            <span className="text-xs font-medium">Instagram</span>
+        <div className="bg-white rounded-xl border border-neutral-200 p-5">
+          <div className="flex items-center gap-2 text-neutral-500 mb-3">
+            <Instagram className="w-6 h-6" />
+            <span className="text-base font-medium">Instagram</span>
           </div>
-          <Badge className={kpis.ig_connected ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}>
+          <Badge className={kpis.ig_connected ? 'bg-emerald-100 text-emerald-700 text-base px-3 py-1' : 'bg-red-100 text-red-700 text-base px-3 py-1'}>
             {kpis.ig_connected ? 'Connected' : 'Disconnected'}
           </Badge>
         </div>
@@ -107,30 +107,30 @@ export default function DashboardOverview({ config }: { config: Record<string, u
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Lead Distribution */}
         <div className="bg-white rounded-xl border border-neutral-200 p-5">
-          <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-            <Flame className="w-4 h-4 text-orange-500" />
+          <h3 className="text-lg font-semibold text-neutral-900 mb-4 flex items-center gap-2">
+            <Flame className="w-6 h-6 text-orange-500" />
             Lead Distribution
           </h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-neutral-600">Hot Leads (70+)</span>
-              <span className="text-sm font-semibold text-emerald-600">{lead_distribution.hot}</span>
+              <span className="text-lg text-neutral-600">Hot Leads (70+)</span>
+              <span className="text-lg font-semibold text-emerald-600">{lead_distribution.hot}</span>
             </div>
-            <div className="w-full h-2 bg-neutral-100 rounded-full overflow-hidden">
+            <div className="w-full h-3 bg-neutral-100 rounded-full overflow-hidden">
               <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.min(100, (lead_distribution.hot / Math.max(1, kpis.total_conversations)) * 100)}%` }} />
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-neutral-600">Warm Leads (30-69)</span>
-              <span className="text-sm font-semibold text-amber-600">{lead_distribution.warm}</span>
+              <span className="text-lg text-neutral-600">Warm Leads (30-69)</span>
+              <span className="text-lg font-semibold text-amber-600">{lead_distribution.warm}</span>
             </div>
-            <div className="w-full h-2 bg-neutral-100 rounded-full overflow-hidden">
+            <div className="w-full h-3 bg-neutral-100 rounded-full overflow-hidden">
               <div className="h-full bg-amber-500 rounded-full" style={{ width: `${Math.min(100, (lead_distribution.warm / Math.max(1, kpis.total_conversations)) * 100)}%` }} />
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-neutral-600">Cold Leads (&lt;30)</span>
-              <span className="text-sm font-semibold text-neutral-500">{lead_distribution.cold}</span>
+              <span className="text-lg text-neutral-600">Cold Leads (&lt;30)</span>
+              <span className="text-lg font-semibold text-neutral-500">{lead_distribution.cold}</span>
             </div>
-            <div className="w-full h-2 bg-neutral-100 rounded-full overflow-hidden">
+            <div className="w-full h-3 bg-neutral-100 rounded-full overflow-hidden">
               <div className="h-full bg-neutral-400 rounded-full" style={{ width: `${Math.min(100, (lead_distribution.cold / Math.max(1, kpis.total_conversations)) * 100)}%` }} />
             </div>
           </div>
@@ -138,22 +138,22 @@ export default function DashboardOverview({ config }: { config: Record<string, u
 
         {/* Deal Funnel */}
         <div className="bg-white rounded-xl border border-neutral-200 p-5">
-          <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-blue-500" />
+          <h3 className="text-lg font-semibold text-neutral-900 mb-4 flex items-center gap-2">
+            <TrendingUp className="w-6 h-6 text-blue-500" />
             Deal Pipeline
           </h3>
           <div className="space-y-2">
             {stages.map((stage) => (
-              <div key={stage} className="flex items-center justify-between py-1.5">
-                <span className="text-sm text-neutral-600 capitalize">{stage}</span>
+              <div key={stage} className="flex items-center justify-between py-2">
+                <span className="text-lg text-neutral-600 capitalize">{stage}</span>
                 <div className="flex items-center gap-2">
-                  <div className="w-24 h-2 bg-neutral-100 rounded-full overflow-hidden">
+                  <div className="w-28 h-3 bg-neutral-100 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-blue-500 rounded-full"
                       style={{ width: `${Math.min(100, ((deal_funnel[stage] || 0) / Math.max(1, kpis.total_conversations)) * 100)}%` }}
                     />
                   </div>
-                  <span className="text-sm font-medium text-neutral-900 w-8 text-right">{deal_funnel[stage] || 0}</span>
+                  <span className="text-lg font-medium text-neutral-900 w-8 text-right">{deal_funnel[stage] || 0}</span>
                 </div>
               </div>
             ))}
@@ -163,30 +163,30 @@ export default function DashboardOverview({ config }: { config: Record<string, u
 
       {/* Recent Conversations */}
       <div className="bg-white rounded-xl border border-neutral-200 p-5">
-        <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-          <Users className="w-4 h-4 text-purple-500" />
+        <h3 className="text-lg font-semibold text-neutral-900 mb-4 flex items-center gap-2">
+          <Users className="w-6 h-6 text-purple-500" />
           Recent Conversations
         </h3>
         {recent_conversations.length === 0 ? (
-          <p className="text-sm text-neutral-500 text-center py-4">No conversations yet</p>
+          <p className="text-lg text-neutral-500 text-center py-4">No conversations yet</p>
         ) : (
           <div className="divide-y divide-neutral-100">
             {recent_conversations.map((conv) => (
-              <div key={conv.sender_id} className="flex items-center justify-between py-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-white text-xs font-medium">
+              <div key={conv.sender_id} className="flex items-center justify-between py-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-white text-base font-medium">
                     {(conv.username || conv.sender_id).slice(0, 2).toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-neutral-900">@{conv.username || conv.sender_id}</p>
-                    <p className="text-xs text-neutral-500 truncate max-w-[200px]">{conv.lastMessage}</p>
+                    <p className="text-lg font-medium text-neutral-900">@{conv.username || conv.sender_id}</p>
+                    <p className="text-base text-neutral-500 truncate max-w-[300px]">{conv.lastMessage}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   {conv.tags?.slice(0, 2).map((tag) => (
-                    <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
+                    <Badge key={tag} variant="outline" className="text-base px-3 py-1">{tag}</Badge>
                   ))}
-                  <Badge className={getScoreColor(conv.lead_score)}>
+                  <Badge className={`${getScoreColor(conv.lead_score)} text-base px-3 py-1`}>
                     {conv.lead_score}
                   </Badge>
                 </div>

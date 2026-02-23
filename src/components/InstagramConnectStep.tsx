@@ -58,8 +58,28 @@ export default function InstagramConnectStep({
     instagram_username: string;
     instagram_user_id: string;
   } | null>(null);
+  const [tokenStatus, setTokenStatus] = useState<{
+    status: 'valid' | 'expiring_soon' | 'expired' | 'unknown';
+    daysRemaining: number | null;
+  }>({ status: 'unknown', daysRemaining: null });
   const popupRef = useRef<Window | null>(null);
   const popupCheckInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Fetch token health status
+  const fetchTokenStatus = useCallback(async () => {
+    if (!subscriptionId) return;
+    try {
+      const resp = await saasApi.getInstagramTokenStatus(subscriptionId);
+      if (resp.success) {
+        setTokenStatus({
+          status: resp.token_status || 'unknown',
+          daysRemaining: resp.days_remaining ?? null,
+        });
+      }
+    } catch {
+      // fail silently
+    }
+  }, [subscriptionId]);
 
   // Check existing connection on mount
   useEffect(() => {
@@ -75,6 +95,7 @@ export default function InstagramConnectStep({
           setConnectedData(data);
           onConnected(data);
           setState('connected');
+          fetchTokenStatus();
           return;
         }
       } catch {
@@ -214,6 +235,16 @@ export default function InstagramConnectStep({
     );
   }
 
+  // Token health badge helper
+  const tokenBadge = () => {
+    const { status, daysRemaining } = tokenStatus;
+    const dayLabel = daysRemaining != null ? ` (${daysRemaining}d)` : '';
+    if (status === 'valid') return <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">🟢 Token valid{dayLabel}</span>;
+    if (status === 'expiring_soon') return <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">🟡 Expiring soon{dayLabel}</span>;
+    if (status === 'expired') return <span className="inline-flex items-center gap-1 text-xs font-medium text-red-700 bg-red-100 px-2 py-0.5 rounded-full">🔴 Token expired — reconnect</span>;
+    return null;
+  };
+
   // Connected state
   if (state === 'connected' && connectedData) {
     return (
@@ -222,16 +253,20 @@ export default function InstagramConnectStep({
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
             <CheckCircle2 className="w-6 h-6 text-pink-600" />
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-gray-900">Instagram Connected</h3>
             {connectedData.instagram_username && (
               <p className="text-sm text-pink-700">@{connectedData.instagram_username}</p>
             )}
           </div>
+          <button onClick={fetchTokenStatus} className="text-gray-400 hover:text-gray-600 transition-colors" title="Refresh token status">
+            <RefreshCw className="w-3.5 h-3.5" />
+          </button>
         </div>
+        {tokenBadge() && <div className="mb-3">{tokenBadge()}</div>}
         <button
           onClick={handleConnect}
-          className="mt-4 text-sm text-pink-700 hover:text-pink-900 underline flex items-center gap-1"
+          className="mt-2 text-sm text-pink-700 hover:text-pink-900 underline flex items-center gap-1"
         >
           <RefreshCw className="w-3 h-3" /> Reconnect with a different account
         </button>

@@ -44,8 +44,8 @@ function NavItem({
     <button
       onClick={onClick}
       className={cn(
-        'group relative w-full flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-200',
-        isCollapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5',
+        'group relative w-full flex items-center gap-3 rounded-lg text-base font-medium transition-all duration-200',
+        isCollapsed ? 'justify-center px-2 py-3.5' : 'px-3 py-3.5',
         isActive
           ? 'bg-primary/10 text-primary shadow-xs'
           : 'text-muted hover:bg-surface-raised hover:text-foreground',
@@ -55,7 +55,7 @@ function NavItem({
         <Icon
           className={cn(
             'shrink-0 transition-colors duration-200',
-            isCollapsed ? 'h-5 w-5' : 'h-4 w-4',
+            isCollapsed ? 'h-7 w-7' : 'h-6 w-6',
             isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground',
           )}
         />
@@ -117,13 +117,13 @@ function LogoutButton({ isCollapsed }: { isCollapsed: boolean }) {
   return (
     <div className="space-y-1">
       {user?.email && (
-        <p className="text-[11px] text-muted-foreground truncate px-1" title={user.email}>
+        <p className="text-xs text-muted-foreground truncate px-1" title={user.email}>
           {user.email}
         </p>
       )}
       <button
         onClick={handleLogout}
-        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors"
+        className="w-full flex items-center gap-2.5 px-3 py-3 rounded-lg text-lg text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors"
       >
         <LogOut className="h-4 w-4 shrink-0" />
         <span>Log out</span>
@@ -158,9 +158,9 @@ function SidebarContent({
         {!isCollapsed && (
           <div className="flex items-center gap-2.5 min-w-0">
             {branding.logo_url && (
-              <img src={branding.logo_url} alt="" className="h-7 w-7 rounded-md shrink-0" />
+              <img src={branding.logo_url} alt="" className="h-9 w-9 rounded-md shrink-0" />
             )}
-            <span className="font-semibold text-foreground truncate text-[15px]">
+            <span className="font-semibold text-foreground truncate text-lg">
               {branding.brand_name || 'Dashboard'}
             </span>
           </div>

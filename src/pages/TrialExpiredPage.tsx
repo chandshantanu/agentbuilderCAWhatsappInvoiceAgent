@@ -4,9 +4,12 @@
  * Provides clear messaging and a CTA to subscribe or renew.
  */
 
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useSaaS } from '@/contexts/SaaSContext';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useSupabaseAuth } from '@/auth/SupabaseAuthContext';
+import { saasApi } from '@/services/saasApiService';
 import {
   Clock,
   ArrowRight,
@@ -17,12 +20,30 @@ import {
   BarChart3,
   MessageSquare,
   Users,
+  Loader2,
 } from 'lucide-react';
+
+declare global {
+  interface Window { Razorpay: any; }
+}
 
 export default function TrialExpiredPage() {
   const navigate = useNavigate();
   const { config } = useSaaS();
-  const { trialExpired, expiryReason } = useSubscription();
+  const { trialExpired, expiryReason, subscriptionId, refetch } = useSubscription();
+  const { user } = useSupabaseAuth();
+  const [resumeLoading, setResumeLoading] = useState(false);
+  const [resumeError, setResumeError] = useState('');
+
+  // Load Razorpay script
+  useEffect(() => {
+    if (document.getElementById('razorpay-script')) return;
+    const s = document.createElement('script');
+    s.id = 'razorpay-script';
+    s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    s.async = true;
+    document.body.appendChild(s);
+  }, []);
 
   const agentName = config?.branding?.brand_name || config?.landing_page?.hero_title || 'Agent';
   const price = config?.pricing?.monthly_price || config?.pricing?.base_price || 8999;
@@ -30,6 +51,58 @@ export default function TrialExpiredPage() {
   const primaryColor = config?.branding?.primary_color || '#6366f1';
 
   const isTrialEnd = trialExpired || expiryReason === 'trial_ended';
+
+  // For trial_expired users: use resume flow (re-activates existing subscription + pod)
+  // For other expired: navigate to checkout (new subscription)
+  const handleSubscribeClick = async () => {
+    if (!isTrialEnd || !subscriptionId) {
+      navigate('/checkout');
+      return;
+    }
+    if (!window.Razorpay) {
+      navigate('/checkout');
+      return;
+    }
+    setResumeLoading(true);
+    setResumeError('');
+    try {
+      const orderResp = await saasApi.createResumeOrder(subscriptionId);
+      const order = orderResp.data;
+      const options = {
+        key: order.key_id,
+        amount: order.amount,
+        currency: order.currency || 'INR',
+        order_id: order.order_id,
+        name: config?.branding?.brand_name || 'Agent',
+        description: 'Resume subscription',
+        prefill: { email: user?.email || '' },
+        theme: { color: primaryColor },
+        handler: async (response: any) => {
+          try {
+            await saasApi.verifyResumePayment(subscriptionId, {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+            await refetch();
+            navigate('/dashboard');
+          } catch (err: any) {
+            setResumeError(err.message || 'Payment verification failed');
+          }
+        },
+        modal: { ondismiss: () => setResumeLoading(false) },
+      };
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', (r: any) => {
+        setResumeError(r.error?.description || 'Payment failed');
+        setResumeLoading(false);
+      });
+      rzp.open();
+    } catch (err: any) {
+      setResumeError(err.message || 'Failed to create order');
+      setResumeLoading(false);
+    }
+  };
   const title = isTrialEnd ? 'Your Free Trial Has Ended' : 'Subscription Expired';
   const subtitle = isTrialEnd
     ? 'Your 14-day trial is over, but your data is safe. Subscribe to pick up right where you left off.'
@@ -116,13 +189,22 @@ export default function TrialExpiredPage() {
           </div>
 
           <div className="px-6 pb-6">
+            {resumeError && (
+              <p className="text-sm text-red-600 bg-red-50 rounded-lg p-3 mb-4 text-center">
+                {resumeError}
+              </p>
+            )}
             <button
-              onClick={() => navigate('/checkout')}
-              className="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl text-white font-semibold text-base transition-all hover:opacity-90 hover:shadow-lg"
+              onClick={handleSubscribeClick}
+              disabled={resumeLoading}
+              className="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl text-white font-semibold text-base transition-all hover:opacity-90 hover:shadow-lg disabled:opacity-60"
               style={{ backgroundColor: primaryColor }}
             >
-              Subscribe Now
-              <ArrowRight className="w-5 h-5" />
+              {resumeLoading ? (
+                <><Loader2 className="w-5 h-5 animate-spin" /> Processing...</>
+              ) : (
+                <>{isTrialEnd ? 'Resume Subscription' : 'Subscribe Now'}<ArrowRight className="w-5 h-5" /></>
+              )}
             </button>
             <p className="text-center text-xs text-gray-400 mt-3">
               Secure payment via Razorpay · Cancel anytime

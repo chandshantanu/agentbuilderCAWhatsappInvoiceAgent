@@ -58,7 +58,8 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
 
   const [searchParams] = useSearchParams();
-  const [couponCode, setCouponCode] = useState('');
+  const isTrial = (config?.pricing?.trial_days || 0) > 0;
+  const [couponCode, setCouponCode] = useState(isTrial ? 'TEST1' : '');
   const [couponResult, setCouponResult] = useState<any>(null);
   const [couponError, setCouponError] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
@@ -73,21 +74,19 @@ export default function CheckoutPage() {
     }
   }, [hasSubscription, navigate]);
 
-  // Auto-fill and validate coupon from ?coupon= URL param
+  // Auto-fill and validate coupon: trial agents always use TEST1 (locked)
   useEffect(() => {
-    if (couponAutoApplied.current) return;
-    const urlCoupon = searchParams.get('coupon');
-    if (urlCoupon && subdomain && !couponCode) {
-      couponAutoApplied.current = true;
-      const code = urlCoupon.toUpperCase();
-      setCouponCode(code);
-      setCouponLoading(true);
-      saasApi.validateCoupon(subdomain, code)
-        .then((result) => setCouponResult(result.data))
-        .catch((err: any) => setCouponError(err.message || 'Invalid coupon'))
-        .finally(() => setCouponLoading(false));
-    }
-  }, [searchParams, subdomain, couponCode]);
+    if (couponAutoApplied.current || !subdomain) return;
+    const code = isTrial ? 'TEST1' : (searchParams.get('coupon') || '');
+    if (!code) return;
+    couponAutoApplied.current = true;
+    setCouponCode(code.toUpperCase());
+    setCouponLoading(true);
+    saasApi.validateCoupon(subdomain, code.toUpperCase())
+      .then((result) => setCouponResult(result.data))
+      .catch((err: any) => !isTrial && setCouponError(err.message || 'Invalid coupon'))
+      .finally(() => setCouponLoading(false));
+  }, [searchParams, subdomain, isTrial]);
 
   // Load Razorpay script
   useEffect(() => {
@@ -104,10 +103,11 @@ export default function CheckoutPage() {
   const { branding, pricing, landing_page } = config;
   const primary = branding.primary_color || '#2563eb';
   const rgb = hexToRgb(primary);
-  const amount = couponResult ? couponResult.final_amount : pricing.monthly_price;
   const currency = pricing.currency || 'INR';
   const currencySymbol = currency === 'INR' ? '\u20B9' : '$';
   const displayPrice = pricing.display_price || pricing.monthly_price;
+  // Trial: always show ₹1 as "due today"; full price shows "after trial"
+  const amount = isTrial ? 1 : (couponResult ? couponResult.final_amount : pricing.monthly_price);
   const features: Array<{ title: string; description: string }> =
     landing_page?.features || [];
   const discount = couponResult ? couponResult.discount : 0;
@@ -312,43 +312,65 @@ export default function CheckoutPage() {
                 className="rounded-xl p-4 mb-5 space-y-2.5"
                 style={{ backgroundColor: `rgba(${rgb}, 0.03)` }}
               >
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-600">Monthly plan</span>
-                  <span className="font-medium text-gray-900">
-                    {currencySymbol}{displayPrice}
-                  </span>
-                </div>
-                {couponResult && (
-                  <div className="flex justify-between items-center text-sm text-emerald-600">
-                    <span className="flex items-center gap-1.5">
-                      <Tag className="w-3.5 h-3.5" />
-                      Coupon ({couponCode})
-                    </span>
-                    <span className="font-medium">-{currencySymbol}{discount}</span>
-                  </div>
+                {isTrial ? (
+                  <>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-600">{pricing.trial_days}-day free trial</span>
+                      <span className="font-medium text-emerald-600">FREE</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm text-gray-500">
+                      <span>After trial ({displayPrice}/mo)</span>
+                      <span>billed monthly</span>
+                    </div>
+                    <div className="border-t border-gray-200/60 pt-2.5 flex justify-between items-center">
+                      <span className="font-semibold text-gray-900">Verification charge today</span>
+                      <span className="text-xl font-bold" style={{ color: primary }}>
+                        {currencySymbol}1
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-600">Monthly plan</span>
+                      <span className="font-medium text-gray-900">{currencySymbol}{displayPrice}</span>
+                    </div>
+                    {couponResult && (
+                      <div className="flex justify-between items-center text-sm text-emerald-600">
+                        <span className="flex items-center gap-1.5">
+                          <Tag className="w-3.5 h-3.5" />
+                          Coupon ({couponCode})
+                        </span>
+                        <span className="font-medium">-{currencySymbol}{discount}</span>
+                      </div>
+                    )}
+                    <div className="border-t border-gray-200/60 pt-2.5 flex justify-between items-center">
+                      <span className="font-semibold text-gray-900">Total due today</span>
+                      <span className="text-xl font-bold" style={{ color: couponResult ? '#059669' : primary }}>
+                        {currencySymbol}{amount}
+                      </span>
+                    </div>
+                  </>
                 )}
-                <div className="border-t border-gray-200/60 pt-2.5 flex justify-between items-center">
-                  <span className="font-semibold text-gray-900">Total due today</span>
-                  <span
-                    className="text-xl font-bold"
-                    style={{ color: couponResult ? '#059669' : primary }}
-                  >
-                    {currencySymbol}{amount}
-                  </span>
-                </div>
               </div>
 
-              {/* Coupon section */}
-              {couponResult ? (
+              {/* Coupon section — locked for trial, editable otherwise */}
+              {isTrial ? (
+                <div className="flex items-center justify-between bg-emerald-50 rounded-lg px-4 py-3 mb-5 border border-emerald-200">
+                  <div className="flex items-center gap-2 text-sm text-emerald-700">
+                    <Lock className="w-4 h-4" />
+                    <span className="font-mono font-semibold">TEST1</span>
+                    <span>trial coupon applied</span>
+                  </div>
+                  <Lock className="w-4 h-4 text-emerald-500" />
+                </div>
+              ) : couponResult ? (
                 <div className="flex items-center justify-between bg-emerald-50 rounded-lg px-4 py-3 mb-5">
                   <div className="flex items-center gap-2 text-sm text-emerald-700">
                     <Check className="w-4 h-4" />
                     <span className="font-medium">{couponCode}</span> applied — you save {currencySymbol}{discount}
                   </div>
-                  <button
-                    onClick={handleRemoveCoupon}
-                    className="text-emerald-600 hover:text-emerald-800 transition-colors"
-                  >
+                  <button onClick={handleRemoveCoupon} className="text-emerald-600 hover:text-emerald-800 transition-colors">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -360,10 +382,7 @@ export default function CheckoutPage() {
                       <input
                         type="text"
                         value={couponCode}
-                        onChange={(e) => {
-                          setCouponCode(e.target.value.toUpperCase());
-                          if (couponError) setCouponError('');
-                        }}
+                        onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); if (couponError) setCouponError(''); }}
                         onKeyDown={(e) => e.key === 'Enter' && handleValidateCoupon()}
                         className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-shadow"
                         style={{ '--tw-ring-color': `rgba(${rgb}, 0.4)` } as any}
@@ -375,11 +394,7 @@ export default function CheckoutPage() {
                       disabled={couponLoading || !couponCode.trim()}
                       className="px-5 py-2.5 text-sm font-medium border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                     >
-                      {couponLoading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        'Apply'
-                      )}
+                      {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
                     </button>
                   </div>
                   {couponError && (
@@ -405,6 +420,11 @@ export default function CheckoutPage() {
                     <Loader2 className="w-5 h-5 animate-spin" />
                     Processing...
                   </>
+                ) : isTrial ? (
+                  <>
+                    <Shield className="w-5 h-5" />
+                    Start {pricing.trial_days}-Day Trial — {currencySymbol}1
+                  </>
                 ) : (
                   <>
                     <Shield className="w-5 h-5" />
@@ -414,7 +434,9 @@ export default function CheckoutPage() {
               </button>
 
               <p className="text-xs text-gray-400 text-center mt-4">
-                Secure payment powered by Razorpay. Cancel anytime.
+                {isTrial
+                  ? `₹1 verification charge today. ${currencySymbol}${displayPrice}/mo after ${pricing.trial_days}-day trial. Cancel anytime.`
+                  : 'Secure payment powered by Razorpay. Cancel anytime.'}
               </p>
             </div>
           </div>
