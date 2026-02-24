@@ -158,37 +158,37 @@ export default function ProductsPanel({ config }: { config: Record<string, unkno
           <p className="text-sm mt-1">Add products to your catalog for the AI agent to recommend.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
+        <div className="glass-card rounded-xl overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-neutral-50 border-b border-neutral-200">
+            <thead className="bg-white/5 border-b border-white/10">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-neutral-600">Product</th>
-                <th className="text-left px-4 py-3 font-medium text-neutral-600">Price</th>
-                <th className="text-left px-4 py-3 font-medium text-neutral-600">Category</th>
-                <th className="text-left px-4 py-3 font-medium text-neutral-600">Stock</th>
-                <th className="text-right px-4 py-3 font-medium text-neutral-600">Actions</th>
+                <th className="text-left px-4 py-3 font-medium text-slate-400">Product</th>
+                <th className="text-left px-4 py-3 font-medium text-slate-400">Price</th>
+                <th className="text-left px-4 py-3 font-medium text-slate-400">Category</th>
+                <th className="text-left px-4 py-3 font-medium text-slate-400">Stock</th>
+                <th className="text-right px-4 py-3 font-medium text-slate-400">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100">
+            <tbody className="divide-y divide-white/10">
               {products.map((p) => (
-                <tr key={p.id} className="hover:bg-neutral-50">
+                <tr key={p.id} className="hover:bg-white/[0.04]">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       {p.image_url ? (
                         <img src={p.image_url} alt="" className="w-10 h-10 rounded-lg object-cover" />
                       ) : (
-                        <div className="w-10 h-10 rounded-lg bg-neutral-100 flex items-center justify-center">
-                          <Package className="w-5 h-5 text-neutral-400" />
+                        <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+                          <Package className="w-5 h-5 text-slate-500" />
                         </div>
                       )}
                       <div>
-                        <p className="font-medium text-neutral-900">{p.name}</p>
-                        <p className="text-xs text-neutral-500 truncate max-w-[200px]">{p.description}</p>
+                        <p className="font-medium text-slate-200">{p.name}</p>
+                        <p className="text-xs text-slate-500 truncate max-w-[200px]">{p.description}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-neutral-900 font-medium">
-                    {p.currency === 'INR' ? '₹' : '$'}{p.price.toLocaleString()}
+                    <span className="text-slate-200 font-medium">{p.currency === 'INR' ? '₹' : '$'}{p.price.toLocaleString()}</span>
                   </td>
                   <td className="px-4 py-3">
                     <Badge variant="outline">{p.category || 'Uncategorized'}</Badge>
@@ -217,10 +217,10 @@ export default function ProductsPanel({ config }: { config: Record<string, unkno
 
       {/* Create/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowModal(false)}>
+          <div className="bg-[#0d1525] border border-white/10 rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-lg">{editingProduct ? 'Edit Product' : 'Add Product'}</h3>
+              <h3 className="font-semibold text-lg text-slate-100">{editingProduct ? 'Edit Product' : 'Add Product'}</h3>
               <Button variant="ghost" size="icon" onClick={() => setShowModal(false)}>
                 <X className="w-4 h-4" />
               </Button>
@@ -228,30 +228,30 @@ export default function ProductsPanel({ config }: { config: Record<string, unkno
 
             <div className="space-y-3">
               <div>
-                <label className="text-sm font-medium text-neutral-700">Name *</label>
+                <label className="text-sm font-medium text-slate-400">Name *</label>
                 <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Product name" />
               </div>
               <div>
-                <label className="text-sm font-medium text-neutral-700">Description</label>
+                <label className="text-sm font-medium text-slate-400">Description</label>
                 <textarea
                   value={form.description}
                   onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                   placeholder="Product description..."
                   rows={3}
-                  className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm"
+                  className="w-full px-3 py-2 border border-white/10 rounded-lg text-sm bg-white/5 text-slate-200"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium text-neutral-700">Price</label>
+                  <label className="text-sm font-medium text-slate-400">Price</label>
                   <Input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: parseFloat(e.target.value) || 0 }))} />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-neutral-700">Currency</label>
+                  <label className="text-sm font-medium text-slate-400">Currency</label>
                   <select
                     value={form.currency}
                     onChange={e => setForm(f => ({ ...f, currency: e.target.value }))}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm"
+                    className="w-full px-3 py-2 border border-white/10 rounded-lg text-sm bg-white/5 text-slate-200"
                   >
                     <option value="INR">INR (₹)</option>
                     <option value="USD">USD ($)</option>
@@ -259,19 +259,19 @@ export default function ProductsPanel({ config }: { config: Record<string, unkno
                 </div>
               </div>
               <div>
-                <label className="text-sm font-medium text-neutral-700">Category</label>
+                <label className="text-sm font-medium text-slate-400">Category</label>
                 <Input value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} placeholder="e.g. Dresses, Electronics" />
               </div>
               <div>
-                <label className="text-sm font-medium text-neutral-700">Image URL</label>
+                <label className="text-sm font-medium text-slate-400">Image URL</label>
                 <Input value={form.image_url} onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))} placeholder="https://..." />
               </div>
               <div>
-                <label className="text-sm font-medium text-neutral-700">Buy Link</label>
+                <label className="text-sm font-medium text-slate-400">Buy Link</label>
                 <Input value={form.buy_link} onChange={e => setForm(f => ({ ...f, buy_link: e.target.value }))} placeholder="https://..." />
               </div>
               <div>
-                <label className="text-sm font-medium text-neutral-700">Tags (comma separated)</label>
+                <label className="text-sm font-medium text-slate-400">Tags (comma separated)</label>
                 <Input value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} placeholder="sale, new-arrival, festive" />
               </div>
               <label className="flex items-center gap-2 cursor-pointer">

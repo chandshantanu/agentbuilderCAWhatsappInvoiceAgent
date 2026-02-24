@@ -34,12 +34,12 @@ interface Contact {
 
 const STAGES = ['new', 'qualified', 'proposal', 'negotiation', 'won', 'lost'];
 const STAGE_COLORS: Record<string, string> = {
-  new: 'bg-neutral-100 text-neutral-700',
-  qualified: 'bg-blue-100 text-blue-700',
-  proposal: 'bg-purple-100 text-purple-700',
-  negotiation: 'bg-amber-100 text-amber-700',
-  won: 'bg-emerald-100 text-emerald-700',
-  lost: 'bg-red-100 text-red-700',
+  new: 'bg-white/10 text-slate-400',
+  qualified: 'bg-blue-500/20 text-blue-400',
+  proposal: 'bg-purple-500/20 text-purple-400',
+  negotiation: 'bg-amber-500/20 text-amber-400',
+  won: 'bg-emerald-500/20 text-emerald-400',
+  lost: 'bg-red-500/20 text-red-400',
 };
 
 export default function CRMPanel({ config }: { config: Record<string, unknown> }) {
@@ -118,16 +118,16 @@ export default function CRMPanel({ config }: { config: Record<string, unknown> }
           <Badge variant="secondary">{contacts.length}</Badge>
         </h3>
         <div className="flex gap-2">
-          <div className="flex bg-neutral-100 rounded-lg p-0.5">
+          <div className="flex bg-white/10 rounded-lg p-0.5">
             <button
               onClick={() => setView('table')}
-              className={cn('px-3 py-1 rounded-md text-xs font-medium', view === 'table' ? 'bg-white shadow-sm' : '')}
+              className={cn('px-3 py-1 rounded-md text-xs font-medium transition-colors', view === 'table' ? 'bg-white/15 text-slate-200 shadow-sm' : 'text-slate-400')}
             >
               Table
             </button>
             <button
               onClick={() => setView('pipeline')}
-              className={cn('px-3 py-1 rounded-md text-xs font-medium', view === 'pipeline' ? 'bg-white shadow-sm' : '')}
+              className={cn('px-3 py-1 rounded-md text-xs font-medium transition-colors', view === 'pipeline' ? 'bg-white/15 text-slate-200 shadow-sm' : 'text-slate-400')}
             >
               Pipeline
             </button>
@@ -157,36 +157,36 @@ export default function CRMPanel({ config }: { config: Record<string, unknown> }
           {loading ? (
             <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-neutral-400" /></div>
           ) : (
-            <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
+            <div className="glass-card rounded-xl overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-neutral-50 border-b border-neutral-200">
+                <thead className="bg-white/5 border-b border-white/10">
                   <tr>
-                    <th className="text-left px-4 py-3 font-medium text-neutral-600">Contact</th>
-                    <th className="text-left px-4 py-3 font-medium text-neutral-600">Score</th>
-                    <th className="text-left px-4 py-3 font-medium text-neutral-600">Tags</th>
-                    <th className="text-left px-4 py-3 font-medium text-neutral-600">Stage</th>
-                    <th className="text-left px-4 py-3 font-medium text-neutral-600">Messages</th>
-                    <th className="text-right px-4 py-3 font-medium text-neutral-600">Actions</th>
+                    <th className="text-left px-4 py-3 font-medium text-slate-400">Contact</th>
+                    <th className="text-left px-4 py-3 font-medium text-slate-400">Score</th>
+                    <th className="text-left px-4 py-3 font-medium text-slate-400">Tags</th>
+                    <th className="text-left px-4 py-3 font-medium text-slate-400">Stage</th>
+                    <th className="text-left px-4 py-3 font-medium text-slate-400">Messages</th>
+                    <th className="text-right px-4 py-3 font-medium text-slate-400">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-neutral-100">
+                <tbody className="divide-y divide-white/10">
                   {filteredContacts.map(c => (
                     <React.Fragment key={c.sender_id}>
-                      <tr className="hover:bg-neutral-50 cursor-pointer" onClick={() => setExpandedContact(expandedContact === c.sender_id ? null : c.sender_id)}>
+                      <tr className="hover:bg-white/[0.04] cursor-pointer" onClick={() => setExpandedContact(expandedContact === c.sender_id ? null : c.sender_id)}>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-white text-xs font-medium">
                               {(c.username || c.sender_id).slice(0, 2).toUpperCase()}
                             </div>
                             <div>
-                              <p className="font-medium text-neutral-900">@{c.username || c.sender_id.slice(-8)}</p>
+                              <p className="font-medium text-slate-200">@{c.username || c.sender_id.slice(-8)}</p>
                               {c.ai_paused && <Badge variant="outline" className="text-xs text-orange-600">Paused</Badge>}
                             </div>
                           </div>
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <div className="w-16 h-2 bg-neutral-100 rounded-full overflow-hidden">
+                            <div className="w-16 h-2 bg-white/10 rounded-full overflow-hidden">
                               <div className={cn('h-full rounded-full', getScoreColor(c.lead_score))} style={{ width: `${c.lead_score}%` }} />
                             </div>
                             <span className="text-xs font-medium text-neutral-600">{c.lead_score}</span>
@@ -204,7 +204,7 @@ export default function CRMPanel({ config }: { config: Record<string, unknown> }
                             value={c.deal_stage || 'new'}
                             onChange={e => { e.stopPropagation(); updateStage(c.sender_id, e.target.value); }}
                             onClick={e => e.stopPropagation()}
-                            className={cn('px-2 py-1 rounded-md text-xs font-medium border-0', STAGE_COLORS[c.deal_stage || 'new'])}
+                            className={cn('px-2 py-1 rounded-md text-xs font-medium border-0 bg-transparent cursor-pointer', STAGE_COLORS[c.deal_stage || 'new'])}
                           >
                             {STAGES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
                           </select>
@@ -218,14 +218,14 @@ export default function CRMPanel({ config }: { config: Record<string, unknown> }
                       </tr>
                       {expandedContact === c.sender_id && (
                         <tr>
-                          <td colSpan={6} className="px-4 py-4 bg-neutral-50">
+                          <td colSpan={6} className="px-4 py-4 bg-white/[0.03]">
                             <div className="grid grid-cols-2 gap-4">
                               <div>
                                 <h4 className="text-sm font-medium text-neutral-700 mb-2 flex items-center gap-1">
                                   <StickyNote className="w-4 h-4" /> Notes
                                 </h4>
                                 {(c.notes || []).map(n => (
-                                  <div key={n.id} className="text-xs text-neutral-600 mb-1 bg-white rounded p-2">
+                                  <div key={n.id} className="text-xs text-slate-400 mb-1 bg-white/5 rounded p-2">
                                     {n.text}
                                     <span className="text-neutral-400 ml-2">{new Date(n.created_at).toLocaleDateString()}</span>
                                   </div>
@@ -274,12 +274,12 @@ export default function CRMPanel({ config }: { config: Record<string, unknown> }
                 {stage.charAt(0).toUpperCase() + stage.slice(1)}
                 <Badge variant="secondary" className="ml-2 text-xs">{(pipelineData[stage] || []).length}</Badge>
               </div>
-              <div className="bg-neutral-50 rounded-b-lg p-2 space-y-2 min-h-[200px]">
+              <div className="bg-white/[0.03] rounded-b-lg p-2 space-y-2 min-h-[200px]">
                 {(pipelineData[stage] || []).map(c => (
-                  <div key={c.sender_id} className="bg-white rounded-lg border border-neutral-200 p-3">
-                    <p className="text-sm font-medium text-neutral-900">@{c.username || c.sender_id.slice(-8)}</p>
+                  <div key={c.sender_id} className="glass-card rounded-lg p-3">
+                    <p className="text-sm font-medium text-slate-200">@{c.username || c.sender_id.slice(-8)}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      <div className="flex-1 h-1.5 bg-neutral-100 rounded-full overflow-hidden">
+                      <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
                         <div className={cn('h-full rounded-full', getScoreColor(c.lead_score))} style={{ width: `${c.lead_score}%` }} />
                       </div>
                       <span className="text-xs text-neutral-500">{c.lead_score}</span>

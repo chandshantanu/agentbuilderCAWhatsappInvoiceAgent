@@ -186,21 +186,26 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div className="min-h-screen" style={{ background: '#070B14', fontFamily: "'Inter', system-ui, sans-serif" }}>
+      {/* Aurora bg */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-15%] right-[5%] w-[500px] h-[500px] rounded-full opacity-15" style={{ background: 'radial-gradient(circle, #7C3AED 0%, transparent 70%)', filter: 'blur(80px)' }} />
+        <div className="absolute bottom-[-10%] left-[10%] w-[400px] h-[400px] rounded-full opacity-10" style={{ background: 'radial-gradient(circle, #EC4899 0%, transparent 70%)', filter: 'blur(80px)' }} />
+      </div>
       {/* Header */}
-      <header className="bg-white border-b border-gray-200/60">
+      <header className="relative z-10 border-b border-white/10 bg-white/5 backdrop-blur-md">
         <div className="max-w-5xl mx-auto px-5 sm:px-8 h-[60px] flex items-center justify-between">
           <div className="flex items-center gap-3">
             {branding.logo_url && (
               <img src={branding.logo_url} alt="" className="h-8 w-auto" />
             )}
-            <span className="font-semibold text-[17px] text-gray-900 tracking-[-0.01em]">
+            <span className="font-semibold text-[17px] text-slate-200 tracking-[-0.01em]">
               {branding.brand_name || subdomain}
             </span>
           </div>
           <Link
             to="/"
-            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+            className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-200 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Back
@@ -208,12 +213,12 @@ export default function CheckoutPage() {
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto px-5 sm:px-8 py-10 sm:py-14">
+      <div className="relative z-10 max-w-5xl mx-auto px-5 sm:px-8 py-10 sm:py-14">
         <div className="grid lg:grid-cols-5 gap-8 lg:gap-12">
 
           {/* Left: Features + trust signals */}
           <div className="lg:col-span-2 order-2 lg:order-1">
-            <h2 className="text-lg font-semibold text-gray-900 mb-5">
+            <h2 className="text-lg font-semibold text-slate-200 mb-5">
               What's included
             </h2>
             <div className="space-y-4">
@@ -227,13 +232,13 @@ export default function CheckoutPage() {
                   <div key={i} className="flex items-start gap-3">
                     <div
                       className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
-                      style={{ backgroundColor: `rgba(${rgb}, 0.08)` }}
+                      style={{ backgroundColor: `rgba(${rgb}, 0.15)` }}
                     >
                       <Icon className="w-4 h-4" style={{ color: primary }} />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{f.title}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{f.description}</p>
+                      <p className="text-sm font-medium text-slate-200">{f.title}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{f.description}</p>
                     </div>
                   </div>
                 );
@@ -241,16 +246,16 @@ export default function CheckoutPage() {
             </div>
 
             {/* Trust signals */}
-            <div className="mt-8 pt-6 border-t border-gray-200 space-y-3">
-              <div className="flex items-center gap-2.5 text-sm text-gray-500">
+            <div className="mt-8 pt-6 border-t border-white/10 space-y-3">
+              <div className="flex items-center gap-2.5 text-sm text-slate-400">
                 <Lock className="w-4 h-4" />
                 <span>256-bit SSL encrypted payments</span>
               </div>
-              <div className="flex items-center gap-2.5 text-sm text-gray-500">
+              <div className="flex items-center gap-2.5 text-sm text-slate-400">
                 <CreditCard className="w-4 h-4" />
                 <span>Powered by Razorpay — PCI DSS compliant</span>
               </div>
-              <div className="flex items-center gap-2.5 text-sm text-gray-500">
+              <div className="flex items-center gap-2.5 text-sm text-slate-400">
                 <Shield className="w-4 h-4" />
                 <span>Cancel anytime — no questions asked</span>
               </div>
@@ -260,10 +265,12 @@ export default function CheckoutPage() {
           {/* Right: Pricing card + checkout */}
           <div className="lg:col-span-3 order-1 lg:order-2">
             <div
-              className="relative bg-white rounded-2xl p-7 sm:p-8"
+              className="relative rounded-2xl p-7 sm:p-8"
               style={{
-                border: `1.5px solid rgba(${rgb}, 0.15)`,
-                boxShadow: `0 1px 3px rgba(0,0,0,0.06), 0 8px 32px rgba(${rgb}, 0.06)`,
+                background: 'rgba(255,255,255,0.05)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
               }}
             >
               {/* Trial badge */}
@@ -281,7 +288,7 @@ export default function CheckoutPage() {
               )}
 
               {error && (
-                <div className="text-sm text-red-600 bg-red-50 rounded-lg p-3 mb-5 flex items-center gap-2">
+                <div className="text-sm text-red-400 bg-red-500/10 rounded-lg p-3 mb-5 flex items-center gap-2 border border-red-500/20">
                   <X className="w-4 h-4 shrink-0" />
                   {error}
                 </div>
@@ -289,41 +296,40 @@ export default function CheckoutPage() {
 
               {/* Plan info */}
               <div className="text-center mb-6">
-                <p className="text-sm text-gray-500 mb-2">Monthly subscription</p>
+                <p className="text-sm text-slate-400 mb-2">Monthly subscription</p>
                 <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-lg font-medium text-gray-400">{currencySymbol}</span>
-                  <span className="text-5xl font-extrabold text-gray-900 tracking-tight leading-none">
+                  <span className="text-lg font-medium text-slate-400">{currencySymbol}</span>
+                  <span className="text-5xl font-extrabold text-slate-100 tracking-tight leading-none">
                     {displayPrice}
                   </span>
-                  <span className="text-gray-400 text-base font-medium">/mo</span>
+                  <span className="text-slate-400 text-base font-medium">/mo</span>
                 </div>
                 {user?.email && (
-                  <p className="text-xs text-gray-400 mt-2">
+                  <p className="text-xs text-slate-500 mt-2">
                     for {user.email}
                   </p>
                 )}
               </div>
 
               {/* Divider */}
-              <div className="h-px bg-gray-100 mb-6" />
+              <div className="h-px bg-white/10 mb-6" />
 
               {/* Pricing breakdown */}
               <div
-                className="rounded-xl p-4 mb-5 space-y-2.5"
-                style={{ backgroundColor: `rgba(${rgb}, 0.03)` }}
+                className="rounded-xl p-4 mb-5 space-y-2.5 bg-white/[0.04] border border-white/10"
               >
                 {isTrial ? (
                   <>
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-600">{pricing.trial_days}-day free trial</span>
-                      <span className="font-medium text-emerald-600">FREE</span>
+                      <span className="text-slate-400">{pricing.trial_days}-day free trial</span>
+                      <span className="font-medium text-emerald-400">FREE</span>
                     </div>
-                    <div className="flex justify-between items-center text-sm text-gray-500">
+                    <div className="flex justify-between items-center text-sm text-slate-500">
                       <span>After trial ({displayPrice}/mo)</span>
                       <span>billed monthly</span>
                     </div>
-                    <div className="border-t border-gray-200/60 pt-2.5 flex justify-between items-center">
-                      <span className="font-semibold text-gray-900">Verification charge today</span>
+                    <div className="border-t border-white/10 pt-2.5 flex justify-between items-center">
+                      <span className="font-semibold text-slate-200">Verification charge today</span>
                       <span className="text-xl font-bold" style={{ color: primary }}>
                         {currencySymbol}1
                       </span>
@@ -332,11 +338,11 @@ export default function CheckoutPage() {
                 ) : (
                   <>
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-600">Monthly plan</span>
-                      <span className="font-medium text-gray-900">{currencySymbol}{displayPrice}</span>
+                      <span className="text-slate-400">Monthly plan</span>
+                      <span className="font-medium text-slate-200">{currencySymbol}{displayPrice}</span>
                     </div>
                     {couponResult && (
-                      <div className="flex justify-between items-center text-sm text-emerald-600">
+                      <div className="flex justify-between items-center text-sm text-emerald-400">
                         <span className="flex items-center gap-1.5">
                           <Tag className="w-3.5 h-3.5" />
                           Coupon ({couponCode})
@@ -344,9 +350,9 @@ export default function CheckoutPage() {
                         <span className="font-medium">-{currencySymbol}{discount}</span>
                       </div>
                     )}
-                    <div className="border-t border-gray-200/60 pt-2.5 flex justify-between items-center">
-                      <span className="font-semibold text-gray-900">Total due today</span>
-                      <span className="text-xl font-bold" style={{ color: couponResult ? '#059669' : primary }}>
+                    <div className="border-t border-white/10 pt-2.5 flex justify-between items-center">
+                      <span className="font-semibold text-slate-200">Total due today</span>
+                      <span className="text-xl font-bold" style={{ color: couponResult ? '#34d399' : primary }}>
                         {currencySymbol}{amount}
                       </span>
                     </div>
@@ -356,8 +362,8 @@ export default function CheckoutPage() {
 
               {/* Coupon section — locked for trial, editable otherwise */}
               {isTrial ? (
-                <div className="flex items-center justify-between bg-emerald-50 rounded-lg px-4 py-3 mb-5 border border-emerald-200">
-                  <div className="flex items-center gap-2 text-sm text-emerald-700">
+                <div className="flex items-center justify-between bg-emerald-500/10 rounded-lg px-4 py-3 mb-5 border border-emerald-500/20">
+                  <div className="flex items-center gap-2 text-sm text-emerald-400">
                     <Lock className="w-4 h-4" />
                     <span className="font-mono font-semibold">TEST1</span>
                     <span>trial coupon applied</span>
@@ -365,12 +371,12 @@ export default function CheckoutPage() {
                   <Lock className="w-4 h-4 text-emerald-500" />
                 </div>
               ) : couponResult ? (
-                <div className="flex items-center justify-between bg-emerald-50 rounded-lg px-4 py-3 mb-5">
-                  <div className="flex items-center gap-2 text-sm text-emerald-700">
+                <div className="flex items-center justify-between bg-emerald-500/10 rounded-lg px-4 py-3 mb-5 border border-emerald-500/20">
+                  <div className="flex items-center gap-2 text-sm text-emerald-400">
                     <Check className="w-4 h-4" />
                     <span className="font-medium">{couponCode}</span> applied — you save {currencySymbol}{discount}
                   </div>
-                  <button onClick={handleRemoveCoupon} className="text-emerald-600 hover:text-emerald-800 transition-colors">
+                  <button onClick={handleRemoveCoupon} className="text-emerald-500 hover:text-emerald-300 transition-colors">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -378,27 +384,26 @@ export default function CheckoutPage() {
                 <div className="mb-5">
                   <div className="flex gap-2">
                     <div className="relative flex-1">
-                      <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                       <input
                         type="text"
                         value={couponCode}
                         onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); if (couponError) setCouponError(''); }}
                         onKeyDown={(e) => e.key === 'Enter' && handleValidateCoupon()}
-                        className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-shadow"
-                        style={{ '--tw-ring-color': `rgba(${rgb}, 0.4)` } as any}
+                        className="w-full pl-9 pr-3 py-2.5 border border-white/10 bg-white/5 rounded-lg text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-transparent transition-shadow"
                         placeholder="Coupon code"
                       />
                     </div>
                     <button
                       onClick={handleValidateCoupon}
                       disabled={couponLoading || !couponCode.trim()}
-                      className="px-5 py-2.5 text-sm font-medium border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                      className="px-5 py-2.5 text-sm font-medium border border-white/10 bg-white/5 text-slate-300 rounded-lg hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                     >
                       {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
                     </button>
                   </div>
                   {couponError && (
-                    <p className="text-xs text-red-500 mt-1.5 flex items-center gap-1">
+                    <p className="text-xs text-red-400 mt-1.5 flex items-center gap-1">
                       <X className="w-3 h-3" /> {couponError}
                     </p>
                   )}
@@ -433,7 +438,7 @@ export default function CheckoutPage() {
                 )}
               </button>
 
-              <p className="text-xs text-gray-400 text-center mt-4">
+              <p className="text-xs text-slate-500 text-center mt-4">
                 {isTrial
                   ? `₹1 verification charge today. ${currencySymbol}${displayPrice}/mo after ${pricing.trial_days}-day trial. Cancel anytime.`
                   : 'Secure payment powered by Razorpay. Cancel anytime.'}

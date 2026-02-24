@@ -52,21 +52,26 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#070B14', fontFamily: "'Inter', system-ui, sans-serif" }}>
+      {/* Aurora bg blobs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-20%] left-[10%] w-[500px] h-[500px] rounded-full opacity-20" style={{ background: 'radial-gradient(circle, #7C3AED 0%, transparent 70%)', filter: 'blur(60px)' }} />
+        <div className="absolute bottom-[-10%] right-[5%] w-[400px] h-[400px] rounded-full opacity-15" style={{ background: 'radial-gradient(circle, #EC4899 0%, transparent 70%)', filter: 'blur(60px)' }} />
+      </div>
       {/* Header */}
-      <header className="bg-white border-b border-gray-200/60">
+      <header className="relative z-10 border-b border-white/10 bg-white/5 backdrop-blur-md">
         <div className="max-w-5xl mx-auto px-5 sm:px-8 h-[60px] flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
             {branding.logo_url && (
               <img src={branding.logo_url} alt="" className="h-8 w-auto" />
             )}
-            <span className="font-semibold text-[17px] text-gray-900 tracking-[-0.01em]">
+            <span className="font-semibold text-[17px] text-slate-200 tracking-[-0.01em]">
               {branding.brand_name || 'Welcome back'}
             </span>
           </Link>
           <Link
             to="/"
-            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+            className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-200 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Back
@@ -74,34 +79,36 @@ export default function LoginPage() {
         </div>
       </header>
 
-      <div className="flex-1 flex items-center justify-center px-4 py-10">
+      <div className="relative z-10 flex-1 flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-sm">
           {/* Heading */}
           <div className="text-center mb-7">
-            <h1 className="text-2xl font-bold text-gray-900 tracking-[-0.02em]">
+            <h1 className="text-2xl font-bold text-slate-100 tracking-[-0.02em]">
               Welcome back
             </h1>
-            <p className="text-sm text-gray-500 mt-1.5">
+            <p className="text-sm text-slate-400 mt-1.5">
               Log in to your account to continue
             </p>
           </div>
 
           <form
             onSubmit={handleSubmit}
-            className="bg-white rounded-2xl p-7 space-y-5"
+            className="rounded-2xl p-7 space-y-5"
             style={{
-              border: '1px solid rgba(0,0,0,0.06)',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03)',
+              background: 'rgba(255,255,255,0.05)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
             }}
           >
             {error && (
-              <div className="text-sm text-red-600 bg-red-50 rounded-lg p-3 border border-red-100">
+              <div className="text-sm text-red-400 bg-red-500/10 rounded-lg p-3 border border-red-500/20">
                 {error}
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label className="block text-sm font-medium text-slate-400 mb-1.5">
                 Email
               </label>
               <input
@@ -109,21 +116,19 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-shadow"
-                style={{ '--tw-ring-color': `rgba(${rgb}, 0.4)` } as any}
+                className="w-full px-4 py-3 border border-white/10 bg-white/5 rounded-xl text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-transparent transition-all"
                 placeholder="you@example.com"
               />
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-slate-400">
                   Password
                 </label>
                 <Link
                   to="/forgot-password"
-                  className="text-xs font-medium hover:underline"
-                  style={{ color: primary }}
+                  className="text-xs font-medium hover:underline text-violet-400"
                 >
                   Forgot password?
                 </Link>
@@ -133,8 +138,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-shadow"
-                style={{ '--tw-ring-color': `rgba(${rgb}, 0.4)` } as any}
+                className="w-full px-4 py-3 border border-white/10 bg-white/5 rounded-xl text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-transparent transition-all"
                 placeholder="Your password"
               />
             </div>
@@ -159,13 +163,9 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="text-center text-sm text-gray-500 mt-5">
+          <p className="text-center text-sm text-slate-500 mt-5">
             Don't have an account?{' '}
-            <Link
-              to="/signup"
-              className="font-medium hover:underline"
-              style={{ color: primary }}
-            >
+            <Link to="/signup" className="font-medium text-violet-400 hover:underline">
               Sign up
             </Link>
           </p>

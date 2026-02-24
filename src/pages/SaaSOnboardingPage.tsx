@@ -176,10 +176,10 @@ export default function SaaSOnboardingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#070B14' }}>
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3" style={{ color: primary }} />
-          <p className="text-sm text-gray-500">Loading setup...</p>
+          <p className="text-sm text-slate-400">Loading setup...</p>
         </div>
       </div>
     );
@@ -195,10 +195,10 @@ export default function SaaSOnboardingPage() {
           >
             <CheckCircle2 className="w-8 h-8" style={{ color: primary }} />
           </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          <h2 className="text-xl font-semibold text-slate-100 mb-2">
             You're all set!
           </h2>
-          <p className="text-sm text-gray-500 mb-6">
+          <p className="text-sm text-slate-400 mb-6">
             Your agent is ready to use. Head to the dashboard to get started.
           </p>
           <button
@@ -217,19 +217,19 @@ export default function SaaSOnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div className="min-h-screen" style={{ background: '#070B14', fontFamily: "'Inter', system-ui, sans-serif" }}>
       {/* Header */}
-      <header className="bg-white border-b border-gray-200/60">
+      <header className="relative z-10 border-b border-white/10 bg-white/5 backdrop-blur-md">
         <div className="max-w-3xl mx-auto px-5 sm:px-8 h-[60px] flex items-center justify-between">
           <div className="flex items-center gap-3">
             {branding.logo_url && (
               <img src={branding.logo_url} alt="" className="h-8 w-auto" />
             )}
-            <span className="font-semibold text-[17px] text-gray-900 tracking-[-0.01em]">
+            <span className="font-semibold text-[17px] text-slate-200 tracking-[-0.01em]">
               {branding.brand_name || subdomain}
             </span>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-gray-400">
+          <div className="flex items-center gap-1.5 text-xs text-slate-400">
             <Shield className="w-3.5 h-3.5" />
             Secure setup
           </div>
@@ -246,7 +246,7 @@ export default function SaaSOnboardingPage() {
                   <div
                     className="h-px w-6 sm:w-10 transition-colors duration-300"
                     style={{
-                      backgroundColor: i <= currentStep ? primary : '#e5e7eb',
+                      backgroundColor: i <= currentStep ? primary : 'rgba(255,255,255,0.15)',
                     }}
                   />
                 )}
@@ -261,7 +261,7 @@ export default function SaaSOnboardingPage() {
                             color: primary,
                             border: `2px solid ${primary}`,
                           }
-                        : { backgroundColor: '#f3f4f6', color: '#9ca3af' }
+                        : { backgroundColor: 'rgba(255,255,255,0.08)', color: '#94a3b8' }
                   }
                 >
                   {i < currentStep ? (
@@ -273,14 +273,14 @@ export default function SaaSOnboardingPage() {
               </div>
             ))}
           </div>
-          <div className="flex items-center justify-between text-xs text-gray-400">
+          <div className="flex items-center justify-between text-xs text-slate-400">
             <span>
               Step {currentStep + 1} of {totalSteps}
             </span>
             <span>{Math.round(((currentStep + 1) / totalSteps) * 100)}% complete</span>
           </div>
           {/* Progress bar */}
-          <div className="h-1 bg-gray-200 rounded-full overflow-hidden mt-2">
+          <div className="h-1 bg-white/10 rounded-full overflow-hidden mt-2">
             <div
               className="h-full rounded-full transition-all duration-500 ease-out"
               style={{
@@ -293,11 +293,8 @@ export default function SaaSOnboardingPage() {
 
         {/* Step content card */}
         <div
-          className="bg-white rounded-2xl p-7 sm:p-8"
-          style={{
-            border: '1px solid rgba(0,0,0,0.06)',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03)',
-          }}
+          className="rounded-2xl p-7 sm:p-8"
+          style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}
         >
           {/* Step header */}
           <div className="mb-6">
@@ -312,18 +309,18 @@ export default function SaaSOnboardingPage() {
                 Step {currentStep + 1}
               </span>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-xl font-semibold text-slate-100">
               {currentField.label}
             </h2>
             {currentField.description && (
-              <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">
+              <p className="text-sm text-slate-400 mt-1.5 leading-relaxed">
                 {currentField.description}
               </p>
             )}
           </div>
 
           {error && (
-            <div className="text-sm text-red-600 bg-red-50 rounded-lg p-3 mb-5 border border-red-100">
+            <div className="text-sm text-red-400 bg-red-500/10 rounded-lg p-3 mb-5 border border-red-500/20">
               {error}
             </div>
           )}
@@ -404,10 +401,10 @@ export default function SaaSOnboardingPage() {
                   className="sr-only peer"
                 />
                 <div
-                  className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"
+                  className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-2 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"
                   style={values[currentField.key] === 'true' ? { backgroundColor: primary } : {}}
                 />
-                <span className="ms-3 text-sm font-medium text-gray-700">
+                <span className="ms-3 text-sm font-medium text-slate-300">
                   {values[currentField.key] === 'true' ? 'Enabled' : 'Disabled'}
                 </span>
               </label>
@@ -417,7 +414,7 @@ export default function SaaSOnboardingPage() {
                 onChange={(e) =>
                   setValues((v) => ({ ...v, [currentField.key]: e.target.value }))
                 }
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:border-transparent bg-white transition-shadow"
+                className="w-full px-4 py-3 border border-white/10 rounded-xl text-sm text-slate-200 bg-white/5 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-transparent transition-shadow"
                 style={{ '--tw-ring-color': `rgba(${rgb}, 0.4)` } as any}
               >
                 <option value="">Select...</option>
@@ -439,7 +436,7 @@ export default function SaaSOnboardingPage() {
                 }
                 placeholder={currentField.placeholder}
                 rows={4}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:border-transparent resize-none transition-shadow"
+                className="w-full px-4 py-3 border border-white/10 rounded-xl text-sm text-slate-200 bg-white/5 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-transparent resize-none transition-shadow"
                 style={{ '--tw-ring-color': `rgba(${rgb}, 0.4)` } as any}
               />
             ) : (
@@ -450,7 +447,7 @@ export default function SaaSOnboardingPage() {
                   setValues((v) => ({ ...v, [currentField.key]: e.target.value }))
                 }
                 placeholder={currentField.placeholder}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-shadow"
+                className="w-full px-4 py-3 border border-white/10 rounded-xl text-sm text-slate-200 bg-white/5 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-transparent transition-shadow"
                 style={{ '--tw-ring-color': `rgba(${rgb}, 0.4)` } as any}
               />
             )}
@@ -461,7 +458,7 @@ export default function SaaSOnboardingPage() {
             {currentStep > 0 && (
               <button
                 onClick={handleBack}
-                className="flex-1 h-11 rounded-xl text-sm font-medium text-gray-700 border border-gray-200 hover:bg-gray-50 flex items-center justify-center gap-2 transition-colors"
+                className="flex-1 h-11 rounded-xl text-sm font-medium text-slate-300 border border-white/10 hover:bg-white/10 flex items-center justify-center gap-2 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Back
@@ -496,13 +493,13 @@ export default function SaaSOnboardingPage() {
         {/* Upcoming steps preview */}
         {currentStep < totalSteps - 1 && (
           <div className="mt-6 space-y-2">
-            <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">
+            <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">
               Coming next
             </p>
             {fields.slice(currentStep + 1, currentStep + 3).map((field, i) => (
               <div
                 key={i}
-                className="flex items-center gap-3 text-sm text-gray-400 bg-white/60 rounded-lg px-4 py-2.5 border border-gray-100"
+                className="flex items-center gap-3 text-sm text-slate-400 bg-white/5 rounded-lg px-4 py-2.5 border border-white/10"
               >
                 <Circle className="w-3.5 h-3.5 shrink-0" />
                 <span>{field.label}</span>

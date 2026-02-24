@@ -107,14 +107,14 @@ export default function KnowledgeBasePanel({ config }: { config: Record<string, 
 
   const getCategoryColor = (cat: string) => {
     const colors: Record<string, string> = {
-      faq: 'bg-blue-100 text-blue-700',
-      returns: 'bg-orange-100 text-orange-700',
-      shipping: 'bg-purple-100 text-purple-700',
-      brand_story: 'bg-pink-100 text-pink-700',
-      policies: 'bg-neutral-100 text-neutral-700',
-      uploaded: 'bg-cyan-100 text-cyan-700',
+      faq: 'bg-blue-500/20 text-blue-400',
+      returns: 'bg-orange-500/20 text-orange-400',
+      shipping: 'bg-purple-500/20 text-purple-400',
+      brand_story: 'bg-pink-500/20 text-pink-400',
+      policies: 'bg-white/10 text-slate-400',
+      uploaded: 'bg-cyan-500/20 text-cyan-400',
     };
-    return colors[cat] || 'bg-neutral-100 text-neutral-700';
+    return colors[cat] || 'bg-white/10 text-slate-400';
   };
 
   return (
@@ -148,7 +148,7 @@ export default function KnowledgeBasePanel({ config }: { config: Record<string, 
         <select
           value={filterCategory}
           onChange={e => setFilterCategory(e.target.value)}
-          className="px-3 py-2 border border-neutral-300 rounded-lg text-sm"
+          className="px-3 py-2 border border-white/10 rounded-lg text-sm bg-white/5 text-slate-200"
         >
           <option value="">All Categories</option>
           {CATEGORIES.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1).replace('_', ' ')}</option>)}
@@ -167,14 +167,14 @@ export default function KnowledgeBasePanel({ config }: { config: Record<string, 
       ) : (
         <div className="space-y-3">
           {articles.map(a => (
-            <div key={a.id} className="bg-white rounded-xl border border-neutral-200 p-4 hover:bg-neutral-50 transition-colors">
+            <div key={a.id} className="glass-card rounded-xl p-4 hover:bg-white/[0.07] transition-colors">
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-medium text-neutral-900 truncate">{a.title}</h4>
+                    <h4 className="font-medium text-slate-200 truncate">{a.title}</h4>
                     <Badge className={getCategoryColor(a.category)}>{a.category.replace('_', ' ')}</Badge>
                   </div>
-                  <p className="text-sm text-neutral-500 line-clamp-2">{a.content}</p>
+                  <p className="text-sm text-slate-500 line-clamp-2">{a.content}</p>
                 </div>
                 <div className="flex gap-1 ml-3">
                   <Button variant="ghost" size="icon" className="w-8 h-8" onClick={() => openEdit(a)}>
@@ -192,34 +192,34 @@ export default function KnowledgeBasePanel({ config }: { config: Record<string, 
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowModal(false)}>
+          <div className="bg-[#0d1525] border border-white/10 rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-lg">{editingArticle ? 'Edit Article' : 'Add Article'}</h3>
+              <h3 className="font-semibold text-lg text-slate-100">{editingArticle ? 'Edit Article' : 'Add Article'}</h3>
               <Button variant="ghost" size="icon" onClick={() => setShowModal(false)}><X className="w-4 h-4" /></Button>
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="text-sm font-medium text-neutral-700">Title *</label>
+                <label className="text-sm font-medium text-slate-400">Title *</label>
                 <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Article title" />
               </div>
               <div>
-                <label className="text-sm font-medium text-neutral-700">Content *</label>
+                <label className="text-sm font-medium text-slate-400">Content *</label>
                 <textarea
                   value={form.content}
                   onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
                   placeholder="Article content..."
                   rows={8}
-                  className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm"
+                  className="w-full px-3 py-2 border border-white/10 rounded-lg text-sm bg-white/5 text-slate-200"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-neutral-700">Category</label>
+                <label className="text-sm font-medium text-slate-400">Category</label>
                 <select
                   value={form.category}
                   onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
-                  className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm"
+                  className="w-full px-3 py-2 border border-white/10 rounded-lg text-sm bg-white/5 text-slate-200"
                 >
                   {CATEGORIES.filter(c => c !== 'uploaded').map(c => (
                     <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1).replace('_', ' ')}</option>
@@ -227,7 +227,7 @@ export default function KnowledgeBasePanel({ config }: { config: Record<string, 
                 </select>
               </div>
               <div>
-                <label className="text-sm font-medium text-neutral-700">Tags (comma separated)</label>
+                <label className="text-sm font-medium text-slate-400">Tags (comma separated)</label>
                 <Input value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} placeholder="shipping, returns" />
               </div>
             </div>

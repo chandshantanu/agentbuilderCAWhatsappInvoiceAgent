@@ -123,14 +123,19 @@ export default function TrialExpiredPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+    <div className="min-h-screen" style={{ background: '#070B14' }}>
+      {/* Aurora blobs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] left-[20%] w-[600px] h-[600px] rounded-full opacity-15" style={{ background: 'radial-gradient(circle, #7C3AED 0%, transparent 70%)', filter: 'blur(80px)' }} />
+        <div className="absolute bottom-[-10%] right-[10%] w-[500px] h-[500px] rounded-full opacity-10" style={{ background: 'radial-gradient(circle, #EC4899 0%, transparent 70%)', filter: 'blur(80px)' }} />
+      </div>
       {/* Header */}
-      <header className="border-b border-gray-100 bg-white/80 backdrop-blur-sm">
+      <header className="relative z-10 border-b border-white/10 bg-white/5 backdrop-blur-md">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <span className="text-lg font-semibold text-gray-900">{agentName}</span>
+          <span className="text-lg font-semibold text-slate-200">{agentName}</span>
           <Link
             to="/"
-            className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+            className="text-sm text-slate-400 hover:text-slate-200 transition-colors"
           >
             Back to home
           </Link>
@@ -147,19 +152,19 @@ export default function TrialExpiredPage() {
             <Clock className="w-10 h-10" style={{ color: primaryColor }} />
           </div>
 
-          <h1 className="text-3xl font-bold text-gray-900 mb-3">{title}</h1>
-          <p className="text-lg text-gray-500 max-w-md mx-auto">{subtitle}</p>
+          <h1 className="text-3xl font-bold text-slate-100 mb-3">{title}</h1>
+          <p className="text-lg text-slate-400 max-w-md mx-auto">{subtitle}</p>
         </div>
 
         {/* What you get card */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-8">
-          <div className="p-6 border-b border-gray-100" style={{ backgroundColor: `${primaryColor}08` }}>
+        <div className="rounded-2xl overflow-hidden mb-8" style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
+          <div className="p-6 border-b border-white/10" style={{ backgroundColor: `${primaryColor}12` }}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">Monthly subscription</p>
+                <p className="text-sm font-medium text-slate-400">Monthly subscription</p>
                 <div className="flex items-baseline gap-1 mt-1">
-                  <span className="text-4xl font-bold text-gray-900">{formatPrice(price)}</span>
-                  <span className="text-gray-500">/mo</span>
+                  <span className="text-4xl font-bold text-slate-100">{formatPrice(price)}</span>
+                  <span className="text-slate-400">/mo</span>
                 </div>
               </div>
               <div
@@ -172,17 +177,17 @@ export default function TrialExpiredPage() {
           </div>
 
           <div className="p-6">
-            <p className="text-sm font-medium text-gray-700 mb-4">Everything included:</p>
+            <p className="text-sm font-medium text-slate-300 mb-4">Everything included:</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {features.map((feature, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <div
                     className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: `${primaryColor}12` }}
+                    style={{ backgroundColor: `${primaryColor}20` }}
                   >
                     <feature.icon className="w-4 h-4" style={{ color: primaryColor }} />
                   </div>
-                  <span className="text-sm text-gray-700">{feature.text}</span>
+                  <span className="text-sm text-slate-300">{feature.text}</span>
                 </div>
               ))}
             </div>
@@ -190,7 +195,7 @@ export default function TrialExpiredPage() {
 
           <div className="px-6 pb-6">
             {resumeError && (
-              <p className="text-sm text-red-600 bg-red-50 rounded-lg p-3 mb-4 text-center">
+              <p className="text-sm text-red-400 bg-red-500/10 rounded-lg p-3 mb-4 text-center border border-red-500/20">
                 {resumeError}
               </p>
             )}
@@ -206,20 +211,20 @@ export default function TrialExpiredPage() {
                 <>{isTrialEnd ? 'Resume Subscription' : 'Subscribe Now'}<ArrowRight className="w-5 h-5" /></>
               )}
             </button>
-            <p className="text-center text-xs text-gray-400 mt-3">
+            <p className="text-center text-xs text-slate-500 mt-3">
               Secure payment via Razorpay · Cancel anytime
             </p>
           </div>
         </div>
 
         {/* Data safety notice */}
-        <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-3">
-          <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-            <Check className="w-4 h-4 text-green-600" />
+        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 flex items-start gap-3">
+          <div className="w-8 h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+            <Check className="w-4 h-4 text-emerald-400" />
           </div>
           <div>
-            <p className="text-sm font-medium text-green-900">Your data is safe</p>
-            <p className="text-sm text-green-700 mt-0.5">
+            <p className="text-sm font-medium text-emerald-300">Your data is safe</p>
+            <p className="text-sm text-emerald-400/80 mt-0.5">
               All your conversations, leads, products, and settings are preserved.
               Subscribe to pick up right where you left off.
             </p>

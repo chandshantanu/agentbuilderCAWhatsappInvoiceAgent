@@ -60,109 +60,92 @@ export default function SignupPage() {
   const passwordStrength = password.length >= 8 ? 'strong' : password.length >= 6 ? 'ok' : 'weak';
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#070B14', fontFamily: "'Inter', system-ui, sans-serif" }}>
+      {/* Aurora bg */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-20%] right-[10%] w-[500px] h-[500px] rounded-full opacity-20" style={{ background: 'radial-gradient(circle, #7C3AED 0%, transparent 70%)', filter: 'blur(60px)' }} />
+        <div className="absolute bottom-[-10%] left-[5%] w-[400px] h-[400px] rounded-full opacity-15" style={{ background: 'radial-gradient(circle, #EC4899 0%, transparent 70%)', filter: 'blur(60px)' }} />
+      </div>
       {/* Header */}
-      <header className="bg-white border-b border-gray-200/60">
+      <header className="relative z-10 border-b border-white/10 bg-white/5 backdrop-blur-md">
         <div className="max-w-5xl mx-auto px-5 sm:px-8 h-[60px] flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
             {branding.logo_url && (
               <img src={branding.logo_url} alt="" className="h-8 w-auto" />
             )}
-            <span className="font-semibold text-[17px] text-gray-900 tracking-[-0.01em]">
+            <span className="font-semibold text-[17px] text-slate-200 tracking-[-0.01em]">
               {branding.brand_name || 'Get Started'}
             </span>
           </Link>
-          <Link
-            to="/"
-            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-          >
+          <Link to="/" className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-200 transition-colors">
             <ArrowLeft className="w-4 h-4" />
             Back
           </Link>
         </div>
       </header>
 
-      <div className="flex-1 flex items-center justify-center px-4 py-10">
+      <div className="relative z-10 flex-1 flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-sm">
-          {/* Heading */}
           <div className="text-center mb-7">
-            <h1 className="text-2xl font-bold text-gray-900 tracking-[-0.02em]">
-              Create your account
-            </h1>
-            <p className="text-sm text-gray-500 mt-1.5">
-              Get started with {branding.brand_name || 'us'} in minutes
-            </p>
+            <h1 className="text-2xl font-bold text-slate-100 tracking-[-0.02em]">Create your account</h1>
+            <p className="text-sm text-slate-400 mt-1.5">Get started with {branding.brand_name || 'us'} in minutes</p>
           </div>
 
           <form
             onSubmit={handleSubmit}
-            className="bg-white rounded-2xl p-7 space-y-5"
-            style={{
-              border: '1px solid rgba(0,0,0,0.06)',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03)',
-            }}
+            className="rounded-2xl p-7 space-y-5"
+            style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}
           >
             {error && (
-              <div className="text-sm text-red-600 bg-red-50 rounded-lg p-3 border border-red-100">
-                {error}
-              </div>
+              <div className="text-sm text-red-400 bg-red-500/10 rounded-lg p-3 border border-red-500/20">{error}</div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Full Name
-              </label>
+              <label className="block text-sm font-medium text-slate-400 mb-1.5">Full Name</label>
               <input
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-shadow"
-                style={{ '--tw-ring-color': `rgba(${rgb}, 0.4)` } as any}
+                className="w-full px-4 py-3 border border-white/10 bg-white/5 rounded-xl text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-transparent transition-all"
                 placeholder="Your full name"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Email
-              </label>
+              <label className="block text-sm font-medium text-slate-400 mb-1.5">Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-shadow"
-                style={{ '--tw-ring-color': `rgba(${rgb}, 0.4)` } as any}
+                className="w-full px-4 py-3 border border-white/10 bg-white/5 rounded-xl text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-transparent transition-all"
                 placeholder="you@example.com"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Password
-              </label>
+              <label className="block text-sm font-medium text-slate-400 mb-1.5">Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-shadow"
-                style={{ '--tw-ring-color': `rgba(${rgb}, 0.4)` } as any}
+                className="w-full px-4 py-3 border border-white/10 bg-white/5 rounded-xl text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-transparent transition-all"
                 placeholder="At least 6 characters"
               />
               {password.length > 0 && (
                 <div className="flex items-center gap-2 mt-2">
-                  <div className="flex-1 h-1 rounded-full bg-gray-200 overflow-hidden">
+                  <div className="flex-1 h-1 rounded-full bg-white/10 overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-300"
                       style={{
                         width: passwordStrength === 'strong' ? '100%' : passwordStrength === 'ok' ? '60%' : '30%',
-                        backgroundColor: passwordStrength === 'strong' ? '#059669' : passwordStrength === 'ok' ? '#d97706' : '#ef4444',
+                        backgroundColor: passwordStrength === 'strong' ? '#34d399' : passwordStrength === 'ok' ? '#fbbf24' : '#f87171',
                       }}
                     />
                   </div>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-slate-500">
                     {passwordStrength === 'strong' ? 'Strong' : passwordStrength === 'ok' ? 'OK' : 'Weak'}
                   </span>
                 </div>
@@ -172,36 +155,18 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-11 rounded-xl text-white font-medium text-sm disabled:opacity-50 flex items-center justify-center gap-2 transition-all duration-300 hover:brightness-105 hover:shadow-md active:scale-[0.99]"
-              style={{
-                background: `linear-gradient(135deg, ${primary}, ${lightenColor(primary, 0.12)})`,
-                boxShadow: `0 2px 8px rgba(${rgb}, 0.25)`,
-              }}
+              className="w-full h-11 rounded-xl text-white font-medium text-sm disabled:opacity-50 flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[0.99]"
+              style={{ background: 'linear-gradient(135deg, #7C3AED, #EC4899)', boxShadow: '0 0 20px rgba(124,58,237,0.3)' }}
             >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Creating account...
-                </>
-              ) : (
-                'Create Account'
-              )}
+              {loading ? <><Loader2 className="w-4 h-4 animate-spin" />Creating account...</> : 'Create Account'}
             </button>
 
-            <p className="text-xs text-gray-400 text-center">
-              By signing up, you agree to our terms of service
-            </p>
+            <p className="text-xs text-slate-500 text-center">By signing up, you agree to our terms of service</p>
           </form>
 
-          <p className="text-center text-sm text-gray-500 mt-5">
+          <p className="text-center text-sm text-slate-500 mt-5">
             Already have an account?{' '}
-            <Link
-              to="/login"
-              className="font-medium hover:underline"
-              style={{ color: primary }}
-            >
-              Log in
-            </Link>
+            <Link to="/login" className="font-medium text-violet-400 hover:underline">Log in</Link>
           </p>
         </div>
       </div>

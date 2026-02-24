@@ -66,31 +66,31 @@ export default function SettingsPanel({ config }: { config: Record<string, unkno
   return (
     <div className="space-y-6">
       {/* Instagram Connection */}
-      <div className="bg-white rounded-xl border border-neutral-200 p-5">
-        <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
+      <div className="glass-card rounded-xl p-5">
+        <h3 className="font-semibold text-slate-200 mb-4 flex items-center gap-2">
           <Instagram className="w-5 h-5 text-pink-500" />
           Instagram Connection
         </h3>
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-neutral-600">Status</span>
+            <span className="text-sm text-slate-400">Status</span>
             <Badge className={igStatus?.connected ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}>
               {igStatus?.connected ? 'Connected' : 'Disconnected'}
             </Badge>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-neutral-600">Total Conversations</span>
-            <span className="text-sm font-medium text-neutral-900">{igStatus?.total_conversations || 0}</span>
+            <span className="text-sm text-slate-400">Total Conversations</span>
+            <span className="text-sm font-medium text-slate-200">{igStatus?.total_conversations || 0}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-neutral-600">Total Messages</span>
-            <span className="text-sm font-medium text-neutral-900">{igStatus?.total_messages || 0}</span>
+            <span className="text-sm text-slate-400">Total Messages</span>
+            <span className="text-sm font-medium text-slate-200">{igStatus?.total_messages || 0}</span>
           </div>
           {igStatus?.webhook_url && (
             <div className="mt-2">
               <span className="text-xs text-neutral-500">Webhook URL</span>
-              <div className="bg-neutral-50 rounded-lg p-2 mt-1">
-                <code className="text-xs text-neutral-700 break-all">{igStatus.webhook_url}</code>
+              <div className="bg-white/5 rounded-lg p-2 mt-1">
+                <code className="text-xs text-slate-400 break-all">{igStatus.webhook_url}</code>
               </div>
             </div>
           )}
@@ -98,13 +98,13 @@ export default function SettingsPanel({ config }: { config: Record<string, unkno
       </div>
 
       {/* Comment Triggers */}
-      <div className="bg-white rounded-xl border border-neutral-200 p-5">
-        <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
+      <div className="glass-card rounded-xl p-5">
+        <h3 className="font-semibold text-slate-200 mb-4 flex items-center gap-2">
           <MessageCircle className="w-5 h-5 text-blue-500" />
           Comment Keyword Triggers
           {saving && <Loader2 className="w-4 h-4 animate-spin text-neutral-400" />}
         </h3>
-        <p className="text-sm text-neutral-500 mb-4">
+        <p className="text-sm text-slate-500 mb-4">
           When a comment contains any of these keywords, the AI will automatically reply and initiate a DM conversation.
         </p>
 
@@ -137,8 +137,8 @@ export default function SettingsPanel({ config }: { config: Record<string, unkno
       </div>
 
       {/* Rate Limits Info */}
-      <div className="bg-white rounded-xl border border-neutral-200 p-5">
-        <h3 className="font-semibold text-neutral-900 mb-4 flex items-center gap-2">
+      <div className="glass-card rounded-xl p-5">
+        <h3 className="font-semibold text-slate-200 mb-4 flex items-center gap-2">
           <Shield className="w-5 h-5 text-green-500" />
           Rate Limiting
         </h3>
@@ -147,15 +147,15 @@ export default function SettingsPanel({ config }: { config: Record<string, unkno
         </p>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-neutral-600">Max DMs per hour</span>
-            <span className="text-sm font-medium text-neutral-900">150</span>
+            <span className="text-sm text-slate-400">Max DMs per hour</span>
+            <span className="text-sm font-medium text-slate-200">150</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-neutral-600">Max DMs per minute</span>
-            <span className="text-sm font-medium text-neutral-900">15</span>
+            <span className="text-sm text-slate-400">Max DMs per minute</span>
+            <span className="text-sm font-medium text-slate-200">15</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-neutral-600">Protection</span>
+            <span className="text-sm text-slate-400">Protection</span>
             <Badge className="bg-emerald-100 text-emerald-700">Active</Badge>
           </div>
         </div>

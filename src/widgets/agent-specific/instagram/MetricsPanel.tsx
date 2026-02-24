@@ -42,7 +42,7 @@ const StatCard: React.FC<{
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay }}
-    className="bg-white rounded-xl border border-neutral-200 p-5 hover:shadow-md transition-shadow"
+    className="glass-card rounded-xl p-5 hover:bg-white/[0.07] transition-colors"
   >
     <div className="flex items-start justify-between mb-3">
       <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", iconColor.replace('text-', 'bg-').replace('500', '100'))}>
@@ -58,9 +58,9 @@ const StatCard: React.FC<{
         </div>
       )}
     </div>
-    <p className="text-4xl font-bold text-neutral-900 mb-1">{value}</p>
-    <p className="text-lg text-neutral-500">{title}</p>
-    {subtitle && <p className="text-base text-neutral-400 mt-1">{subtitle}</p>}
+    <p className="text-4xl font-bold text-slate-100 mb-1">{value}</p>
+    <p className="text-lg text-slate-400">{title}</p>
+    {subtitle && <p className="text-base text-slate-500 mt-1">{subtitle}</p>}
   </motion.div>
 );
 
@@ -72,7 +72,7 @@ const SentimentBar: React.FC<{ positive: number; neutral: number; negative: numb
 
   return (
     <div className="space-y-3">
-      <div className="h-3 rounded-full overflow-hidden flex bg-neutral-100">
+      <div className="h-3 rounded-full overflow-hidden flex bg-white/10">
         <motion.div initial={{ width: 0 }} animate={{ width: `${positivePercent}%` }} transition={{ duration: 0.8, delay: 0.2 }} className="bg-emerald-500" />
         <motion.div initial={{ width: 0 }} animate={{ width: `${neutralPercent}%` }} transition={{ duration: 0.8, delay: 0.4 }} className="bg-amber-400" />
         <motion.div initial={{ width: 0 }} animate={{ width: `${negativePercent}%` }} transition={{ duration: 0.8, delay: 0.6 }} className="bg-red-400" />
@@ -215,7 +215,7 @@ export default function MetricsPanel({ config }: { config: Record<string, unknow
           <BarChart3 className="w-6 h-6 text-pink-500" />
           Performance Metrics
         </h3>
-        <span className="text-lg text-neutral-500">Last 30 days</span>
+        <span className="text-lg text-slate-400">Last 30 days</span>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -226,7 +226,7 @@ export default function MetricsPanel({ config }: { config: Record<string, unknow
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="bg-white rounded-xl border border-neutral-200 p-5">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="glass-card rounded-xl p-5">
           <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Heart className="w-6 h-6 text-pink-500" />
             Sentiment Analysis
@@ -234,7 +234,7 @@ export default function MetricsPanel({ config }: { config: Record<string, unknow
           <SentimentBar positive={metrics.sentiment.positive} neutral={metrics.sentiment.neutral} negative={metrics.sentiment.negative} />
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="bg-white rounded-xl border border-neutral-200 p-5">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="glass-card rounded-xl p-5">
           <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Target className="w-6 h-6 text-purple-500" />
             Conversion Funnel
@@ -243,38 +243,38 @@ export default function MetricsPanel({ config }: { config: Record<string, unknow
         </motion.div>
       </div>
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="bg-white rounded-xl border border-neutral-200 p-5">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="glass-card rounded-xl p-5">
         <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <Activity className="w-6 h-6 text-pink-500" />
           Activity by Hour
         </h4>
         <ActivityChart data={metrics.peakHours} />
-        <div className="flex justify-between text-sm text-neutral-400 mt-2">
+        <div className="flex justify-between text-sm text-slate-500 mt-2">
           <span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span><span>11 PM</span>
         </div>
       </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="grid grid-cols-3 gap-4">
-        <div className="bg-gradient-to-br from-pink-50 to-white rounded-xl border border-pink-100 p-6 text-center">
-          <div className="w-16 h-16 rounded-full bg-pink-100 flex items-center justify-center mx-auto mb-3">
+        <div className="bg-pink-500/10 rounded-xl border border-pink-500/20 p-6 text-center">
+          <div className="w-16 h-16 rounded-full bg-pink-500/20 flex items-center justify-center mx-auto mb-3">
             <Zap className="w-8 h-8 text-pink-500" />
           </div>
-          <p className="text-4xl font-bold text-neutral-900">{metrics.engagement.responseRate}%</p>
-          <p className="text-lg text-neutral-500 mt-1">Response Rate</p>
+          <p className="text-4xl font-bold text-slate-100">{metrics.engagement.responseRate}%</p>
+          <p className="text-lg text-slate-400 mt-1">Response Rate</p>
         </div>
-        <div className="bg-gradient-to-br from-purple-50 to-white rounded-xl border border-purple-100 p-6 text-center">
-          <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-3">
+        <div className="bg-purple-500/10 rounded-xl border border-purple-500/20 p-6 text-center">
+          <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-3">
             <Sparkles className="w-8 h-8 text-purple-500" />
           </div>
-          <p className="text-4xl font-bold text-neutral-900">{metrics.engagement.resolutionRate}%</p>
-          <p className="text-lg text-neutral-500 mt-1">Resolution Rate</p>
+          <p className="text-4xl font-bold text-slate-100">{metrics.engagement.resolutionRate}%</p>
+          <p className="text-lg text-slate-400 mt-1">Resolution Rate</p>
         </div>
-        <div className="bg-gradient-to-br from-amber-50 to-white rounded-xl border border-amber-100 p-6 text-center">
-          <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-3">
+        <div className="bg-amber-500/10 rounded-xl border border-amber-500/20 p-6 text-center">
+          <div className="w-16 h-16 rounded-full bg-amber-500/20 flex items-center justify-center mx-auto mb-3">
             <Users className="w-8 h-8 text-amber-500" />
           </div>
-          <p className="text-4xl font-bold text-neutral-900">{metrics.engagement.handoffRate}%</p>
-          <p className="text-lg text-neutral-500 mt-1">Human Handoff</p>
+          <p className="text-4xl font-bold text-slate-100">{metrics.engagement.handoffRate}%</p>
+          <p className="text-lg text-slate-400 mt-1">Human Handoff</p>
         </div>
       </motion.div>
     </div>

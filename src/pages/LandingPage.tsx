@@ -194,16 +194,16 @@ export default function LandingPage() {
   const handleCta = () => navigate(isAuthenticated ? '/checkout' : '/signup');
 
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div className="min-h-screen" style={{ background: '#070B14', fontFamily: "'Inter', system-ui, sans-serif" }}>
 
       {/* ═══════════ FIXED HEADER ═══════════ */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/85 backdrop-blur-2xl border-b border-gray-200/60">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/5 backdrop-blur-md border-b border-white/10">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 h-[60px] flex items-center justify-between">
           <div className="flex items-center gap-3">
             {branding.logo_url && (
               <img src={branding.logo_url} alt="" className="h-8 w-auto" />
             )}
-            <span className="font-semibold text-[17px] text-gray-900 tracking-[-0.01em]">
+            <span className="font-semibold text-[17px] text-slate-200 tracking-[-0.01em]">
               {branding.brand_name || config.subdomain}
             </span>
           </div>
@@ -220,7 +220,7 @@ export default function LandingPage() {
               <>
                 <button
                   onClick={() => navigate('/login')}
-                  className="h-9 px-4 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100/80 transition-colors"
+                  className="h-9 px-4 rounded-lg text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-white/10 transition-colors"
                 >
                   Log in
                 </button>
@@ -343,14 +343,14 @@ export default function LandingPage() {
         {/* Wave transition → features */}
         <div className="absolute bottom-0 left-0 right-0 leading-[0]">
           <svg viewBox="0 0 1440 80" preserveAspectRatio="none" className="w-full h-12 sm:h-[72px]">
-            <path d="M0 40 C360 75, 720 10, 1080 55 S1440 25, 1440 25 L1440 80 L0 80 Z" fill="#f8fafc" />
+            <path d="M0 40 C360 75, 720 10, 1080 55 S1440 25, 1440 25 L1440 80 L0 80 Z" fill="#070B14" />
           </svg>
         </div>
       </section>
 
       {/* ═══════════ FEATURES ═══════════ */}
       {features.length > 0 && (
-        <section className="py-16 sm:py-20 px-5 sm:px-8 bg-slate-50">
+        <section className="py-16 sm:py-20 px-5 sm:px-8">
           <div className="max-w-5xl mx-auto">
             <motion.div
               initial="hidden"
@@ -370,7 +370,7 @@ export default function LandingPage() {
               </motion.div>
               <motion.h2
                 variants={fadeUp}
-                className="text-3xl sm:text-[2.5rem] font-bold text-gray-900 tracking-[-0.02em]"
+                className="text-3xl sm:text-[2.5rem] font-bold text-slate-100 tracking-[-0.02em]"
               >
                 Everything you need
               </motion.h2>
@@ -391,7 +391,7 @@ export default function LandingPage() {
                     key={i}
                     variants={fadeUp}
                     whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                    className="bg-white rounded-2xl border border-gray-200/70 overflow-hidden transition-shadow duration-300 hover:shadow-lg cursor-default"
+                    className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden transition-shadow duration-300 hover:bg-white/[0.08] cursor-default"
                   >
                     {/* Feature image */}
                     <div className="relative h-40 overflow-hidden bg-gray-50">
@@ -403,7 +403,7 @@ export default function LandingPage() {
                       />
                       <div
                         className="absolute inset-0"
-                        style={{ background: `linear-gradient(to top, rgba(255,255,255,0.6) 0%, transparent 50%)` }}
+                        style={{ background: `linear-gradient(to top, rgba(7,11,20,0.8) 0%, transparent 50%)` }}
                       />
                     </div>
                     <div className="p-6 sm:p-7">
@@ -414,9 +414,9 @@ export default function LandingPage() {
                         >
                           <Icon className="w-4 h-4" style={{ color: primary }} />
                         </div>
-                        <h3 className="font-semibold text-gray-900 text-[15px]">{f.title}</h3>
+                        <h3 className="font-semibold text-slate-200 text-[15px]">{f.title}</h3>
                       </div>
-                      <p className="text-sm text-gray-500 leading-relaxed">{f.description}</p>
+                      <p className="text-sm text-slate-400 leading-relaxed">{f.description}</p>
                     </div>
                   </motion.div>
                 );
@@ -427,7 +427,7 @@ export default function LandingPage() {
       )}
 
       {/* ═══════════ PRICING ═══════════ */}
-      <section className="py-16 sm:py-20 px-5 sm:px-8 bg-white">
+      <section className="py-16 sm:py-20 px-5 sm:px-8">
         <div className="max-w-md mx-auto">
           {/* Section header — always visible (no animation gate for safety) */}
           <div className="text-center mb-10">
@@ -440,7 +440,7 @@ export default function LandingPage() {
                 Pricing
               </span>
             </div>
-            <h2 className="text-3xl sm:text-[2.5rem] font-bold text-gray-900 tracking-[-0.02em]">
+            <h2 className="text-3xl sm:text-[2.5rem] font-bold text-slate-100 tracking-[-0.02em]">
               Simple, transparent
             </h2>
           </div>
@@ -452,7 +452,7 @@ export default function LandingPage() {
             transition={{ duration: 0.6, ease, delay: 0.15 }}
             className="relative rounded-2xl p-7 sm:p-8"
             style={{
-              background: `linear-gradient(180deg, rgba(${rgb}, 0.04) 0%, #fff 40%)`,
+              background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(20px)',
               border: `1.5px solid rgba(${rgb}, 0.18)`,
               boxShadow: `0 1px 3px rgba(0,0,0,0.06), 0 12px 40px rgba(${rgb}, 0.08)`,
             }}
@@ -472,17 +472,17 @@ export default function LandingPage() {
             )}
 
             {/* Price display */}
-            <p className="text-gray-500 text-center text-sm mb-2 mt-2">Monthly subscription</p>
+            <p className="text-slate-400 text-center text-sm mb-2 mt-2">Monthly subscription</p>
             <div className="flex items-baseline justify-center gap-1 mb-7">
-              <span className="text-xl font-medium text-gray-400">{currencySymbol}</span>
-              <span className="text-[3.5rem] font-extrabold text-gray-900 tracking-tight leading-none">
+              <span className="text-xl font-medium text-slate-400">{currencySymbol}</span>
+              <span className="text-[3.5rem] font-extrabold text-slate-100 tracking-tight leading-none">
                 {displayPrice}
               </span>
-              <span className="text-gray-400 text-base font-medium">/mo</span>
+              <span className="text-slate-400 text-base font-medium">/mo</span>
             </div>
 
             {/* Divider */}
-            <div className="h-px bg-gray-100 mb-6" />
+            <div className="h-px bg-white/10 mb-6" />
 
             {/* Feature checklist */}
             <div className="space-y-3.5 mb-8">
@@ -497,7 +497,7 @@ export default function LandingPage() {
                       >
                         <Check className="w-3 h-3" style={{ color: primary }} />
                       </div>
-                      <span className="text-[14px] text-gray-700 leading-snug">{label}</span>
+                      <span className="text-[14px] text-slate-300 leading-snug">{label}</span>
                     </div>
                   );
                 },
@@ -516,7 +516,7 @@ export default function LandingPage() {
               {landing_page.cta_text || 'Get Started'}
             </button>
 
-            <p className="text-xs text-gray-400 text-center mt-4 tracking-wide">
+            <p className="text-xs text-slate-500 text-center mt-4 tracking-wide">
               No credit card required &middot; Cancel anytime
             </p>
           </motion.div>
@@ -524,7 +524,7 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════════ SOCIAL PROOF BANNER ═══════════ */}
-      <section className="py-16 sm:py-20 px-5 sm:px-8 bg-slate-50 overflow-hidden">
+      <section className="py-16 sm:py-20 px-5 sm:px-8 overflow-hidden">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial="hidden"
@@ -542,7 +542,7 @@ export default function LandingPage() {
                 loading="lazy"
               />
               <div
-                className="absolute -bottom-4 -right-4 bg-white rounded-xl shadow-lg px-5 py-3 border border-gray-100"
+                className="absolute -bottom-4 -right-4 glass-card rounded-xl px-5 py-3"
               >
                 <div className="flex items-center gap-2">
                   <div className="flex -space-x-2">
@@ -557,8 +557,8 @@ export default function LandingPage() {
                     ))}
                   </div>
                   <div className="ml-1">
-                    <p className="text-sm font-semibold text-gray-900">500+ businesses</p>
-                    <p className="text-xs text-gray-500">trust our platform</p>
+                    <p className="text-sm font-semibold text-slate-200">500+ businesses</p>
+                    <p className="text-xs text-slate-400">trust our platform</p>
                   </div>
                 </div>
               </div>
@@ -572,10 +572,10 @@ export default function LandingPage() {
                   Trusted by businesses
                 </span>
               </div>
-              <h2 className="text-3xl sm:text-[2.5rem] font-bold text-gray-900 tracking-[-0.02em] mb-4">
+              <h2 className="text-3xl sm:text-[2.5rem] font-bold text-slate-100 tracking-[-0.02em] mb-4">
                 Join hundreds of growing businesses
               </h2>
-              <p className="text-gray-500 text-lg leading-relaxed mb-6">
+              <p className="text-slate-400 text-lg leading-relaxed mb-6">
                 From solo entrepreneurs to fast-scaling teams, businesses use our AI agent to convert more DM conversations into paying customers — automatically.
               </p>
               <div className="grid grid-cols-3 gap-4">
@@ -584,9 +584,9 @@ export default function LandingPage() {
                   { value: '24/7', label: 'Always-on support' },
                   { value: '< 5s', label: 'Response time' },
                 ].map((stat) => (
-                  <div key={stat.label} className="text-center p-3 bg-white rounded-xl border border-gray-100">
-                    <p className="text-xl font-bold text-gray-900">{stat.value}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{stat.label}</p>
+                  <div key={stat.label} className="text-center p-3 bg-white/5 rounded-xl border border-white/10">
+                    <p className="text-xl font-bold text-slate-100">{stat.value}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{stat.label}</p>
                   </div>
                 ))}
               </div>
@@ -637,14 +637,14 @@ export default function LandingPage() {
 
       {/* ═══════════ TESTIMONIALS ═══════════ */}
       {landing_page.testimonials?.length > 0 && (
-        <section className="py-16 sm:py-20 px-5 sm:px-8 bg-slate-50">
+        <section className="py-16 sm:py-20 px-5 sm:px-8">
           <div className="max-w-5xl mx-auto">
             <motion.h2
               initial="hidden"
               whileInView="show"
               viewport={{ once: true, amount: 0.3 }}
               variants={fadeUp}
-              className="text-3xl font-bold text-gray-900 text-center mb-12 tracking-[-0.02em]"
+              className="text-3xl font-bold text-slate-100 text-center mb-12 tracking-[-0.02em]"
             >
               What our customers say
             </motion.h2>
@@ -659,10 +659,10 @@ export default function LandingPage() {
                 <motion.div
                   key={i}
                   variants={fadeUp}
-                  className="bg-white rounded-2xl border border-gray-200/70 p-6"
+                  className="bg-white/5 rounded-2xl border border-white/10 p-6"
                 >
-                  <p className="text-gray-700 mb-4 leading-relaxed text-[15px]">"{t.quote || t.text}"</p>
-                  <div className="border-t border-gray-100 pt-3 flex items-center gap-3">
+                  <p className="text-slate-300 mb-4 leading-relaxed text-[15px]">"{t.quote || t.text}"</p>
+                  <div className="border-t border-white/10 pt-3 flex items-center gap-3">
                     {t.avatar ? (
                       <img src={t.avatar} alt={t.name} className="w-10 h-10 rounded-full object-cover" />
                     ) : (
@@ -674,8 +674,8 @@ export default function LandingPage() {
                       </div>
                     )}
                     <div>
-                      <p className="font-semibold text-gray-900 text-sm">{t.name}</p>
-                      {t.role && <p className="text-xs text-gray-500 mt-0.5">{t.role}</p>}
+                      <p className="font-semibold text-slate-200 text-sm">{t.name}</p>
+                      {t.role && <p className="text-xs text-slate-400 mt-0.5">{t.role}</p>}
                     </div>
                   </div>
                 </motion.div>
@@ -686,13 +686,13 @@ export default function LandingPage() {
       )}
 
       {/* ═══════════ FOOTER ═══════════ */}
-      <footer className="border-t border-gray-100 py-8 px-5 sm:px-8">
+      <footer className="border-t border-white/10 py-8 px-5 sm:px-8">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             {branding.logo_url && (
               <img src={branding.logo_url} alt="" className="h-5 w-auto opacity-50" />
             )}
-            <span className="text-sm text-gray-400">
+            <span className="text-sm text-slate-500">
               {branding.brand_name || config.subdomain}
             </span>
           </div>
@@ -700,7 +700,7 @@ export default function LandingPage() {
             href="https://chatslytics.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
           >
             Powered by chatslytics.com
           </a>

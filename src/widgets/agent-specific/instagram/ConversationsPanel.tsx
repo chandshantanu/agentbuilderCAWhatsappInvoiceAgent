@@ -172,16 +172,16 @@ const formatTime = (dateStr: string) => {
 };
 
 const scoreColor = (score: number) =>
-  score >= 70 ? 'text-emerald-600' : score >= 40 ? 'text-amber-600' : 'text-neutral-500';
+  score >= 70 ? 'text-emerald-400' : score >= 40 ? 'text-amber-400' : 'text-slate-500';
 
 const scoreBg = (score: number) =>
-  score >= 70 ? 'bg-emerald-50 border-emerald-200' : score >= 40 ? 'bg-amber-50 border-amber-200' : 'bg-neutral-50 border-neutral-200';
+  score >= 70 ? 'bg-emerald-500/10 border-emerald-500/30' : score >= 40 ? 'bg-amber-500/10 border-amber-500/30' : 'bg-white/5 border-white/10';
 
 const priorityColor = (p?: string) => {
   switch (p) {
-    case 'high': return 'bg-red-100 text-red-700';
-    case 'medium': return 'bg-amber-100 text-amber-700';
-    default: return 'bg-neutral-100 text-neutral-600';
+    case 'high': return 'bg-red-500/20 text-red-400';
+    case 'medium': return 'bg-amber-500/20 text-amber-400';
+    default: return 'bg-white/10 text-slate-400';
   }
 };
 
@@ -199,17 +199,17 @@ const emotionIcon = (e?: string) => {
 
 const stageColor = (stage?: string) => {
   const map: Record<string, string> = {
-    greeting: 'bg-neutral-100 text-neutral-600',
-    discovery: 'bg-blue-100 text-blue-700',
-    recommendation: 'bg-purple-100 text-purple-700',
-    objection_handling: 'bg-orange-100 text-orange-700',
-    closing: 'bg-green-100 text-green-700',
-    follow_up: 'bg-sky-100 text-sky-700',
-    nurturing: 'bg-pink-100 text-pink-700',
-    win_back: 'bg-violet-100 text-violet-700',
-    churned: 'bg-red-100 text-red-700',
+    greeting: 'bg-white/10 text-slate-400',
+    discovery: 'bg-blue-500/20 text-blue-400',
+    recommendation: 'bg-purple-500/20 text-purple-400',
+    objection_handling: 'bg-orange-500/20 text-orange-400',
+    closing: 'bg-green-500/20 text-green-400',
+    follow_up: 'bg-sky-500/20 text-sky-400',
+    nurturing: 'bg-pink-500/20 text-pink-400',
+    win_back: 'bg-violet-500/20 text-violet-400',
+    churned: 'bg-red-500/20 text-red-400',
   };
-  return map[stage || ''] || 'bg-neutral-100 text-neutral-600';
+  return map[stage || ''] || 'bg-white/10 text-slate-400';
 };
 
 // ── Intelligence Sidebar ───────────────────────────────────────
@@ -246,11 +246,11 @@ function IntelligenceSidebar({
   ];
 
   return (
-    <div className="flex flex-col h-full bg-neutral-50">
+    <div className="flex flex-col h-full bg-[#070B14]/50">
       {/* Score header */}
       <div className={cn('p-4 border-b', scoreBg(score))}>
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium text-neutral-500 uppercase tracking-wide">Lead Intelligence</span>
+          <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Lead Intelligence</span>
           <div className="flex items-center gap-1">
             {intelligence?.scope && (
               <span className="text-xs px-1.5 py-0.5 rounded bg-violet-100 text-violet-600 font-medium">
@@ -305,7 +305,7 @@ function IntelligenceSidebar({
       </div>
 
       {/* Section tabs */}
-      <div className="flex border-b bg-white overflow-x-auto">
+      <div className="flex border-b border-white/10 bg-white/5 overflow-x-auto">
         {sections.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -313,8 +313,8 @@ function IntelligenceSidebar({
             className={cn(
               'flex items-center gap-1.5 px-3 py-2 text-xs font-medium whitespace-nowrap transition-colors border-b-2',
               activeSection === id
-                ? 'border-violet-500 text-violet-700 bg-violet-50'
-                : 'border-transparent text-neutral-500 hover:text-neutral-700'
+                ? 'border-violet-400 text-violet-300 bg-violet-500/10'
+                : 'border-transparent text-slate-500 hover:text-slate-300'
             )}
           >
             <Icon className="w-3 h-3" />
@@ -330,7 +330,7 @@ function IntelligenceSidebar({
           {activeSection === 'plan' && (
             <div className="space-y-3">
               {next?.latest_assessment && (
-                <div className="bg-white rounded-xl border border-violet-100 p-3">
+                <div className="bg-violet-500/10 rounded-xl border border-violet-500/20 p-3">
                   <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-violet-700">
                     <Eye className="w-3.5 h-3.5" />
                     Internal Assessment
@@ -347,7 +347,7 @@ function IntelligenceSidebar({
               )}
 
               {next?.latest_strategy && (
-                <div className="bg-white rounded-xl border border-blue-100 p-3">
+                <div className="bg-blue-500/10 rounded-xl border border-blue-500/20 p-3">
                   <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-blue-700">
                     <Target className="w-3.5 h-3.5" />
                     Current Strategy
@@ -357,7 +357,7 @@ function IntelligenceSidebar({
               )}
 
               {next?.suggested_question && (
-                <div className="bg-amber-50 rounded-xl border border-amber-200 p-3">
+                <div className="bg-amber-500/10 rounded-xl border border-amber-500/25 p-3">
                   <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-amber-700">
                     <Lightbulb className="w-3.5 h-3.5" />
                     Next Question to Ask
@@ -369,7 +369,7 @@ function IntelligenceSidebar({
               )}
 
               {next?.emotional_state && next.emotional_state !== 'neutral' && (
-                <div className="bg-white rounded-xl border border-neutral-200 p-3">
+                <div className="bg-white/5 rounded-xl border border-white/10 p-3">
                   <div className="text-xs font-medium text-neutral-600 mb-1">Customer Mood</div>
                   <div className="flex items-center gap-2">
                     <span className="text-lg">{emotionIcon(next.emotional_state)}</span>
@@ -393,7 +393,7 @@ function IntelligenceSidebar({
           {activeSection === 'profile' && (
             <div className="space-y-3">
               {q?.business_type && (
-                <div className="bg-white rounded-xl border border-neutral-200 p-3 space-y-2">
+                <div className="bg-white/5 rounded-xl border border-white/10 p-3 space-y-2">
                   <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wide">Business</div>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     {q.business_type && <Row label="Type" value={q.business_type} />}
@@ -405,7 +405,7 @@ function IntelligenceSidebar({
               )}
 
               {(q?.current_pain || q?.purchase_timeline) && (
-                <div className="bg-white rounded-xl border border-neutral-200 p-3 space-y-2">
+                <div className="bg-white/5 rounded-xl border border-white/10 p-3 space-y-2">
                   <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wide">Buying Signals</div>
                   {q.current_pain && (
                     <div>
@@ -429,7 +429,7 @@ function IntelligenceSidebar({
               )}
 
               {q?.buying_readiness != null && q.buying_readiness > 0 && (
-                <div className="bg-white rounded-xl border border-neutral-200 p-3">
+                <div className="bg-white/5 rounded-xl border border-white/10 p-3">
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wide">Buying Readiness</div>
                     <span className={cn('text-sm font-bold',
@@ -455,7 +455,7 @@ function IntelligenceSidebar({
               )}
 
               {(q?.communication_style || q?.price_sensitivity || q?.key_motivator) && (
-                <div className="bg-white rounded-xl border border-neutral-200 p-3 space-y-2">
+                <div className="bg-white/5 rounded-xl border border-white/10 p-3 space-y-2">
                   <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wide">Psychology</div>
                   <div className="grid grid-cols-1 gap-1.5 text-xs">
                     {q.communication_style && (
@@ -484,7 +484,7 @@ function IntelligenceSidebar({
               )}
 
               {q?.objections && q.objections.length > 0 && (
-                <div className="bg-white rounded-xl border border-red-100 p-3">
+                <div className="bg-red-500/10 rounded-xl border border-red-500/20 p-3">
                   <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-red-700">
                     <XCircle className="w-3.5 h-3.5" />
                     Objections Raised
@@ -498,7 +498,7 @@ function IntelligenceSidebar({
               )}
 
               {q?.interests && q.interests.length > 0 && (
-                <div className="bg-white rounded-xl border border-emerald-100 p-3">
+                <div className="bg-emerald-500/10 rounded-xl border border-emerald-500/20 p-3">
                   <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-emerald-700">
                     <CheckCircle className="w-3.5 h-3.5" />
                     Interests & Hooks
@@ -512,7 +512,7 @@ function IntelligenceSidebar({
               )}
 
               {q?.personal_details && (
-                <div className="bg-neutral-50 rounded-xl border border-neutral-200 p-3">
+                <div className="bg-white/5 rounded-xl border border-white/10 p-3">
                   <div className="text-xs font-medium text-neutral-600 mb-1">Personal Context</div>
                   <p className="text-xs text-neutral-700">{q.personal_details}</p>
                 </div>
@@ -532,7 +532,7 @@ function IntelligenceSidebar({
             <div className="space-y-3">
               {/* Stage timeline */}
               {intelligence?.stage_progression && intelligence.stage_progression.length > 0 && (
-                <div className="bg-white rounded-xl border border-neutral-200 p-3">
+                <div className="bg-white/5 rounded-xl border border-white/10 p-3">
                   <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wide mb-3">Stage Journey</div>
                   <div className="relative">
                     {intelligence.stage_progression.map((s, i) => (
@@ -551,7 +551,7 @@ function IntelligenceSidebar({
               )}
 
               {/* Active follow-ups */}
-              <div className="bg-white rounded-xl border border-neutral-200 p-3">
+              <div className="bg-white/5 rounded-xl border border-white/10 p-3">
                 <div className="flex items-center gap-1.5 mb-3 text-xs font-semibold text-neutral-700 uppercase tracking-wide">
                   <Calendar className="w-3.5 h-3.5" />
                   Scheduled Follow-ups
@@ -559,7 +559,7 @@ function IntelligenceSidebar({
                 {intelligence?.follow_up_schedule && intelligence.follow_up_schedule.length > 0 ? (
                   <div className="space-y-2">
                     {intelligence.follow_up_schedule.map((fu, i) => (
-                      <div key={i} className="flex items-center justify-between text-xs bg-violet-50 rounded-lg px-3 py-2">
+                      <div key={i} className="flex items-center justify-between text-xs bg-violet-500/10 rounded-lg px-3 py-2">
                         <div>
                           <div className="font-medium text-violet-800">Follow-up #{fu.follow_up_number}</div>
                           <div className="text-violet-600 capitalize">{fu.stage.replace('_', ' ')} stage</div>
@@ -585,7 +585,7 @@ function IntelligenceSidebar({
 
               {/* Score trajectory mini chart */}
               {intelligence?.score_trajectory && intelligence.score_trajectory.length > 1 && (
-                <div className="bg-white rounded-xl border border-neutral-200 p-3">
+                <div className="bg-white/5 rounded-xl border border-white/10 p-3">
                   <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wide mb-3">Score Trajectory</div>
                   <div className="flex items-end gap-1 h-12">
                     {intelligence.score_trajectory.slice(-12).map((pt, i) => (
@@ -614,7 +614,7 @@ function IntelligenceSidebar({
             <div className="space-y-2">
               {intelligence?.strategist_log && intelligence.strategist_log.length > 0 ? (
                 [...intelligence.strategist_log].reverse().map((entry, i) => (
-                  <div key={i} className="bg-white rounded-xl border border-neutral-200 p-3 text-xs space-y-2">
+                  <div key={i} className="bg-white/5 rounded-xl border border-white/10 p-3 text-xs space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
                         <span className="text-lg">{emotionIcon(entry.emotional_state)}</span>
@@ -629,7 +629,7 @@ function IntelligenceSidebar({
                     </div>
 
                     {entry.text_preview && (
-                      <div className="bg-neutral-50 rounded-lg px-2 py-1.5 text-neutral-600 italic">
+                      <div className="bg-white/5 rounded-lg px-2 py-1.5 text-slate-400 italic">
                         "{entry.text_preview}…"
                       </div>
                     )}
@@ -649,7 +649,7 @@ function IntelligenceSidebar({
                     )}
 
                     {entry.suggested_question && (
-                      <div className="bg-amber-50 rounded px-2 py-1 border border-amber-100">
+                      <div className="bg-amber-500/10 rounded px-2 py-1 border border-amber-500/20">
                         <span className="font-medium text-amber-700">Asked: </span>
                         <span className="text-amber-900">{entry.suggested_question}</span>
                       </div>
@@ -679,19 +679,19 @@ function IntelligenceSidebar({
                             </div>
                           )}
                           {entry.reasoning_trace.research_basis && (
-                            <div className="bg-blue-50 rounded px-2 py-1 text-blue-700">
+                            <div className="bg-blue-500/10 rounded px-2 py-1 text-blue-400">
                               <p className="font-medium mb-0.5">Research basis:</p>
                               <p>{entry.reasoning_trace.research_basis}</p>
                             </div>
                           )}
                           {entry.reasoning_trace.next_best_action && (
-                            <div className="bg-emerald-50 rounded px-2 py-1 text-emerald-700">
+                            <div className="bg-emerald-500/10 rounded px-2 py-1 text-emerald-400">
                               <p className="font-medium mb-0.5">If no reply:</p>
                               <p>{entry.reasoning_trace.next_best_action}</p>
                             </div>
                           )}
                           {entry.timing_reasoning && (
-                            <div className="bg-violet-50 rounded px-2 py-1 text-violet-700">
+                            <div className="bg-violet-500/10 rounded px-2 py-1 text-violet-400">
                               <p className="font-medium mb-0.5">Follow-up timing:</p>
                               <p>{entry.timing_reasoning}</p>
                             </div>
@@ -914,11 +914,11 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
   });
 
   return (
-    <div className="flex h-[calc(100vh-10rem)] min-h-[550px] max-h-[920px] bg-white rounded-xl border border-neutral-200 overflow-hidden">
+    <div className="flex h-[calc(100vh-10rem)] min-h-[550px] max-h-[920px] bg-white/5 rounded-xl border border-white/10 overflow-hidden">
 
       {/* ── Column 1: Conversation List ── */}
-      <div className="w-72 flex-shrink-0 border-r border-neutral-200 flex flex-col">
-        <div className="p-4 border-b border-neutral-100">
+      <div className="w-72 flex-shrink-0 border-r border-white/10 flex flex-col">
+        <div className="p-4 border-b border-white/10">
           <div className="flex items-center gap-2 mb-3">
             <Instagram className="w-4 h-4 text-pink-500" />
             <span className="font-semibold text-sm">Conversations</span>
@@ -953,7 +953,7 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
               <p className="text-xs">No conversations</p>
             </div>
           ) : (
-            <div className="divide-y divide-neutral-100">
+            <div className="divide-y divide-white/10">
               {filteredConvs.map(conv => {
                 const sid = conv.sender_id || conv.id;
                 const score = conv.lead_score ?? 0;
@@ -962,8 +962,8 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                     key={sid}
                     onClick={() => { setSelected(conv); setShowNotes(false); setNoteText(''); }}
                     className={cn(
-                      'w-full p-3 flex items-start gap-2.5 text-left hover:bg-neutral-50 transition-colors',
-                      selected?.sender_id === sid && 'bg-violet-50 border-r-2 border-violet-500'
+                      'w-full p-3 flex items-start gap-2.5 text-left hover:bg-white/[0.07] transition-colors',
+                      selected?.sender_id === sid && 'bg-violet-500/15 border-r-2 border-violet-400'
                     )}
                   >
                     <div className="relative flex-shrink-0">
@@ -1005,11 +1005,11 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
       </div>
 
       {/* ── Column 2: Chat ── */}
-      <div className="flex-1 flex flex-col min-w-0 border-r border-neutral-200">
+      <div className="flex-1 flex flex-col min-w-0 border-r border-white/10">
         {selected ? (
           <>
             {/* Chat header */}
-            <div className="px-4 py-3 border-b border-neutral-100 bg-neutral-50 flex items-center justify-between">
+            <div className="px-4 py-3 border-b border-white/10 bg-white/5 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <Avatar className="w-8 h-8">
                   <AvatarFallback className="bg-gradient-to-br from-pink-500 to-purple-600 text-white text-xs">
@@ -1070,14 +1070,14 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                     </button>
                   </div>
                   {showScopeMenu && (
-                    <div className="absolute right-0 top-8 z-20 bg-white rounded-lg shadow-lg border border-neutral-200 py-1 min-w-[140px]">
+                    <div className="absolute right-0 top-8 z-20 bg-[#0d1525] rounded-lg shadow-xl border border-white/10 py-1 min-w-[140px]">
                       {(['recent', 'all'] as const).map(s => (
                         <button
                           key={s}
                           onClick={() => handleRunAnalysis(s)}
                           className={cn(
                             'w-full text-left px-3 py-2 text-xs hover:bg-neutral-50 flex items-center gap-2',
-                            s === analyseScope ? 'text-violet-600 font-medium' : 'text-neutral-700'
+                            s === analyseScope ? 'text-violet-400 font-medium' : 'text-slate-300'
                           )}
                         >
                           {s === 'recent'
@@ -1110,7 +1110,7 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                       'max-w-[78%] rounded-2xl px-3.5 py-2.5',
                       msg.role === 'assistant'
                         ? 'bg-gradient-to-br from-violet-500 to-purple-600 text-white'
-                        : 'bg-neutral-100 text-neutral-900'
+                        : 'bg-white/10 text-slate-200'
                     )}>
                       <div className={cn('flex items-center gap-1 text-xs mb-1 opacity-70')}>
                         {msg.role === 'assistant' ? <Bot className="w-3 h-3" /> : <User className="w-3 h-3" />}
@@ -1155,7 +1155,7 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.15 }}
-                  className="border-t border-amber-100 bg-amber-50 overflow-hidden"
+                  className="border-t border-amber-500/20 bg-amber-500/10 overflow-hidden"
                 >
                   <div className="p-3 space-y-2">
                     <div className="flex items-center gap-1.5 text-xs font-medium text-amber-700">
@@ -1165,7 +1165,7 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                     {(selected.notes || []).length > 0 ? (
                       <div className="space-y-1.5 max-h-28 overflow-y-auto">
                         {(selected.notes || []).map(note => (
-                          <div key={note.id} className="bg-white rounded-lg px-3 py-2 text-xs border border-amber-100">
+                          <div key={note.id} className="bg-white/5 rounded-lg px-3 py-2 text-xs border border-amber-500/20">
                             <p className="text-neutral-700">{note.text}</p>
                             <p className="text-neutral-400 mt-0.5">{formatTime(note.created_at)}</p>
                           </div>
@@ -1197,7 +1197,7 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
             </AnimatePresence>
 
             {/* Reply box */}
-            <div className="p-3 border-t border-neutral-100">
+            <div className="p-3 border-t border-white/10">
               <div className="flex items-end gap-2">
                 <Textarea
                   placeholder="Type a reply..."
@@ -1218,8 +1218,8 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
             </div>
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-neutral-400">
-            <div className="w-14 h-14 rounded-full bg-neutral-100 flex items-center justify-center mb-3">
+          <div className="flex-1 flex flex-col items-center justify-center text-slate-500">
+            <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-3">
               <MessageCircle className="w-7 h-7" />
             </div>
             <p className="font-medium text-sm">Select a conversation</p>
