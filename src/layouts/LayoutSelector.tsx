@@ -1,9 +1,6 @@
 /**
- * LayoutSelector — picks the appropriate layout based on dashboard config.
- * Sidebar layout features collapsible sidebar with framer-motion animations,
- * mobile sheet overlay, and icon support via iconMap.
- *
- * Visual: dark glassmorphism / liquid glass aesthetic.
+ * LayoutSelector — sidebar or topbar layout.
+ * Light mode only — warm paper palette, DM Serif Display headings, clean surfaces.
  */
 
 import React, { useState, type ReactNode } from 'react';
@@ -27,75 +24,7 @@ interface LayoutProps {
   onTabChange: (tabId: string) => void;
 }
 
-/* ─── Aurora background blobs ────────────────────────────── */
-
-function AuroraBackground() {
-  return (
-    <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
-      {/* Deep base gradient */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(ellipse 80% 60% at 50% -20%, rgba(99,102,241,0.18) 0%, transparent 60%), ' +
-            'radial-gradient(ellipse 60% 40% at 80% 80%, rgba(139,92,246,0.12) 0%, transparent 60%), ' +
-            'linear-gradient(180deg, #070B14 0%, #0A0F1E 100%)',
-        }}
-      />
-      {/* Blob 1 — violet */}
-      <div
-        className="absolute animate-aurora"
-        style={{
-          top: '-15%',
-          left: '-10%',
-          width: '55%',
-          height: '55%',
-          background:
-            'radial-gradient(ellipse at center, rgba(139,92,246,0.28) 0%, transparent 65%)',
-          filter: 'blur(60px)',
-        }}
-      />
-      {/* Blob 2 — blue */}
-      <div
-        className="absolute animate-aurora-slow"
-        style={{
-          top: '10%',
-          right: '-15%',
-          width: '50%',
-          height: '50%',
-          background:
-            'radial-gradient(ellipse at center, rgba(59,130,246,0.2) 0%, transparent 65%)',
-          filter: 'blur(70px)',
-          animationDelay: '-6s',
-        }}
-      />
-      {/* Blob 3 — pink */}
-      <div
-        className="absolute animate-aurora-drift"
-        style={{
-          bottom: '-10%',
-          left: '20%',
-          width: '45%',
-          height: '45%',
-          background:
-            'radial-gradient(ellipse at center, rgba(236,72,153,0.16) 0%, transparent 65%)',
-          filter: 'blur(80px)',
-          animationDelay: '-11s',
-        }}
-      />
-      {/* Subtle noise overlay */}
-      <div
-        className="absolute inset-0 opacity-[0.015]"
-        style={{
-          backgroundImage:
-            'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")',
-        }}
-      />
-    </div>
-  );
-}
-
-/* ─── Sidebar Nav Item ─────────────────────────────────────── */
+/* ─── Nav Item ───────────────────────────────────────────── */
 
 function NavItem({
   tab,
@@ -114,48 +43,19 @@ function NavItem({
     <button
       onClick={onClick}
       className={cn(
-        'group relative w-full flex items-center gap-3 rounded-xl text-base font-medium transition-all duration-200',
-        isCollapsed ? 'justify-center px-2 py-3.5' : 'px-3 py-3',
+        'group relative w-full flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-200',
+        isCollapsed ? 'justify-center px-2 py-3' : 'px-3 py-2.5',
         isActive
-          ? 'text-primary'
-          : 'text-muted hover:text-foreground',
+          ? 'bg-green-50 text-green-800 border border-green-200'
+          : 'text-stone-500 hover:text-stone-800 hover:bg-stone-100 border border-transparent',
       )}
-      style={
-        isActive
-          ? {
-              background: 'rgba(167,139,250,0.12)',
-              border: '1px solid rgba(167,139,250,0.2)',
-              boxShadow: '0 0 16px rgba(167,139,250,0.15), inset 0 1px 0 rgba(255,255,255,0.06)',
-            }
-          : {
-              background: 'transparent',
-              border: '1px solid transparent',
-            }
-      }
-      onMouseEnter={(e) => {
-        if (!isActive) {
-          (e.currentTarget as HTMLButtonElement).style.background =
-            'rgba(255,255,255,0.05)';
-          (e.currentTarget as HTMLButtonElement).style.border =
-            '1px solid rgba(255,255,255,0.08)';
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!isActive) {
-          (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
-          (e.currentTarget as HTMLButtonElement).style.border =
-            '1px solid transparent';
-        }
-      }}
     >
       {Icon && (
         <Icon
           className={cn(
             'shrink-0 transition-colors duration-200',
-            isCollapsed ? 'h-6 w-6' : 'h-5 w-5',
-            isActive
-              ? 'text-primary drop-shadow-[0_0_6px_rgba(167,139,250,0.7)]'
-              : 'text-muted-foreground group-hover:text-foreground',
+            isCollapsed ? 'h-5 w-5' : 'h-4 w-4',
+            isActive ? 'text-green-700' : 'text-stone-400 group-hover:text-stone-600',
           )}
         />
       )}
@@ -165,23 +65,18 @@ function NavItem({
             initial={{ opacity: 0, width: 0 }}
             animate={{ opacity: 1, width: 'auto' }}
             exit={{ opacity: 0, width: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.18 }}
             className="truncate whitespace-nowrap"
           >
             {tab.label}
           </motion.span>
         )}
       </AnimatePresence>
-      {/* Active indicator — left glow bar */}
-      {isActive && (
+      {isActive && !isCollapsed && (
         <motion.div
           layoutId="sidebar-active"
-          className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
-          style={{
-            background: 'linear-gradient(180deg, #A78BFA 0%, #22D3EE 100%)',
-            boxShadow: '0 0 8px rgba(167,139,250,0.8), 0 0 16px rgba(167,139,250,0.4)',
-          }}
-          transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-green-600"
+          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
         />
       )}
     </button>
@@ -212,21 +107,7 @@ function LogoutButton({ isCollapsed }: { isCollapsed: boolean }) {
       <Tooltip content="Log out" side="right">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center justify-center p-2.5 rounded-xl text-muted-foreground transition-all duration-200"
-          style={{ background: 'transparent', border: '1px solid transparent' }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.color = '#FB7185';
-            (e.currentTarget as HTMLButtonElement).style.background =
-              'rgba(251,113,133,0.1)';
-            (e.currentTarget as HTMLButtonElement).style.border =
-              '1px solid rgba(251,113,133,0.2)';
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.color = '';
-            (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
-            (e.currentTarget as HTMLButtonElement).style.border =
-              '1px solid transparent';
-          }}
+          className="w-full flex items-center justify-center p-2.5 rounded-lg text-stone-400 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
           aria-label="Log out"
         >
           <LogOut className="h-4 w-4" />
@@ -238,31 +119,13 @@ function LogoutButton({ isCollapsed }: { isCollapsed: boolean }) {
   return (
     <div className="space-y-1">
       {user?.email && (
-        <p
-          className="text-xs truncate px-1"
-          style={{ color: 'rgba(148,163,184,0.6)' }}
-          title={user.email}
-        >
+        <p className="text-xs text-stone-400 truncate px-1" title={user.email}>
           {user.email}
         </p>
       )}
       <button
         onClick={handleLogout}
-        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-base text-muted-foreground transition-all duration-200"
-        style={{ background: 'transparent', border: '1px solid transparent' }}
-        onMouseEnter={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.color = '#FB7185';
-          (e.currentTarget as HTMLButtonElement).style.background =
-            'rgba(251,113,133,0.1)';
-          (e.currentTarget as HTMLButtonElement).style.border =
-            '1px solid rgba(251,113,133,0.2)';
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.color = '';
-          (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
-          (e.currentTarget as HTMLButtonElement).style.border =
-            '1px solid transparent';
-        }}
+        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-stone-500 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
       >
         <LogOut className="h-4 w-4 shrink-0" />
         <span>Log out</span>
@@ -295,75 +158,52 @@ function SidebarContent({
       {/* Header */}
       <div
         className={cn(
-          'flex items-center',
+          'flex items-center border-b border-stone-200',
           isCollapsed ? 'justify-center p-3' : 'justify-between px-4 py-4',
         )}
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}
       >
         {!isCollapsed && (
           <div className="flex items-center gap-2.5 min-w-0">
-            {branding.logo_url && (
+            {branding.logo_url ? (
               <img
                 src={branding.logo_url}
                 alt=""
-                className="h-8 w-8 rounded-lg shrink-0"
-                style={{ boxShadow: '0 0 12px rgba(167,139,250,0.3)' }}
+                className="h-8 w-8 rounded-lg shrink-0 object-cover"
               />
+            ) : (
+              <div className="h-8 w-8 rounded-lg shrink-0 bg-green-700 flex items-center justify-center">
+                <span className="text-white text-xs font-bold font-display">
+                  {(branding.brand_name || 'D')[0].toUpperCase()}
+                </span>
+              </div>
             )}
-            <span
-              className="font-bold text-lg truncate"
-              style={{
-                background: 'linear-gradient(135deg, #A78BFA 0%, #22D3EE 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
+            <span className="font-display text-base font-normal text-stone-800 truncate">
               {branding.brand_name || 'Dashboard'}
             </span>
           </div>
         )}
         {isCollapsed && branding.logo_url && (
-          <img
-            src={branding.logo_url}
-            alt=""
-            className="h-7 w-7 rounded-lg"
-            style={{ boxShadow: '0 0 10px rgba(167,139,250,0.3)' }}
-          />
+          <img src={branding.logo_url} alt="" className="h-7 w-7 rounded-lg object-cover" />
         )}
         {isCollapsed && !branding.logo_url && (
-          <div
-            className="h-7 w-7 rounded-lg flex items-center justify-center text-xs font-bold"
-            style={{
-              background: 'linear-gradient(135deg, #A78BFA 0%, #22D3EE 100%)',
-              boxShadow: '0 0 12px rgba(167,139,250,0.4)',
-            }}
-          >
-            D
+          <div className="h-7 w-7 rounded-lg bg-green-700 flex items-center justify-center">
+            <span className="text-white text-xs font-bold">
+              {(branding.brand_name || 'D')[0].toUpperCase()}
+            </span>
           </div>
         )}
         {showToggle && (
           <button
             onClick={onToggle}
             className={cn(
-              'p-1.5 rounded-lg text-muted-foreground transition-all duration-200',
+              'p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-all duration-200',
               isCollapsed && 'mt-1',
             )}
-            style={{ background: 'transparent' }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.color = '#E2E8F0';
-              (e.currentTarget as HTMLButtonElement).style.background =
-                'rgba(255,255,255,0.08)';
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.color = '';
-              (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
-            }}
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             <motion.div
               animate={{ rotate: isCollapsed ? 180 : 0 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.25 }}
             >
               <ChevronLeft className="h-4 w-4" />
             </motion.div>
@@ -374,7 +214,7 @@ function SidebarContent({
       {/* Navigation */}
       <nav
         className={cn(
-          'flex-1 overflow-y-auto py-3 space-y-1',
+          'flex-1 overflow-y-auto py-3 space-y-0.5',
           isCollapsed ? 'px-2' : 'px-3',
         )}
       >
@@ -391,8 +231,10 @@ function SidebarContent({
 
       {/* Logout + Footer */}
       <div
-        className={cn(isCollapsed ? 'px-2 py-3' : 'px-3 py-3')}
-        style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}
+        className={cn(
+          'border-t border-stone-200',
+          isCollapsed ? 'px-2 py-3' : 'px-3 py-3',
+        )}
       >
         <LogoutButton isCollapsed={isCollapsed} />
         <AnimatePresence>
@@ -404,16 +246,7 @@ function SidebarContent({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-[11px] mt-2 px-1 transition-colors block"
-              style={{ color: 'rgba(100,116,139,0.7)' }}
-              onMouseEnter={(e) =>
-                ((e.currentTarget as HTMLAnchorElement).style.color =
-                  'rgba(148,163,184,0.9)')
-              }
-              onMouseLeave={(e) =>
-                ((e.currentTarget as HTMLAnchorElement).style.color =
-                  'rgba(100,116,139,0.7)')
-              }
+              className="text-[11px] mt-2 px-1 text-stone-400 hover:text-stone-600 transition-colors block"
             >
               Powered by chatslytics.com
             </motion.a>
@@ -428,11 +261,7 @@ function SidebarContent({
 
 function useMobileSheet() {
   const [isOpen, setIsOpen] = useState(false);
-  return {
-    isOpen,
-    open:  () => setIsOpen(true),
-    close: () => setIsOpen(false),
-  };
+  return { isOpen, open: () => setIsOpen(true), close: () => setIsOpen(false) };
 }
 
 /* ─── Desktop Sidebar Layout ─────────────────────────────── */
@@ -452,61 +281,24 @@ function SidebarLayout({ children, tabs, activeTab, onTabChange }: LayoutProps) 
   /* ── Mobile ─── */
   if (isMobile) {
     return (
-      <div className="flex flex-col h-screen" style={{ background: '#070B14' }}>
-        <AuroraBackground />
-
-        {/* Mobile header — frosted glass */}
-        <header
-          className="relative z-10 flex items-center justify-between px-4 py-3"
-          style={{
-            background: 'rgba(7,11,20,0.85)',
-            backdropFilter: 'blur(24px)',
-            WebkitBackdropFilter: 'blur(24px)',
-            borderBottom: '1px solid rgba(255,255,255,0.07)',
-            boxShadow: '0 1px 24px rgba(0,0,0,0.4)',
-          }}
-        >
+      <div className="flex flex-col h-screen bg-stone-50">
+        {/* Mobile header */}
+        <header className="flex items-center justify-between px-4 py-3 bg-white border-b border-stone-200 shadow-sm">
           <div className="flex items-center gap-3">
             <button
               onClick={mobileSheet.open}
-              className="p-1.5 rounded-lg text-muted-foreground transition-all duration-200"
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.color = '#E2E8F0';
-                (e.currentTarget as HTMLButtonElement).style.background =
-                  'rgba(255,255,255,0.08)';
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.color = '';
-                (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
-              }}
+              className="p-1.5 rounded-lg text-stone-500 hover:text-stone-800 hover:bg-stone-100 transition-all duration-200"
               aria-label="Open menu"
             >
               <Menu className="h-5 w-5" />
             </button>
-            <span
-              className="font-bold text-base"
-              style={{
-                background: 'linear-gradient(135deg, #A78BFA 0%, #22D3EE 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
+            <span className="font-display text-base text-stone-800">
               {branding.brand_name || 'Dashboard'}
             </span>
           </div>
           <button
             onClick={handleMobileLogout}
-            className="p-1.5 rounded-lg text-muted-foreground transition-all duration-200"
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.color = '#FB7185';
-              (e.currentTarget as HTMLButtonElement).style.background =
-                'rgba(251,113,133,0.1)';
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.color = '';
-              (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
-            }}
+            className="p-1.5 rounded-lg text-stone-400 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
             aria-label="Log out"
           >
             <LogOut className="h-4 w-4" />
@@ -514,36 +306,30 @@ function SidebarLayout({ children, tabs, activeTab, onTabChange }: LayoutProps) 
         </header>
 
         <Sheet open={mobileSheet.isOpen} onClose={mobileSheet.close} side="left">
-          {/* Sheet panel gets glass sidebar styling */}
-          <div className="glass-sidebar h-full">
+          <div className="sidebar-surface h-full">
             <SidebarContent
               tabs={tabs}
               activeTab={activeTab}
-              onTabChange={(tabId) => {
-                onTabChange(tabId);
-                mobileSheet.close();
-              }}
+              onTabChange={(tabId) => { onTabChange(tabId); mobileSheet.close(); }}
               isCollapsed={false}
               showToggle={false}
             />
           </div>
         </Sheet>
 
-        <main className="relative z-10 flex-1 overflow-y-auto p-4">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4">{children}</main>
       </div>
     );
   }
 
   /* ── Desktop ─── */
   return (
-    <div className="flex h-screen" style={{ background: '#070B14' }}>
-      <AuroraBackground />
-
-      {/* Collapsible glass sidebar */}
+    <div className="flex h-screen bg-stone-50">
+      {/* Collapsible sidebar */}
       <motion.aside
         animate={{ width: isCollapsed ? 72 : 256 }}
-        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-        className="relative z-20 shrink-0 flex flex-col overflow-hidden glass-sidebar"
+        transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+        className="relative z-20 shrink-0 flex flex-col overflow-hidden sidebar-surface"
       >
         <SidebarContent
           tabs={tabs}
@@ -555,7 +341,7 @@ function SidebarLayout({ children, tabs, activeTab, onTabChange }: LayoutProps) 
         />
       </motion.aside>
 
-      <main className="relative z-10 flex-1 overflow-y-auto p-6">{children}</main>
+      <main className="flex-1 overflow-y-auto p-6">{children}</main>
     </div>
   );
 }
@@ -572,32 +358,14 @@ function TopbarLayout({ children, tabs, activeTab, onTabChange }: LayoutProps) {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: '#070B14' }}>
-      <AuroraBackground />
-      <header
-        className="relative z-10"
-        style={{
-          background: 'rgba(7,11,20,0.85)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          borderBottom: '1px solid rgba(255,255,255,0.07)',
-          boxShadow: '0 1px 24px rgba(0,0,0,0.4)',
-        }}
-      >
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div className="min-h-screen bg-stone-50">
+      <header className="bg-white border-b border-stone-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             {branding.logo_url && (
-              <img src={branding.logo_url} alt="" className="h-7 w-7 rounded-lg" />
+              <img src={branding.logo_url} alt="" className="h-7 w-7 rounded-lg object-cover" />
             )}
-            <h1
-              className="font-bold text-base"
-              style={{
-                background: 'linear-gradient(135deg, #A78BFA 0%, #22D3EE 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
+            <h1 className="font-display text-base text-stone-800">
               {branding.brand_name || 'Dashboard'}
             </h1>
           </div>
@@ -607,29 +375,14 @@ function TopbarLayout({ children, tabs, activeTab, onTabChange }: LayoutProps) {
                 href="https://chatslytics.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[11px] transition-colors"
-                style={{ color: 'rgba(100,116,139,0.7)' }}
+                className="text-[11px] text-stone-400 hover:text-stone-600 transition-colors"
               >
                 Powered by chatslytics.com
               </a>
             )}
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-muted-foreground transition-all duration-200"
-              style={{ border: '1px solid transparent' }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.color = '#FB7185';
-                (e.currentTarget as HTMLButtonElement).style.background =
-                  'rgba(251,113,133,0.1)';
-                (e.currentTarget as HTMLButtonElement).style.border =
-                  '1px solid rgba(251,113,133,0.2)';
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.color = '';
-                (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
-                (e.currentTarget as HTMLButtonElement).style.border =
-                  '1px solid transparent';
-              }}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-stone-500 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
               title={user?.email || 'Log out'}
             >
               <LogOut className="h-4 w-4" />
@@ -637,7 +390,7 @@ function TopbarLayout({ children, tabs, activeTab, onTabChange }: LayoutProps) {
             </button>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto px-6 flex gap-1 -mb-px">
+        <div className="max-w-7xl mx-auto px-6 flex gap-1">
           {tabs.map((tab) => {
             const Icon = getIcon(tab.icon);
             const isActive = activeTab === tab.id;
@@ -648,18 +401,9 @@ function TopbarLayout({ children, tabs, activeTab, onTabChange }: LayoutProps) {
                 className={cn(
                   'flex items-center gap-2 px-4 py-2.5 text-sm border-b-2 transition-all duration-200',
                   isActive
-                    ? 'font-medium'
-                    : 'border-transparent text-muted hover:text-foreground',
+                    ? 'font-medium text-green-700 border-green-700'
+                    : 'border-transparent text-stone-500 hover:text-stone-800 hover:border-stone-300',
                 )}
-                style={
-                  isActive
-                    ? {
-                        borderBottomColor: '#A78BFA',
-                        color: '#A78BFA',
-                        textShadow: '0 0 12px rgba(167,139,250,0.5)',
-                      }
-                    : {}
-                }
               >
                 {Icon && <Icon className="h-4 w-4" />}
                 {tab.label}
@@ -668,7 +412,7 @@ function TopbarLayout({ children, tabs, activeTab, onTabChange }: LayoutProps) {
           })}
         </div>
       </header>
-      <main className="relative z-10 max-w-7xl mx-auto p-6">{children}</main>
+      <main className="max-w-7xl mx-auto p-6">{children}</main>
     </div>
   );
 }
@@ -678,7 +422,6 @@ function TopbarLayout({ children, tabs, activeTab, onTabChange }: LayoutProps) {
 export default function LayoutSelector(props: LayoutProps) {
   const { dashboardConfig } = useConfig();
   const navigation = dashboardConfig?.navigation || 'sidebar';
-
   if (navigation === 'topbar') return <TopbarLayout {...props} />;
   return <SidebarLayout {...props} />;
 }

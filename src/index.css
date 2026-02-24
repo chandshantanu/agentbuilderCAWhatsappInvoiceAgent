@@ -2,59 +2,70 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Google Fonts ─────────────────────────────────────────────
+   DM Serif Display  — display headings (authoritative, editorial)
+   Outfit            — body + UI (clean geometric, warm readability)
+   JetBrains Mono    — ledger names, amounts, codes
+─────────────────────────────────────────────────────────────── */
+
 :root {
-  /* ── Core palette ─────────────────────────────────────── */
-  --color-primary: #A78BFA;           /* violet-400  */
-  --color-secondary: #818CF8;         /* indigo-400  */
-  --color-background: #070B14;        /* deep space  */
-  --color-text: #E2E8F0;              /* slate-200   */
-  --font-family: 'Inter', system-ui, sans-serif;
+  /* ── Core palette ──────────────────────────────────────── */
+  --color-primary:        #166534;   /* forest green — trust, money */
+  --color-primary-hover:  #14532d;
+  --color-primary-light:  #dcfce7;
+  --color-secondary:      #92400e;   /* amber ochre — accent, GST */
+  --color-secondary-light:#fef3c7;
+  --color-background:     #fafaf8;   /* warm off-white */
+  --color-text:           #1c1917;   /* warm charcoal ink */
 
-  /* ── Surface / glass layers ──────────────────────────── */
-  --color-surface-raised: rgba(255, 255, 255, 0.04);
-  --color-surface-overlay: rgba(255, 255, 255, 0.07);
+  /* ── Fonts ─────────────────────────────────────────────── */
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-body:    'Outfit', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'Courier New', monospace;
 
-  /* ── Text tones ──────────────────────────────────────── */
-  --color-muted: #94A3B8;
-  --color-muted-foreground: #64748B;
+  /* ── Surface layers ─────────────────────────────────────── */
+  --color-surface:        #ffffff;
+  --color-surface-raised: #f5f3f0;
+  --color-surface-overlay:#ede9e3;
 
-  /* ── Borders ─────────────────────────────────────────── */
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-border-subtle: rgba(255, 255, 255, 0.04);
+  /* ── Text tones ─────────────────────────────────────────── */
+  --color-muted:            #57534e;   /* warm stone */
+  --color-muted-foreground: #a8a29e;
 
-  /* ── Accent palette ───────────────────────────────────── */
-  --color-accent-blue: #60A5FA;
-  --color-accent-green: #34D399;
-  --color-accent-amber: #FBBF24;
-  --color-accent-rose: #FB7185;
-  --color-accent-violet: #A78BFA;
-  --color-accent-cyan: #22D3EE;
-  --color-accent-pink: #F472B6;
+  /* ── Borders ────────────────────────────────────────────── */
+  --color-border:        #e7e2d9;
+  --color-border-subtle: #f0ece6;
 
-  /* ── Shadows / glows ──────────────────────────────────── */
-  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  /* ── Status / semantic accents ─────────────────────────── */
+  --color-accent-green:  #16a34a;
+  --color-accent-amber:  #d97706;
+  --color-accent-red:    #dc2626;
+  --color-accent-blue:   #2563eb;
+  --color-accent-violet: #7c3aed;
 
-  --glow-primary: 0 0 20px rgba(167, 139, 250, 0.35), 0 0 40px rgba(167, 139, 250, 0.15);
-  --glow-green:   0 0 16px rgba(52, 211, 153, 0.45),  0 0 32px rgba(52, 211, 153, 0.18);
-  --glow-cyan:    0 0 16px rgba(34, 211, 238, 0.4),   0 0 32px rgba(34, 211, 238, 0.15);
-  --glow-rose:    0 0 16px rgba(251, 113, 133, 0.4),  0 0 32px rgba(251, 113, 133, 0.15);
-  --glow-amber:   0 0 16px rgba(251, 191, 36, 0.4),   0 0 32px rgba(251, 191, 36, 0.15);
-
-  /* ── Layout ───────────────────────────────────────────── */
-  --sidebar-width: 16rem;
+  /* ── Sidebar ────────────────────────────────────────────── */
+  --sidebar-bg:          #ffffff;
+  --sidebar-border:      #e7e2d9;
+  --sidebar-width:       16rem;
   --sidebar-collapsed-width: 4.5rem;
-  --transition-smooth: 300ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-bounce: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ── Shadows (warm, paper-like) ─────────────────────────── */
+  --shadow-xs: 0 1px 2px rgba(28,25,23,0.06);
+  --shadow-sm: 0 1px 3px rgba(28,25,23,0.08), 0 1px 2px -1px rgba(28,25,23,0.05);
+  --shadow-md: 0 4px 6px -1px rgba(28,25,23,0.08), 0 2px 4px -2px rgba(28,25,23,0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(28,25,23,0.1), 0 4px 6px -4px rgba(28,25,23,0.06);
+  --shadow-card: 0 1px 4px rgba(28,25,23,0.08), 0 0 0 1px rgba(28,25,23,0.04);
+
+  /* ── Transitions ────────────────────────────────────────── */
+  --transition-smooth: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* ── Reset / Base ─────────────────────────────────────────── */
-html { font-size: 18px; }
+html { font-size: 16px; }
 
 body {
-  font-family: var(--font-family);
+  font-family: var(--font-body);
   font-size: 1rem;
   color: var(--color-text);
   background-color: var(--color-background);
@@ -63,103 +74,80 @@ body {
   overflow-x: hidden;
 }
 
+/* Display font for headings */
+h1, h2, .font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
 /* ── Custom scrollbar ─────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: #d6d3d1;
   border-radius: 9999px;
 }
-::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
 
-/* ── Glass utility classes ────────────────────────────────── */
+/* ── Card utility ─────────────────────────────────────────── */
 @layer components {
-  .glass {
-    background: rgba(255, 255, 255, 0.04);
-    backdrop-filter: blur(16px) saturate(180%);
-    -webkit-backdrop-filter: blur(16px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+  .card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-card);
   }
 
-  .glass-card {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(24px) saturate(200%);
-    -webkit-backdrop-filter: blur(24px) saturate(200%);
-    border: 1px solid rgba(255, 255, 255, 0.09);
-    border-radius: 1rem;
-    box-shadow:
-      0 4px 24px rgba(0, 0, 0, 0.4),
-      inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    transition: box-shadow 300ms ease, border-color 300ms ease;
+  .card-hover {
+    transition: box-shadow var(--transition-smooth), border-color var(--transition-smooth),
+      transform var(--transition-smooth);
+  }
+  .card-hover:hover {
+    box-shadow: var(--shadow-md);
+    border-color: #d6cfc4;
+    transform: translateY(-1px);
   }
 
-  .glass-card:hover {
-    border-color: rgba(255, 255, 255, 0.14);
-    box-shadow:
-      0 8px 32px rgba(0, 0, 0, 0.5),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  /* Sidebar surface */
+  .sidebar-surface {
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--sidebar-border);
+    box-shadow: 2px 0 8px rgba(28,25,23,0.05);
   }
 
-  .glass-sidebar {
-    background: rgba(7, 11, 20, 0.8);
-    backdrop-filter: blur(32px) saturate(200%);
-    -webkit-backdrop-filter: blur(32px) saturate(200%);
-    border-right: 1px solid rgba(255, 255, 255, 0.07);
-    box-shadow: 4px 0 32px rgba(0, 0, 0, 0.5);
+  /* Status badge helpers */
+  .badge-green  { background: #dcfce7; color: #15803d; }
+  .badge-amber  { background: #fef3c7; color: #b45309; }
+  .badge-red    { background: #fee2e2; color: #b91c1c; }
+  .badge-blue   { background: #dbeafe; color: #1d4ed8; }
+  .badge-violet { background: #ede9fe; color: #6d28d9; }
+  .badge-stone  { background: #f5f5f4; color: #57534e; }
+
+  /* Primary action button */
+  .btn-primary {
+    background: var(--color-primary);
+    color: #ffffff;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: background var(--transition-smooth), box-shadow var(--transition-smooth);
+  }
+  .btn-primary:hover {
+    background: var(--color-primary-hover);
+    box-shadow: 0 2px 8px rgba(22,101,52,0.25);
   }
 
-  .glow-primary { box-shadow: var(--glow-primary); }
-  .glow-green   { box-shadow: var(--glow-green); }
-  .glow-cyan    { box-shadow: var(--glow-cyan); }
-  .glow-rose    { box-shadow: var(--glow-rose); }
-  .glow-amber   { box-shadow: var(--glow-amber); }
-
-  .gradient-text {
-    background: linear-gradient(135deg, #A78BFA 0%, #22D3EE 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  /* Subtle text helpers */
+  .text-display {
+    font-family: var(--font-display);
   }
-
-  .gradient-text-warm {
-    background: linear-gradient(135deg, #F472B6 0%, #A78BFA 50%, #60A5FA 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  .text-mono {
+    font-family: var(--font-mono);
   }
 }
 
 /* ── Keyframe animations ──────────────────────────────────── */
-@keyframes aurora {
-  0%   { transform: translate(0%, 0%) scale(1);    opacity: 0.5; }
-  33%  { transform: translate(5%, -8%) scale(1.1); opacity: 0.7; }
-  66%  { transform: translate(-4%, 6%) scale(0.95); opacity: 0.55; }
-  100% { transform: translate(0%, 0%) scale(1);    opacity: 0.5; }
-}
-
-@keyframes aurora-slow {
-  0%   { transform: translate(0%, 0%) scale(1.1);   opacity: 0.4; }
-  50%  { transform: translate(-6%, 4%) scale(0.95); opacity: 0.6; }
-  100% { transform: translate(0%, 0%) scale(1.1);   opacity: 0.4; }
-}
-
-@keyframes aurora-drift {
-  0%   { transform: translate(0%, 0%) scale(1);     opacity: 0.35; }
-  40%  { transform: translate(8%, -5%) scale(1.05); opacity: 0.5; }
-  80%  { transform: translate(-3%, 7%) scale(0.97); opacity: 0.4; }
-  100% { transform: translate(0%, 0%) scale(1);     opacity: 0.35; }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 8px rgba(167, 139, 250, 0.3); }
-  50%       { box-shadow: 0 0 20px rgba(167, 139, 250, 0.6), 0 0 40px rgba(167, 139, 250, 0.2); }
-}
-
-@keyframes shimmer {
-  0%   { background-position: -200% center; }
-  100% { background-position: 200% center; }
-}
-
 @keyframes fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
@@ -173,4 +161,9 @@ body {
 @keyframes slide-in-up {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
 }
