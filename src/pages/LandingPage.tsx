@@ -1,11 +1,12 @@
 /**
- * Premium SaaS landing page — refined dark-to-light flow.
+ * CA Invoice Agent — Premium SaaS landing page.
  * Config-driven: branding, features, pricing, testimonials all from SaaSContext.
  *
- * Design direction: "Refined Authority" — dark hero with luminous accents,
- * crisp white content sections, strong typographic hierarchy, confident CTAs.
+ * Design direction: "Precision Ledger" — dark navy with warm amber/gold accents,
+ * sophisticated typography, CA-specific content defaults.
  */
 
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useSaaS } from '@/contexts/SaaSContext';
@@ -21,6 +22,10 @@ import {
   Clock,
   Sparkles,
   Star,
+  MessageSquare,
+  Database,
+  Receipt,
+  ScanLine,
 } from 'lucide-react';
 
 /* ─── Helpers ─────────────────────────────────────── */
@@ -63,24 +68,80 @@ const scaleUp = {
 
 /* ─── Icon map for features ───────────────────────── */
 
-const FEATURE_ICONS = [FileText, Zap, Shield, BarChart3, Users, Clock];
+const FEATURE_ICONS = [MessageSquare, Database, Receipt, Shield, BarChart3, ScanLine];
 
 /* ─── Default SaaS images (Azure CDN) ────────────── */
 
 const CDN_BASE = 'https://stagentbuilderwidgets.blob.core.windows.net/widgets/saas-images';
+const CA_CDN = `${CDN_BASE}/ca`;
 
 const DEFAULT_IMAGES = {
-  hero: `${CDN_BASE}/hero-automation.jpg`,
+  hero: `${CA_CDN}/hero.jpg`,
   features: [
-    `${CDN_BASE}/feature-ai-chatbot.jpg`,
-    `${CDN_BASE}/feature-analytics.jpg`,
-    `${CDN_BASE}/feature-lead-scoring.jpg`,
-    `${CDN_BASE}/feature-brand-protection.jpg`,
-    `${CDN_BASE}/feature-follow-ups.jpg`,
-    `${CDN_BASE}/feature-ai-chatbot.jpg`,
+    `${CA_CDN}/feature-whatsapp.jpg`,
+    `${CA_CDN}/feature-clients.jpg`,
+    `${CA_CDN}/feature-tally.jpg`,
+    `${CA_CDN}/feature-gst.jpg`,
+    `${CA_CDN}/feature-analytics.jpg`,
+    `${CA_CDN}/feature-ocr.jpg`,
   ],
-  humanEntrepreneur: `${CDN_BASE}/human-entrepreneur.jpg`,
-  humanTeam: `${CDN_BASE}/human-team-celebrating.jpg`,
+  humanEntrepreneur: `${CA_CDN}/social-proof.jpg`,
+  humanTeam: `${CA_CDN}/team-banner.jpg`,
+};
+
+/* ─── CA-specific default content ────────────────── */
+
+const CA_DEFAULTS = {
+  hero_title: 'Your Clients Send Bills on WhatsApp. You Get Tally-Ready Vouchers.',
+  hero_subtitle: 'AI-powered invoice processing for Chartered Accountants. WhatsApp photos become GST-compliant Tally XML exports — automatically.',
+  hero_badges: ['GST Compliant', 'Tally Integration', 'WhatsApp Native'],
+  cta_text: 'Start Free Trial',
+  features: [
+    {
+      title: 'WhatsApp Invoice Capture',
+      description: 'Clients simply photograph and send invoices on WhatsApp. No app downloads, no portals — just the messaging app they already use.',
+    },
+    {
+      title: 'Smart Client Management',
+      description: 'Link phone numbers to client accounts. Bills from multiple branches auto-route to the right client. Unlimited clients, zero confusion.',
+    },
+    {
+      title: 'One-Click Tally XML Export',
+      description: 'Export verified invoices directly as Tally Prime XML. Correct GST ledgers, voucher types, and bill-wise allocations — ready to import.',
+    },
+    {
+      title: 'Automated GST Computation',
+      description: 'CGST, SGST, IGST, and cess computed automatically per line item. Supply type (intra/inter-state) detected from GSTIN. Zero manual entry.',
+    },
+    {
+      title: 'Invoice Analytics Dashboard',
+      description: 'Track pending reviews, approval rates, and monthly volumes at a glance. Filter by client, date range, or status in seconds.',
+    },
+    {
+      title: 'AI Document Extraction',
+      description: 'Advanced OCR reads printed and handwritten bills. HSN/SAC codes, quantities, rates — all extracted with confidence scoring.',
+    },
+  ],
+  pricing_features: [
+    'Unlimited WhatsApp invoice capture',
+    'Unlimited client accounts',
+    'One-click Tally Prime XML export',
+    'Automated GST computation (CGST/SGST/IGST)',
+    'Invoice analytics dashboard',
+    'AI-powered OCR extraction',
+    'Bulk approve & export',
+    'WhatsApp delivery notifications',
+  ],
+  social_proof_title: 'Trusted by Chartered Accountants across India',
+  social_proof_description: 'CAs reduce manual data entry by 90% and close their books faster every month. Your clients love it too — no new app to learn.',
+  social_proof_count: '200+',
+  social_proof_stats: [
+    { value: '90%', label: 'Less data entry' },
+    { value: '<2 min', label: 'Per invoice' },
+    { value: '100%', label: 'GST accurate' },
+  ],
+  cta_section_title: 'Ready to eliminate manual invoice entry?',
+  cta_section_subtitle: 'Set up in under 10 minutes. Your first 14 days are completely free.',
 };
 
 /* ─── Hero Atmosphere (bezier curves + orbs) ──────── */
@@ -182,16 +243,54 @@ export default function LandingPage() {
   if (!config) return null;
 
   const { branding, landing_page, pricing } = config;
-  const primary = branding.primary_color || '#2563eb';
+  const primary = branding.primary_color || '#1e6b4a';
   const rgb = hexToRgb(primary);
   const lightAccent = lightenColor(primary, 0.35);
 
-  const features: Array<{ title: string; description: string }> =
-    landing_page.features || [];
+  // Merge CA defaults with config-provided values
+  const lp = { ...CA_DEFAULTS, ...landing_page };
+  const features: Array<{ title: string; description: string }> = lp.features || CA_DEFAULTS.features;
   const currencySymbol = pricing.currency === 'INR' ? '\u20B9' : '$';
   const displayPrice = pricing.display_price || pricing.monthly_price;
 
   const handleCta = () => navigate(isAuthenticated ? '/checkout' : '/signup');
+
+  // SEO meta tags
+  const pageTitle = `${branding.brand_name || 'CA Invoice Assistant'} — WhatsApp Invoice Processing & Tally Export`;
+  const pageDesc = lp.hero_subtitle || CA_DEFAULTS.hero_subtitle;
+
+  useEffect(() => {
+    document.title = pageTitle;
+    const setMeta = (name: string, content: string, attr = 'name') => {
+      let el = document.querySelector(`meta[${attr}="${name}"]`);
+      if (!el) { el = document.createElement('meta'); el.setAttribute(attr, name); document.head.appendChild(el); }
+      el.setAttribute('content', content);
+    };
+    setMeta('description', pageDesc);
+    setMeta('keywords', 'CA invoice assistant, WhatsApp invoice, Tally Prime XML export, GST automation, chartered accountant software, invoice processing India');
+    setMeta('robots', 'index, follow');
+    setMeta('og:title', pageTitle, 'property');
+    setMeta('og:description', pageDesc, 'property');
+    setMeta('og:type', 'website', 'property');
+    setMeta('og:image', DEFAULT_IMAGES.hero, 'property');
+    setMeta('twitter:card', 'summary_large_image');
+    setMeta('twitter:title', pageTitle);
+    setMeta('twitter:description', pageDesc);
+    setMeta('twitter:image', DEFAULT_IMAGES.hero);
+    // JSON-LD for LocalBusiness / SoftwareApplication
+    const ldId = 'ld-json-ca';
+    let ld = document.getElementById(ldId) as HTMLScriptElement | null;
+    if (!ld) { ld = document.createElement('script'); ld.id = ldId; ld.type = 'application/ld+json'; document.head.appendChild(ld); }
+    ld.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      name: branding.brand_name || 'CA Invoice Assistant',
+      applicationCategory: 'BusinessApplication',
+      operatingSystem: 'WhatsApp, Web',
+      description: pageDesc,
+      offers: { '@type': 'Offer', priceCurrency: pricing.currency || 'INR', price: String(displayPrice || 0) },
+    });
+  }, [pageTitle, pageDesc]);
 
   return (
     <div className="min-h-screen" style={{ background: '#070B14', fontFamily: "'Inter', system-ui, sans-serif", fontSize: '16px' }}>
@@ -255,7 +354,7 @@ export default function LandingPage() {
 
               {/* Trust pills */}
               <motion.div variants={fadeUp} className="flex items-center gap-3 sm:gap-5 mb-9 flex-wrap">
-                {(landing_page.hero_badges || ['AI-Powered', '24/7 Availability', 'Multi-language']).map((label: string) => (
+                {(lp.hero_badges || CA_DEFAULTS.hero_badges).map((label: string) => (
                   <span
                     key={label}
                     className="inline-flex items-center gap-2 text-[13px] font-medium tracking-wide text-white/80"
@@ -276,7 +375,7 @@ export default function LandingPage() {
                 variants={fadeUp}
                 className="text-[2.4rem] sm:text-[3.2rem] lg:text-[3.6rem] font-extrabold text-white leading-[1.08] tracking-[-0.025em] mb-6"
               >
-                {landing_page.hero_title || 'Automate Your Practice'}
+                {lp.hero_title}
               </motion.h1>
 
               {/* Subtitle */}
@@ -284,7 +383,7 @@ export default function LandingPage() {
                 variants={fadeUp}
                 className="text-[1.05rem] sm:text-lg text-gray-300 leading-relaxed max-w-xl mb-10"
               >
-                {landing_page.hero_subtitle || 'AI-powered automation for modern professionals'}
+                {lp.hero_subtitle}
               </motion.p>
 
               {/* CTA buttons */}
@@ -297,7 +396,7 @@ export default function LandingPage() {
                     boxShadow: `0 0 0 1px rgba(${rgb}, 0.3), 0 8px 32px rgba(${rgb}, 0.35), 0 2px 6px rgba(0,0,0,0.15)`,
                   }}
                 >
-                  {landing_page.cta_text || 'Start Your Free Trial'}
+                  {lp.cta_text || 'Start Your Free Trial'}
                   <ArrowRight className="w-[18px] h-[18px] transition-transform group-hover:translate-x-0.5" />
                 </button>
                 {!isAuthenticated && (
@@ -324,7 +423,7 @@ export default function LandingPage() {
               >
                 <img
                   src={landing_page.hero_image || DEFAULT_IMAGES.hero}
-                  alt="AI-powered automation"
+                  alt="Chartered Accountant using WhatsApp invoice assistant"
                   className="w-full h-auto object-cover rounded-2xl"
                   loading="eager"
                 />
@@ -349,7 +448,7 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════════ FEATURES ═══════════ */}
-      {features.length > 0 && (
+      {features.length > 0 ? (
         <section className="py-16 sm:py-20 px-5 sm:px-8">
           <div className="max-w-5xl mx-auto">
             <motion.div
@@ -372,7 +471,7 @@ export default function LandingPage() {
                 variants={fadeUp}
                 className="text-3xl sm:text-[2.5rem] font-bold text-slate-100 tracking-[-0.02em]"
               >
-                Everything you need
+                Everything a CA practice needs
               </motion.h2>
             </motion.div>
 
@@ -424,7 +523,7 @@ export default function LandingPage() {
             </motion.div>
           </div>
         </section>
-      )}
+      ) : null}
 
       {/* ═══════════ PRICING ═══════════ */}
       <section className="py-16 sm:py-20 px-5 sm:px-8">
@@ -486,7 +585,7 @@ export default function LandingPage() {
 
             {/* Feature checklist */}
             <div className="space-y-3.5 mb-8">
-              {(landing_page.pricing_features || features.slice(0, 5)).map(
+              {(lp.pricing_features || features.slice(0, 5)).map(
                 (item: any, i: number) => {
                   const label = typeof item === 'string' ? item : item.title || item.label;
                   return (
@@ -513,7 +612,7 @@ export default function LandingPage() {
                 boxShadow: `0 4px 16px rgba(${rgb}, 0.3)`,
               }}
             >
-              {landing_page.cta_text || 'Get Started'}
+              {lp.cta_text || 'Get Started'}
             </button>
 
             <p className="text-xs text-slate-500 text-center mt-4 tracking-wide">
@@ -537,12 +636,13 @@ export default function LandingPage() {
             <motion.div variants={scaleUp} className="relative">
               <img
                 src={landing_page.social_proof_image || DEFAULT_IMAGES.humanEntrepreneur}
-                alt="Business owner using the platform"
+                alt="Chartered Accountant using the platform"
                 className="w-full rounded-2xl shadow-xl object-cover aspect-square"
                 loading="lazy"
               />
               <div
                 className="absolute -bottom-4 -right-4 glass-card rounded-xl px-5 py-3"
+                style={{ background: 'rgba(15,20,35,0.9)', border: '1px solid rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)' }}
               >
                 <div className="flex items-center gap-2">
                   <div className="flex -space-x-2">
@@ -552,15 +652,15 @@ export default function LandingPage() {
                         className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold text-white"
                         style={{ backgroundColor: lightenColor(primary, (n - 1) * 0.15) }}
                       >
-                        {['S', 'A', 'R'][n - 1]}
+                        {['R', 'M', 'P'][n - 1]}
                       </div>
                     ))}
                   </div>
                   <div className="ml-1">
                     <p className="text-sm font-semibold text-slate-200">
-                      {landing_page.social_proof_count || '500+'} businesses
+                      {lp.social_proof_count || CA_DEFAULTS.social_proof_count} CAs
                     </p>
-                    <p className="text-xs text-slate-400">trust our platform</p>
+                    <p className="text-xs text-slate-400">trust this platform</p>
                   </div>
                 </div>
               </div>
@@ -571,22 +671,17 @@ export default function LandingPage() {
               <div className="inline-flex items-center gap-1.5 mb-4">
                 <Users className="w-4 h-4" style={{ color: primary }} />
                 <span className="text-xs font-bold uppercase tracking-[0.15em]" style={{ color: primary }}>
-                  Trusted by businesses
+                  Trusted by CAs across India
                 </span>
               </div>
               <h2 className="text-3xl sm:text-[2.5rem] font-bold text-slate-100 tracking-[-0.02em] mb-4">
-                {landing_page.social_proof_title || 'Join our growing community'}
+                {lp.social_proof_title}
               </h2>
               <p className="text-slate-400 text-lg leading-relaxed mb-6">
-                {landing_page.social_proof_description ||
-                  `Businesses automate their workflows with ${branding.brand_name || 'our AI agent'} and save hours every week.`}
+                {lp.social_proof_description}
               </p>
               <div className="grid grid-cols-3 gap-4">
-                {(landing_page.social_proof_stats || [
-                  { value: '500+', label: 'Businesses' },
-                  { value: '24/7', label: 'Always-on' },
-                  { value: '< 5s', label: 'Response time' },
-                ]).map((stat: any) => (
+                {(lp.social_proof_stats || CA_DEFAULTS.social_proof_stats).map((stat: any) => (
                   <div key={stat.label} className="text-center p-3 bg-white/5 rounded-xl border border-white/10">
                     <p className="text-xl font-bold text-slate-100">{stat.value}</p>
                     <p className="text-xs text-slate-400 mt-0.5">{stat.label}</p>
@@ -603,11 +698,11 @@ export default function LandingPage() {
         <div className="relative">
           <img
             src={landing_page.team_banner_image || DEFAULT_IMAGES.humanTeam}
-            alt="Team celebrating success"
+            alt="Modern CA office interior"
             className="w-full h-[300px] sm:h-[400px] object-cover"
             loading="lazy"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-gray-900/80 to-gray-900/40 flex items-center">
+          <div className="absolute inset-0 bg-gradient-to-r from-gray-900/85 to-gray-900/50 flex items-center">
             <div className="max-w-6xl mx-auto px-5 sm:px-8 w-full">
               <motion.div
                 initial="hidden"
@@ -616,11 +711,10 @@ export default function LandingPage() {
                 variants={fadeUp}
               >
                 <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3 max-w-lg">
-                  {landing_page.cta_section_title ||
-                    `Ready to get started with ${branding.brand_name || 'our platform'}?`}
+                  {lp.cta_section_title}
                 </h2>
                 <p className="text-gray-300 text-lg mb-6 max-w-md">
-                  {landing_page.cta_section_subtitle || 'Start your free trial today. No credit card required.'}
+                  {lp.cta_section_subtitle}
                 </p>
                 <button
                   onClick={handleCta}
@@ -630,7 +724,7 @@ export default function LandingPage() {
                     boxShadow: `0 4px 20px rgba(${rgb}, 0.4)`,
                   }}
                 >
-                  {landing_page.cta_text || 'Get Started Free'}
+                  {lp.cta_text || 'Start Free Trial'}
                   <ArrowRight className="w-5 h-5" />
                 </button>
               </motion.div>

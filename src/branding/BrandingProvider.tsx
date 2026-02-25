@@ -49,7 +49,10 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
       root.style.setProperty('--color-surface-raised', '#F9FAFB');
     }
 
-    if (branding.brand_name) document.title = branding.brand_name;
+    // Only set title from branding if the page hasn't set a more specific one
+    if (branding.brand_name && (!document.title || document.title === 'Agent Dashboard')) {
+      document.title = branding.brand_name;
+    }
 
     if (branding.favicon_url) {
       const favicon = document.querySelector("link[rel='icon']") as HTMLLinkElement;
