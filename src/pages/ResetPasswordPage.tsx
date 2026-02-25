@@ -22,6 +22,18 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
 
+  // Password strength: 0=empty, 1=weak, 2=fair, 3=strong
+  const passwordStrength = (() => {
+    if (!password) return 0;
+    let score = 0;
+    if (password.length >= 6) score++;
+    if (password.length >= 10) score++;
+    if (/[^a-zA-Z0-9]/.test(password) || /\d/.test(password)) score++;
+    return score as 0 | 1 | 2 | 3;
+  })();
+  const strengthLabel = ['', 'Weak', 'Fair', 'Strong'][passwordStrength];
+  const strengthColor = ['', '#EF4444', '#F59E0B', '#10B981'][passwordStrength];
+
   const branding = config?.branding || {};
   const primaryColor = branding.primary_color || '#7C3AED';
 
@@ -158,6 +170,24 @@ export default function ResetPasswordPage() {
                       className="w-full px-4 py-3 border border-white/10 bg-white/5 rounded-xl text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-transparent transition-all"
                       placeholder="At least 6 characters"
                     />
+                    {password.length > 0 && (
+                      <div className="mt-2">
+                        <div className="flex gap-1">
+                          {[1, 2, 3].map((level) => (
+                            <div
+                              key={level}
+                              className="h-1 flex-1 rounded-full transition-colors duration-200"
+                              style={{
+                                background: passwordStrength >= level ? strengthColor : 'rgba(255,255,255,0.1)',
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-xs mt-1" style={{ color: strengthColor }}>
+                          {strengthLabel}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   <div>

@@ -311,7 +311,75 @@ async function bulkApproveInvoices(invoiceIds: string[]): Promise<{ modified_cou
   return resp.data;
 }
 
+// ─── Tally Settings ────────────────────────────────────────────────
+
+export interface TallyConfig {
+  company_name?: string;
+  local_sale_0?: string; local_sale_5?: string; local_sale_12?: string; local_sale_18?: string; local_sale_28?: string;
+  interstate_sale_0?: string; interstate_sale_5?: string; interstate_sale_12?: string; interstate_sale_18?: string; interstate_sale_28?: string;
+  output_cgst_0?: string; output_sgst_0?: string; output_igst_0?: string;
+  output_cgst_2?: string; output_sgst_2?: string; output_igst_5?: string;
+  output_cgst_6?: string; output_sgst_6?: string; output_igst_12?: string;
+  output_cgst_9?: string; output_sgst_9?: string; output_igst_18?: string;
+  output_cgst_14?: string; output_sgst_14?: string; output_igst_28?: string;
+  input_cgst_0?: string; input_sgst_0?: string; input_igst_0?: string;
+  input_cgst_2?: string; input_sgst_2?: string; input_igst_5?: string;
+  input_cgst_6?: string; input_sgst_6?: string; input_igst_12?: string;
+  input_cgst_9?: string; input_sgst_9?: string; input_igst_18?: string;
+  input_cgst_14?: string; input_sgst_14?: string; input_igst_28?: string;
+}
+
+async function getTallyConfig(): Promise<TallyConfig> {
+  const resp = await apiClient.get('/api/settings/tally');
+  return resp.data?.data || {};
+}
+
+async function saveTallyConfig(config: TallyConfig): Promise<void> {
+  await apiClient.put('/api/settings/tally', config);
+}
+
+async function getTallyConfigSuggestions(): Promise<TallyConfig> {
+  const resp = await apiClient.get('/api/settings/tally/suggestions');
+  return resp.data?.data || {};
+}
+
 // ─── Export ────────────────────────────────────────────────────────
+
+export interface OutlierInvoiceItem {
+  invoice_id: string;
+  invoice_number: string;
+  invoice_date: string;
+  gap: number;
+  issue_type: string;
+  taxable: number;
+  grand_total: number;
+  gst_total: number;
+}
+
+export interface OutlierCompanyGroup {
+  company: string;
+  invoices: OutlierInvoiceItem[];
+  insight: string;
+}
+
+export interface TallyPreviewResult {
+  has_outliers: boolean;
+  companies: OutlierCompanyGroup[];
+  clean_count: number;
+  outlier_count: number;
+}
+
+async function previewTallyExport(params: {
+  invoice_ids?: string[];
+  client_id?: string;
+  date_from?: string;
+  date_to?: string;
+  status?: string;
+  acknowledged_invoice_ids?: string[];
+}): Promise<TallyPreviewResult> {
+  const resp = await apiClient.post('/api/export/tally/preview', params);
+  return resp.data;
+}
 
 async function exportTally(params: {
   invoice_ids?: string[];
@@ -320,7 +388,8 @@ async function exportTally(params: {
   date_to?: string;
   status?: string;
   tally_company?: string;
-}): Promise<{ xml: string; invoice_count: number }> {
+  acknowledged_invoice_ids?: string[];
+}): Promise<{ success?: boolean; xml: string; invoice_count: number; message?: string }> {
   const resp = await apiClient.post('/api/export/tally', params);
   return resp.data;
 }
@@ -366,6 +435,9 @@ async function dismissDlqItem(itemId: string): Promise<void> {
 export const caInvoiceService = {
   getDashboardStats,
   getDashboardOverview,
+  getTallyConfig,
+  saveTallyConfig,
+  getTallyConfigSuggestions,
   listClients,
   getClient,
   createClient,
@@ -386,6 +458,7 @@ export const caInvoiceService = {
   bulkApproveInvoices,
   getInvoiceMediaUrl,
   getInvoiceMediaCount,
+  previewTallyExport,
   exportTally,
   exportCsv,
   listDlqItems,
