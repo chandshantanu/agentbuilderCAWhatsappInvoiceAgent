@@ -28,10 +28,11 @@ import {
 import { caInvoiceService, type TallyConfig } from '@/services/caInvoiceService';
 import { getAuthToken } from '@/lib/apiClient';
 
-const GST_RATES = ['5', '12', '18', '28'] as const;
+const GST_RATES = ['0', '5', '12', '18', '28'] as const;
 type GstRate = typeof GST_RATES[number];
 
 const RATE_HALF: Record<GstRate, string> = {
+  '0': '0',
   '5': '2',
   '12': '6',
   '18': '9',
@@ -440,6 +441,7 @@ export default function TallySettings({ config: _config }: { config: Record<stri
   const [values, setValues] = useState<Record<string, string>>({});
   const [salesRate, setSalesRate] = useState<GstRate>('18');
   const [gstRate, setGstRate] = useState<GstRate>('18');
+  const [inputGstRate, setInputGstRate] = useState<GstRate>('18');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -480,10 +482,16 @@ export default function TallySettings({ config: _config }: { config: Record<stri
 
     // Build a mapping from keywords to config keys
     const KEYWORD_MAP: Array<{ keys: string[]; fieldPattern: RegExp }> = [
-      { keys: ['cgst', 'central gst'], fieldPattern: /^output_cgst_/ },
-      { keys: ['sgst', 'state gst'],   fieldPattern: /^output_sgst_/ },
-      { keys: ['igst', 'integrated'],  fieldPattern: /^output_igst_/ },
-      { keys: ['local sale', 'intra'],  fieldPattern: /^local_sale_/ },
+      { keys: ['output cgst', 'cgst output'],  fieldPattern: /^output_cgst_/ },
+      { keys: ['output sgst', 'sgst output'],  fieldPattern: /^output_sgst_/ },
+      { keys: ['output igst', 'igst output'],  fieldPattern: /^output_igst_/ },
+      { keys: ['input cgst', 'cgst input'],    fieldPattern: /^input_cgst_/ },
+      { keys: ['input sgst', 'sgst input'],    fieldPattern: /^input_sgst_/ },
+      { keys: ['input igst', 'igst input'],    fieldPattern: /^input_igst_/ },
+      { keys: ['cgst', 'central gst'],         fieldPattern: /^(output|input)_cgst_/ },
+      { keys: ['sgst', 'state gst'],           fieldPattern: /^(output|input)_sgst_/ },
+      { keys: ['igst', 'integrated'],          fieldPattern: /^(output|input)_igst_/ },
+      { keys: ['local sale', 'intra'],         fieldPattern: /^local_sale_/ },
       { keys: ['interstate', 'inter state', 'inter-state'], fieldPattern: /^interstate_sale_/ },
     ];
 
@@ -517,6 +525,7 @@ export default function TallySettings({ config: _config }: { config: Record<stri
               const half = RATE_HALF[r];
               const candidates = [
                 `output_cgst_${half}`, `output_sgst_${half}`, `output_igst_${r}`,
+                `input_cgst_${half}`, `input_sgst_${half}`, `input_igst_${r}`,
                 `local_sale_${r}`, `interstate_sale_${r}`,
               ];
               candidates.forEach((ck) => {
@@ -766,6 +775,73 @@ export default function TallySettings({ config: _config }: { config: Record<stri
               value={values[`output_igst_${gstRate}`] || ''}
               onChange={(v) => set(`output_igst_${gstRate}`, v)}
               tooltip="Integrated GST liability — applies to interstate sales"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── GST Input Ledgers ─────────────────────────────────── */}
+      <Card className="border-stone-200 shadow-sm">
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-md bg-blue-50 text-blue-700">
+              <ChevronRight className="h-4 w-4 rotate-180" />
+            </div>
+            <div>
+              <CardTitle className="text-sm font-semibold text-stone-800">GST Input Ledgers</CardTitle>
+              <CardDescription className="text-xs text-stone-500">
+                Tax credit ledger names for GST paid on purchases (ITC)
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0 space-y-4">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-stone-500 mr-1">GST Rate:</span>
+            {GST_RATES.map((r) => (
+              <button
+                key={r}
+                onClick={() => setInputGstRate(r)}
+                className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+                  inputGstRate === r
+                    ? 'bg-blue-700 text-white shadow-sm'
+                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                }`}
+              >
+                {r}%
+              </button>
+            ))}
+          </div>
+          <div className="grid gap-3">
+            <LedgerRow
+              label="CGST Input"
+              badge={`@${RATE_HALF[inputGstRate]}%`}
+              badgeColor="bg-blue-50 text-blue-700"
+              fieldKey={`input_cgst_${RATE_HALF[inputGstRate]}`}
+              placeholder={`Input Cgst@${RATE_HALF[inputGstRate]}%`}
+              value={values[`input_cgst_${RATE_HALF[inputGstRate]}`] || ''}
+              onChange={(v) => set(`input_cgst_${RATE_HALF[inputGstRate]}`, v)}
+              tooltip="Central GST input tax credit — applies to intra-state purchases"
+            />
+            <LedgerRow
+              label="SGST Input"
+              badge={`@${RATE_HALF[inputGstRate]}%`}
+              badgeColor="bg-blue-50 text-blue-700"
+              fieldKey={`input_sgst_${RATE_HALF[inputGstRate]}`}
+              placeholder={`Input Sgst@${RATE_HALF[inputGstRate]}%`}
+              value={values[`input_sgst_${RATE_HALF[inputGstRate]}`] || ''}
+              onChange={(v) => set(`input_sgst_${RATE_HALF[inputGstRate]}`, v)}
+              tooltip="State GST input tax credit — applies to intra-state purchases"
+            />
+            <LedgerRow
+              label="IGST Input"
+              badge={`@${inputGstRate}%`}
+              badgeColor="bg-indigo-50 text-indigo-700"
+              fieldKey={`input_igst_${inputGstRate}`}
+              placeholder={`Input Igst@${inputGstRate}%`}
+              value={values[`input_igst_${inputGstRate}`] || ''}
+              onChange={(v) => set(`input_igst_${inputGstRate}`, v)}
+              tooltip="Integrated GST input tax credit — applies to interstate purchases"
             />
           </div>
         </CardContent>

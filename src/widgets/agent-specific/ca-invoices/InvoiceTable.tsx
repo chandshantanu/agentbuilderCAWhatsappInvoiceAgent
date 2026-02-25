@@ -934,10 +934,21 @@ export default function InvoiceTable({ config }: { config: Record<string, unknow
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [clientFilter, setClientFilter] = useState<string>('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [clients, setClients] = useState<Array<{ id: string; name: string }>>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [detailInvoice, setDetailInvoice] = useState<CaInvoice | null>(null);
   const [page, setPage] = useState(0);
   const pageSize = 25;
+
+  // Load client list for filter dropdown
+  useEffect(() => {
+    caInvoiceService.listClients({ limit: 200 }).then((resp) => {
+      setClients(resp.data || []);
+    }).catch(() => {});
+  }, []);
 
   const fetchInvoices = useCallback(async () => {
     setLoading(true);
@@ -945,6 +956,9 @@ export default function InvoiceTable({ config }: { config: Record<string, unknow
       const resp = await caInvoiceService.listInvoices({
         search: search || undefined,
         status: statusFilter || undefined,
+        client_id: clientFilter || undefined,
+        date_from: dateFrom || undefined,
+        date_to: dateTo || undefined,
         limit: pageSize,
         offset: page * pageSize,
       });
@@ -955,7 +969,7 @@ export default function InvoiceTable({ config }: { config: Record<string, unknow
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter, page, toast]);
+  }, [search, statusFilter, clientFilter, dateFrom, dateTo, page, toast]);
 
   useEffect(() => {
     fetchInvoices();
@@ -1019,12 +1033,15 @@ export default function InvoiceTable({ config }: { config: Record<string, unknow
     { value: 'exported', label: 'Exported' },
   ];
 
+  const hasFilters = !!(clientFilter || dateFrom || dateTo);
+
   return (
     <div className="rounded-xl border bg-white overflow-hidden">
       {/* Toolbar */}
       <div className="px-5 pt-5 pb-4 border-b space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-xs">
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Search */}
+          <div className="relative flex-1 min-w-[180px] max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400" />
             <Input
               placeholder="Search invoices…"
@@ -1033,8 +1050,47 @@ export default function InvoiceTable({ config }: { config: Record<string, unknow
               className="pl-9 h-9"
             />
           </div>
+          {/* Client filter */}
+          {clients.length > 0 && (
+            <Select value={clientFilter || 'all'} onValueChange={(v) => { setClientFilter(v === 'all' ? '' : v); setPage(0); }}>
+              <SelectTrigger className="h-9 w-[180px] text-sm">
+                <SelectValue placeholder="All clients" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All clients</SelectItem>
+                {clients.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {/* Date range */}
+          <Input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => { setDateFrom(e.target.value); setPage(0); }}
+            className="h-9 w-[140px] text-sm"
+            title="From date"
+          />
+          <span className="text-neutral-400 text-xs shrink-0">to</span>
+          <Input
+            type="date"
+            value={dateTo}
+            onChange={(e) => { setDateTo(e.target.value); setPage(0); }}
+            className="h-9 w-[140px] text-sm"
+            title="To date"
+          />
+          {/* Clear filters */}
+          {hasFilters && (
+            <button
+              onClick={() => { setClientFilter(''); setDateFrom(''); setDateTo(''); setPage(0); }}
+              className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors underline shrink-0"
+            >
+              Clear filters
+            </button>
+          )}
           {selected.size > 0 && (
-            <Button size="sm" onClick={handleBulkApprove} className="shrink-0">
+            <Button size="sm" onClick={handleBulkApprove} className="shrink-0 ml-auto">
               <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
               Approve {selected.size} selected
             </Button>
@@ -1078,6 +1134,7 @@ export default function InvoiceTable({ config }: { config: Record<string, unknow
                 </TableHead>
                 <TableHead className="font-medium text-neutral-600">Invoice #</TableHead>
                 <TableHead className="font-medium text-neutral-600">Date</TableHead>
+                <TableHead className="font-medium text-neutral-600">Client</TableHead>
                 <TableHead className="font-medium text-neutral-600">Seller</TableHead>
                 <TableHead className="font-medium text-neutral-600">Type</TableHead>
                 <TableHead className="text-right font-medium text-neutral-600">Amount</TableHead>
@@ -1105,7 +1162,8 @@ export default function InvoiceTable({ config }: { config: Record<string, unknow
                     </button>
                   </TableCell>
                   <TableCell className="text-sm text-neutral-600">{inv.invoice_date || '—'}</TableCell>
-                  <TableCell className="text-sm text-neutral-700 max-w-[200px] truncate">{inv.seller_name}</TableCell>
+                  <TableCell className="text-sm text-neutral-500 max-w-[140px] truncate">{inv.client_name || '—'}</TableCell>
+                  <TableCell className="text-sm text-neutral-700 max-w-[180px] truncate">{inv.seller_name}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="text-xs">
                       {inv.voucher_type || inv.invoice_type}
@@ -1135,7 +1193,7 @@ export default function InvoiceTable({ config }: { config: Record<string, unknow
               ))}
               {invoices.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-16">
+                  <TableCell colSpan={9} className="text-center py-16">
                     <div className="flex flex-col items-center gap-2 text-neutral-400">
                       <SlidersHorizontal className="h-8 w-8" />
                       <p className="text-sm font-medium">No invoices found</p>
