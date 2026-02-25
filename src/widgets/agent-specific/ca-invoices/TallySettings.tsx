@@ -38,8 +38,12 @@ const RATE_HALF: Record<GstRate, string> = {
 };
 
 /* ─── Tally XML Parser ──────────────────────────────────────
-   Parses a Tally XML master export and extracts ledger names
-   grouped by parent group (Sales Accounts, Duties & Taxes, etc.)
+   Parses Tally XML exports in two formats:
+   1. Masters export: <LEDGER NAME="..."> elements
+   2. Voucher/All-Masters export: <LEDGERNAME> within <ALLEDGERENTRIES.LIST>
+
+   Also extracts company name from <SVCURRENTCOMPANY>.
+   Handles both UTF-8 and UTF-16 LE encodings from Tally Prime.
 ─────────────────────────────────────────────────────────────── */
 
 interface ParsedLedger {
@@ -47,36 +51,95 @@ interface ParsedLedger {
   parent: string;
 }
 
-function parseTallyXML(xmlText: string): ParsedLedger[] {
-  try {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(xmlText, 'application/xml');
+interface ParsedTallyData {
+  ledgers: ParsedLedger[];
+  companyName?: string;
+}
 
-    // Check for parse errors
+/** Decode ArrayBuffer handling UTF-16 LE BOM (FF FE) that Tally Prime uses */
+function decodeTallyBuffer(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  // Detect UTF-16 LE BOM: 0xFF 0xFE
+  if (bytes[0] === 0xFF && bytes[1] === 0xFE) {
+    return new TextDecoder('utf-16le').decode(buffer);
+  }
+  // Detect UTF-16 BE BOM: 0xFE 0xFF
+  if (bytes[0] === 0xFE && bytes[1] === 0xFF) {
+    return new TextDecoder('utf-16be').decode(buffer);
+  }
+  // Default: UTF-8
+  return new TextDecoder('utf-8').decode(buffer);
+}
+
+/** Strip wide-character spaces: Tally sometimes emits UTF-16 as UTF-8
+    resulting in spaces between every character (e.g. "< E N V E L O P E >").
+    Detect this pattern and compact it. */
+function normalizeSpacedXML(text: string): string {
+  // If every other character is a space for >20 chars, it's wide-spaced
+  const sample = text.slice(0, 40);
+  const everyOtherIsSpace = sample.length > 20 &&
+    Array.from(sample).every((ch, i) => i % 2 === 1 ? ch === ' ' : true);
+  if (everyOtherIsSpace) {
+    return text.replace(/ /g, '');
+  }
+  return text;
+}
+
+function parseTallyXML(xmlText: string): ParsedTallyData {
+  try {
+    const normalized = normalizeSpacedXML(xmlText);
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(normalized, 'application/xml');
+
     if (doc.querySelector('parsererror')) {
       throw new Error('Invalid XML file');
     }
 
+    // Extract company name from static variables (voucher export format)
+    const companyEl = doc.querySelector('SVCURRENTCOMPANY');
+    const companyName = companyEl?.textContent?.trim() || undefined;
+
     const ledgers: ParsedLedger[] = [];
 
-    // Tally XML uses <LEDGER NAME="..."> elements
-    const elements = doc.querySelectorAll('LEDGER[NAME]');
-    elements.forEach((el) => {
+    // Format 1: Masters export — <LEDGER NAME="..."><PARENT>...</PARENT>
+    const masterElements = doc.querySelectorAll('LEDGER[NAME]');
+    masterElements.forEach((el) => {
       const name = el.getAttribute('NAME')?.trim() || '';
       const parentEl = el.querySelector('PARENT');
       const parent = parentEl?.textContent?.trim() || 'Other';
-      if (name) {
-        ledgers.push({ name, parent });
-      }
+      if (name) ledgers.push({ name, parent });
     });
+
+    // Format 2: Voucher/All-Masters export — extract unique LEDGERNAME values
+    // from ALLEDGERENTRIES.LIST entries. Classify by ledger name keywords.
+    if (ledgers.length === 0) {
+      const ledgerNameEls = doc.querySelectorAll('LEDGERNAME');
+      ledgerNameEls.forEach((el) => {
+        const name = el.textContent?.trim() || '';
+        if (!name) return;
+        const lower = name.toLowerCase();
+        let parent = 'Other';
+        if (lower.includes('cgst')) parent = 'Duties & Taxes (CGST)';
+        else if (lower.includes('sgst')) parent = 'Duties & Taxes (SGST)';
+        else if (lower.includes('igst')) parent = 'Duties & Taxes (IGST)';
+        else if (lower.includes('sale') || lower.includes('income')) parent = 'Sales Accounts';
+        else if (lower.includes('purchase') || lower.includes('expense')) parent = 'Purchase Accounts';
+        else if (lower.includes('debtor') || lower.includes('receivable') || lower.includes('sundry')) parent = 'Sundry Debtors';
+        else if (lower.includes('creditor') || lower.includes('payable')) parent = 'Sundry Creditors';
+        else if (lower.includes('bank') || lower.includes('cash')) parent = 'Bank / Cash';
+        ledgers.push({ name, parent });
+      });
+    }
 
     // Deduplicate by name
     const seen = new Set<string>();
-    return ledgers.filter((l) => {
+    const unique = ledgers.filter((l) => {
       if (seen.has(l.name)) return false;
       seen.add(l.name);
       return true;
     });
+
+    return { ledgers: unique, companyName };
   } catch {
     throw new Error('Could not parse Tally XML. Please upload a valid Tally data export file.');
   }
@@ -102,13 +165,14 @@ function isRelevantLedger(parent: string): boolean {
 /* ─── XML Upload Panel ────────────────────────────────────── */
 
 interface XmlUploadPanelProps {
-  onApply: (ledgers: ParsedLedger[]) => void;
+  onApply: (ledgers: ParsedLedger[], companyName?: string) => void;
 }
 
 function XmlUploadPanel({ onApply }: XmlUploadPanelProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [ledgers, setLedgers] = useState<ParsedLedger[]>([]);
+  const [companyName, setCompanyName] = useState<string | undefined>();
   const [fileName, setFileName] = useState<string>('');
   const [expanded, setExpanded] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -121,21 +185,25 @@ function XmlUploadPanel({ onApply }: XmlUploadPanelProps) {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const text = e.target?.result as string;
-        const parsed = parseTallyXML(text);
+        // Decode buffer handling UTF-16 LE BOM that Tally Prime uses
+        const buffer = e.target?.result as ArrayBuffer;
+        const text = decodeTallyBuffer(buffer);
+        const { ledgers: parsed, companyName: cn } = parseTallyXML(text);
         if (parsed.length === 0) {
-          toast({ title: 'No ledgers found', description: 'The XML file contains no LEDGER elements. Export master data from Tally (Gateway of Tally → Export → Masters).', variant: 'destructive' });
+          toast({ title: 'No ledgers found', description: 'Upload any Tally export XML (Masters or Vouchers). The file will be used to detect your ledger names.', variant: 'destructive' });
           return;
         }
         setLedgers(parsed);
+        setCompanyName(cn);
         setFileName(file.name);
         setExpanded(true);
-        toast({ title: `${parsed.length} ledgers found`, description: 'Click a ledger name to fill it into the matching field, or use "Auto-fill" to apply all.' });
+        const companyMsg = cn ? ` Company: "${cn}".` : '';
+        toast({ title: `${parsed.length} ledgers found`, description: `${companyMsg} Click "Auto-fill from XML" to apply.` });
       } catch (err: any) {
         toast({ title: 'Parse error', description: err.message, variant: 'destructive' });
       }
     };
-    reader.readAsText(file, 'utf-8');
+    reader.readAsArrayBuffer(file);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,6 +221,7 @@ function XmlUploadPanel({ onApply }: XmlUploadPanelProps) {
 
   const clear = () => {
     setLedgers([]);
+    setCompanyName(undefined);
     setFileName('');
     setExpanded(false);
   };
@@ -210,7 +279,7 @@ function XmlUploadPanel({ onApply }: XmlUploadPanelProps) {
               </p>
             </div>
             <p className="text-xs text-stone-400">
-              Export from: Gateway of Tally → Export → Masters → XML format
+              Export from Tally: Gateway → Export → Masters or Vouchers → XML format
             </p>
             <input
               ref={fileInputRef}
@@ -237,7 +306,7 @@ function XmlUploadPanel({ onApply }: XmlUploadPanelProps) {
                 size="sm"
                 variant="outline"
                 className="gap-1.5 text-violet-700 border-violet-300 hover:bg-violet-50 text-xs"
-                onClick={() => onApply(ledgers)}
+                onClick={() => onApply(ledgers, companyName)}
               >
                 <Wand2 className="h-3 w-3" />
                 Auto-fill from XML
@@ -261,7 +330,7 @@ function XmlUploadPanel({ onApply }: XmlUploadPanelProps) {
                     parent={parent}
                     names={names}
                     highlighted
-                    onSelect={(name) => onApply([{ name, parent }])}
+                    onSelect={(name) => onApply([{ name, parent }], companyName)}
                   />
                 ))}
                 {otherGroups.map(([parent, names]) => (
@@ -270,7 +339,7 @@ function XmlUploadPanel({ onApply }: XmlUploadPanelProps) {
                     parent={parent}
                     names={names}
                     highlighted={false}
-                    onSelect={(name) => onApply([{ name, parent }])}
+                    onSelect={(name) => onApply([{ name, parent }], companyName)}
                   />
                 ))}
               </div>
@@ -367,7 +436,7 @@ export default function TallySettings({ config: _config }: { config: Record<stri
   /* Apply parsed ledgers from XML upload.
      Strategy: if a single ledger is selected, offer a popover to pick which field.
      If "auto-fill all" is used, match by name keywords. */
-  const handleXmlApply = (ledgers: { name: string; parent: string }[]) => {
+  const handleXmlApply = (ledgers: { name: string; parent: string }[], companyName?: string) => {
     if (ledgers.length === 0) return;
 
     // Build a mapping from keywords to config keys
@@ -378,6 +447,14 @@ export default function TallySettings({ config: _config }: { config: Record<stri
       { keys: ['local sale', 'intra'],  fieldPattern: /^local_sale_/ },
       { keys: ['interstate', 'inter state', 'inter-state'], fieldPattern: /^interstate_sale_/ },
     ];
+
+    // Auto-fill company name if extracted from XML and not already set
+    if (companyName) {
+      setValues((prev) => ({
+        ...prev,
+        company_name: prev['company_name'] || companyName,
+      }));
+    }
 
     setValues((prev) => {
       const next = { ...prev };
