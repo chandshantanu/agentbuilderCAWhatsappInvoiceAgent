@@ -90,7 +90,12 @@ function normalizeSpacedXML(text: string): string {
 
 function parseTallyXML(xmlText: string): ParsedTallyData {
   try {
-    const normalized = normalizeSpacedXML(xmlText);
+    let normalized = normalizeSpacedXML(xmlText);
+
+    // Remove XML encoding declaration — DOMParser rejects encoding="UTF-16"
+    // when fed a pre-decoded JS string. The string is already Unicode at this point.
+    normalized = normalized.replace(/(<\?xml\b[^?]*?)(\s+encoding=["'][^"']*["'])([^?]*?\?>)/, '$1$3');
+
     const parser = new DOMParser();
     const doc = parser.parseFromString(normalized, 'application/xml');
 
