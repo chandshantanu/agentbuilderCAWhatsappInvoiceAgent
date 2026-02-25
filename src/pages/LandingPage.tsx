@@ -194,7 +194,7 @@ export default function LandingPage() {
   const handleCta = () => navigate(isAuthenticated ? '/checkout' : '/signup');
 
   return (
-    <div className="min-h-screen" style={{ background: '#070B14', fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div className="min-h-screen" style={{ background: '#070B14', fontFamily: "'Inter', system-ui, sans-serif", fontSize: '16px' }}>
 
       {/* ═══════════ FIXED HEADER ═══════════ */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/5 backdrop-blur-md border-b border-white/10">
@@ -355,7 +355,7 @@ export default function LandingPage() {
             <motion.div
               initial="hidden"
               whileInView="show"
-              viewport={{ once: true, amount: 0.3 }}
+              viewport={{ once: true, amount: 0 }}
               variants={stagger}
               className="text-center mb-12"
             >
@@ -379,7 +379,7 @@ export default function LandingPage() {
             <motion.div
               initial="hidden"
               whileInView="show"
-              viewport={{ once: true, amount: 0.15 }}
+              viewport={{ once: true, amount: 0 }}
               variants={stagger}
               className={`grid gap-5 ${features.length <= 4 ? 'sm:grid-cols-2' : 'sm:grid-cols-2 lg:grid-cols-3'}`}
             >
@@ -394,7 +394,7 @@ export default function LandingPage() {
                     className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden transition-shadow duration-300 hover:bg-white/[0.08] cursor-default"
                   >
                     {/* Feature image */}
-                    <div className="relative h-40 overflow-hidden bg-gray-50">
+                    <div className="relative h-40 overflow-hidden bg-white/5">
                       <img
                         src={featureImage}
                         alt={f.title}
@@ -529,7 +529,7 @@ export default function LandingPage() {
           <motion.div
             initial="hidden"
             whileInView="show"
-            viewport={{ once: true, amount: 0.2 }}
+            viewport={{ once: true, amount: 0 }}
             variants={stagger}
             className="grid md:grid-cols-2 gap-8 items-center"
           >
@@ -557,7 +557,9 @@ export default function LandingPage() {
                     ))}
                   </div>
                   <div className="ml-1">
-                    <p className="text-sm font-semibold text-slate-200">500+ businesses</p>
+                    <p className="text-sm font-semibold text-slate-200">
+                      {landing_page.social_proof_count || '500+'} businesses
+                    </p>
                     <p className="text-xs text-slate-400">trust our platform</p>
                   </div>
                 </div>
@@ -573,17 +575,18 @@ export default function LandingPage() {
                 </span>
               </div>
               <h2 className="text-3xl sm:text-[2.5rem] font-bold text-slate-100 tracking-[-0.02em] mb-4">
-                Join hundreds of growing businesses
+                {landing_page.social_proof_title || 'Join our growing community'}
               </h2>
               <p className="text-slate-400 text-lg leading-relaxed mb-6">
-                From solo entrepreneurs to fast-scaling teams, businesses use our AI agent to convert more DM conversations into paying customers — automatically.
+                {landing_page.social_proof_description ||
+                  `Businesses automate their workflows with ${branding.brand_name || 'our AI agent'} and save hours every week.`}
               </p>
               <div className="grid grid-cols-3 gap-4">
-                {[
-                  { value: '3x', label: 'More conversions' },
-                  { value: '24/7', label: 'Always-on support' },
+                {(landing_page.social_proof_stats || [
+                  { value: '500+', label: 'Businesses' },
+                  { value: '24/7', label: 'Always-on' },
                   { value: '< 5s', label: 'Response time' },
-                ].map((stat) => (
+                ]).map((stat: any) => (
                   <div key={stat.label} className="text-center p-3 bg-white/5 rounded-xl border border-white/10">
                     <p className="text-xl font-bold text-slate-100">{stat.value}</p>
                     <p className="text-xs text-slate-400 mt-0.5">{stat.label}</p>
@@ -609,14 +612,15 @@ export default function LandingPage() {
               <motion.div
                 initial="hidden"
                 whileInView="show"
-                viewport={{ once: true }}
+                viewport={{ once: true, amount: 0 }}
                 variants={fadeUp}
               >
                 <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3 max-w-lg">
-                  Ready to transform your DM sales?
+                  {landing_page.cta_section_title ||
+                    `Ready to get started with ${branding.brand_name || 'our platform'}?`}
                 </h2>
                 <p className="text-gray-300 text-lg mb-6 max-w-md">
-                  Start your free trial today. No credit card required.
+                  {landing_page.cta_section_subtitle || 'Start your free trial today. No credit card required.'}
                 </p>
                 <button
                   onClick={handleCta}
@@ -642,7 +646,7 @@ export default function LandingPage() {
             <motion.h2
               initial="hidden"
               whileInView="show"
-              viewport={{ once: true, amount: 0.3 }}
+              viewport={{ once: true, amount: 0 }}
               variants={fadeUp}
               className="text-3xl font-bold text-slate-100 text-center mb-12 tracking-[-0.02em]"
             >
@@ -651,7 +655,7 @@ export default function LandingPage() {
             <motion.div
               initial="hidden"
               whileInView="show"
-              viewport={{ once: true, amount: 0.1 }}
+              viewport={{ once: true, amount: 0 }}
               variants={stagger}
               className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5"
             >

@@ -26,6 +26,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { caInvoiceService, type TallyConfig } from '@/services/caInvoiceService';
+import { getAuthToken } from '@/lib/apiClient';
 
 const GST_RATES = ['5', '12', '18', '28'] as const;
 type GstRate = typeof GST_RATES[number];
@@ -95,6 +96,17 @@ function parseTallyXML(xmlText: string): ParsedTallyData {
     // Remove XML encoding declaration — DOMParser rejects encoding="UTF-16"
     // when fed a pre-decoded JS string. The string is already Unicode at this point.
     normalized = normalized.replace(/(<\?xml\b[^?]*?)(\s+encoding=["'][^"']*["'])([^?]*?\?>)/, '$1$3');
+
+    // Remove &#N; references to control characters illegal in XML 1.0
+    // Tally uses &#4; (EOT) to represent "Not Applicable". Strip them.
+    normalized = normalized.replace(/&#([0-9]+);/g, (match, num) => {
+      const code = parseInt(num, 10);
+      // XML 1.0 legal chars: #x9 | #xA | #xD | [#x20-#xD7FF]
+      if (code === 9 || code === 10 || code === 13 || (code >= 32 && code <= 55295)) {
+        return match; // keep valid ones
+      }
+      return ''; // strip illegal control chars like &#4;
+    });
 
     const parser = new DOMParser();
     const doc = parser.parseFromString(normalized, 'application/xml');
@@ -207,6 +219,25 @@ function XmlUploadPanel({ onApply }: XmlUploadPanelProps) {
         setExpanded(true);
         const companyMsg = cn ? ` Company: "${cn}".` : '';
         toast({ title: `${parsed.length} ledgers found`, description: `${companyMsg} Click "Auto-fill from XML" to apply.` });
+
+        // Upload raw file to backend so it can use the real Tally format as export template
+        const formData = new FormData();
+        formData.append('file', file);
+        const authToken = getAuthToken();
+        fetch('/api/settings/tally/template', {
+          method: 'POST',
+          body: formData,
+          headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+        })
+          .then(r => r.json())
+          .then(res => {
+            if (res.success) {
+              toast({ title: 'Export format saved', description: `Tally export will now match your "${file.name}" format exactly.` });
+            }
+          })
+          .catch(() => {
+            // Non-fatal: ledger name auto-fill still works, export falls back to built-in format
+          });
       } catch (err: any) {
         toast({ title: 'Parse error', description: err.message, variant: 'destructive' });
       }
@@ -456,17 +487,19 @@ export default function TallySettings({ config: _config }: { config: Record<stri
       { keys: ['interstate', 'inter state', 'inter-state'], fieldPattern: /^interstate_sale_/ },
     ];
 
-    // Auto-fill company name if extracted from XML and not already set
-    if (companyName) {
-      setValues((prev) => ({
-        ...prev,
-        company_name: prev['company_name'] || companyName,
-      }));
-    }
+    // When auto-filling all ledgers from XML, overwrite existing values
+    // (user explicitly chose "Auto-fill from XML" so intent is to use XML as source of truth)
+    const isFullAutoFill = ledgers.length > 1;
 
     setValues((prev) => {
       const next = { ...prev };
       let filled = 0;
+
+      // Auto-fill company name from XML
+      if (companyName && (isFullAutoFill || !next['company_name'])) {
+        next['company_name'] = companyName;
+        filled++;
+      }
 
       ledgers.forEach(({ name, parent }) => {
         const combined = `${name} ${parent}`.toLowerCase();
@@ -474,20 +507,20 @@ export default function TallySettings({ config: _config }: { config: Record<stri
         // Check each pattern
         for (const { keys, fieldPattern } of KEYWORD_MAP) {
           if (keys.some((k) => combined.includes(k))) {
-            // Fill all matching fields that are currently empty
+            // For full auto-fill: overwrite. For single ledger: only fill empty.
+            const shouldFill = (k: string) => isFullAutoFill ? true : !next[k];
             Object.keys(next).forEach((k) => {
-              if (fieldPattern.test(k) && !next[k]) { next[k] = name; filled++; }
+              if (fieldPattern.test(k) && shouldFill(k)) { next[k] = name; filled++; }
             });
-            // Also set for rates not yet in state
-            const allRates = GST_RATES;
-            allRates.forEach((r) => {
+            // Also apply to all rate-keyed fields
+            GST_RATES.forEach((r) => {
               const half = RATE_HALF[r];
               const candidates = [
                 `output_cgst_${half}`, `output_sgst_${half}`, `output_igst_${r}`,
                 `local_sale_${r}`, `interstate_sale_${r}`,
               ];
               candidates.forEach((ck) => {
-                if (fieldPattern.test(ck) && !next[ck]) { next[ck] = name; filled++; }
+                if (fieldPattern.test(ck) && shouldFill(ck)) { next[ck] = name; filled++; }
               });
             });
             break;
