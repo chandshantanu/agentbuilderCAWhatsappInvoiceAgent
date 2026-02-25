@@ -9,6 +9,7 @@ import React, { createContext, useContext, useEffect, useState, useRef } from 'r
 import { createClient, SupabaseClient, Session, User } from '@supabase/supabase-js';
 import { useSaaS } from '@/contexts/SaaSContext';
 import { setSaaSAuthToken } from '@/services/saasApiService';
+import { setAuthToken } from '@/lib/apiClient';
 
 // Capture hash fragment immediately on module load (before React/router can clear it).
 // Supabase recovery links use hash format: #access_token=xxx&type=recovery&...
@@ -221,6 +222,8 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
   const signOut = async () => {
     if (!supabase) return;
     await supabase.auth.signOut();
+    setAuthToken(null);
+    setSaaSAuthToken(null);
     setSession(null);
     setUser(null);
   };

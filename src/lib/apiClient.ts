@@ -27,4 +27,20 @@ export function getAuthToken(): string | null {
   return _authToken;
 }
 
+// Redirect to login on 401 (expired/invalid token)
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      setAuthToken(null);
+      // Only redirect in SaaS mode (has /login route). Direct-mode uses hash tokens.
+      const isSaaSMode = !window.location.hash.includes('token=');
+      if (isSaaSMode && !window.location.pathname.startsWith('/login')) {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export { apiClient };

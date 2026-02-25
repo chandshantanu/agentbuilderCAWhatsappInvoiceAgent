@@ -135,6 +135,18 @@ export interface DashboardStats {
   total_gst: number;
 }
 
+export interface ClientBreakdownRow {
+  client_id: string | null;
+  client_name: string;
+  total: number;
+  pending: number;
+  approved: number;
+  exported: number;
+  last_invoice_at: string | null;
+  invoice_date_min: string | null;
+  invoice_date_max: string | null;
+}
+
 export interface DashboardOverview {
   kpis: {
     total_invoices: number;
@@ -171,6 +183,8 @@ export interface DashboardOverview {
     blocked_phones_count: number;
     last_message_at: string | null;
   };
+  client_breakdown: ClientBreakdownRow[];
+  approval_rate: number | null;
 }
 
 export interface DlqItem {
