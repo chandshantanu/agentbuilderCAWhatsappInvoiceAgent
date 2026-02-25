@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   MessageCircle, Send, Bot, User, Instagram, Search, Loader2, X,
   Pause, Play, Brain, ChevronDown, ChevronRight, Flame, Target,
-  TrendingUp, AlertCircle, Clock, Zap, Star, ArrowRight,
+  TrendingUp, AlertCircle, Clock, Zap, Star, ArrowRight, ArrowLeft,
   Calendar, MessageSquare, CheckCircle, XCircle, Lightbulb,
   BarChart2, Heart, DollarSign, Eye, RefreshCw, Sparkles,
 } from 'lucide-react';
@@ -228,7 +228,7 @@ function IntelligenceSidebar({
   if (loadingIntel) {
     return (
       <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-5 h-5 animate-spin text-neutral-400" />
+        <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
       </div>
     );
   }
@@ -253,7 +253,7 @@ function IntelligenceSidebar({
           <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Lead Intelligence</span>
           <div className="flex items-center gap-1">
             {intelligence?.scope && (
-              <span className="text-xs px-1.5 py-0.5 rounded bg-violet-100 text-violet-600 font-medium">
+              <span className="text-xs px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 font-medium">
                 {intelligence.scope === 'all'
                   ? `all ${intelligence.total_messages || ''}msgs`
                   : `last ${intelligence.messages_analysed || 50}`}
@@ -267,37 +267,37 @@ function IntelligenceSidebar({
         <div className="flex items-end gap-3">
           <div>
             <div className={cn('text-3xl font-bold', scoreColor(score))}>{score}</div>
-            <div className="text-xs text-neutral-500">Lead Score</div>
+            <div className="text-xs text-slate-500">Lead Score</div>
           </div>
           {score > 0 && (
             <div className="flex-1 mb-1">
-              <div className="h-2 bg-white rounded-full overflow-hidden border border-neutral-200">
+              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                 <div
                   className={cn('h-full rounded-full transition-all duration-700',
-                    score >= 70 ? 'bg-emerald-500' : score >= 40 ? 'bg-amber-500' : 'bg-neutral-300'
+                    score >= 70 ? 'bg-emerald-500' : score >= 40 ? 'bg-amber-500' : 'bg-slate-600'
                   )}
                   style={{ width: `${score}%` }}
                 />
               </div>
-              <div className="flex justify-between text-xs text-neutral-400 mt-0.5">
+              <div className="flex justify-between text-xs text-slate-500 mt-0.5">
                 <span>Cold</span><span>Warm</span><span>Hot</span>
               </div>
             </div>
           )}
         </div>
         {q && q.completeness > 0 && (
-          <div className="mt-2 text-xs text-neutral-500">
-            Qualification: <span className="font-medium text-neutral-700">{q.completeness}% complete</span>
+          <div className="mt-2 text-xs text-slate-500">
+            Qualification: <span className="font-medium text-slate-200">{q.completeness}% complete</span>
           </div>
         )}
         {intelligence?.opted_out && (
-          <Badge className="mt-2 bg-red-100 text-red-700 text-xs">Opted Out</Badge>
+          <Badge className="mt-2 bg-red-500/20 text-red-400 text-xs">Opted Out</Badge>
         )}
         {intelligence?.disengaged && !intelligence.opted_out && (
-          <Badge className="mt-2 bg-orange-100 text-orange-700 text-xs">Disengaged</Badge>
+          <Badge className="mt-2 bg-orange-500/20 text-orange-400 text-xs">Disengaged</Badge>
         )}
         {intelligence?.last_sender === 'assistant' && intelligence?.last_agent_message_at && (
-          <div className="mt-2 flex items-center gap-1 text-xs text-amber-600">
+          <div className="mt-2 flex items-center gap-1 text-xs text-amber-400">
             <Clock className="w-3 h-3" />
             Agent waiting — {formatTime(intelligence.last_agent_message_at)}
           </div>
@@ -331,11 +331,11 @@ function IntelligenceSidebar({
             <div className="space-y-3">
               {next?.latest_assessment && (
                 <div className="bg-violet-500/10 rounded-xl border border-violet-500/20 p-3">
-                  <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-violet-700">
+                  <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-violet-300">
                     <Eye className="w-3.5 h-3.5" />
                     Internal Assessment
                   </div>
-                  <p className="text-xs text-neutral-700 leading-relaxed italic">
+                  <p className="text-xs text-slate-300 leading-relaxed italic">
                     "{next.latest_assessment}"
                   </p>
                   {next.lead_priority && (
@@ -348,21 +348,21 @@ function IntelligenceSidebar({
 
               {next?.latest_strategy && (
                 <div className="bg-blue-500/10 rounded-xl border border-blue-500/20 p-3">
-                  <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-blue-700">
+                  <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-blue-300">
                     <Target className="w-3.5 h-3.5" />
                     Current Strategy
                   </div>
-                  <p className="text-xs text-neutral-700 leading-relaxed">{next.latest_strategy}</p>
+                  <p className="text-xs text-slate-300 leading-relaxed">{next.latest_strategy}</p>
                 </div>
               )}
 
               {next?.suggested_question && (
                 <div className="bg-amber-500/10 rounded-xl border border-amber-500/25 p-3">
-                  <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-amber-700">
+                  <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-amber-300">
                     <Lightbulb className="w-3.5 h-3.5" />
                     Next Question to Ask
                   </div>
-                  <p className="text-xs text-amber-900 leading-relaxed font-medium">
+                  <p className="text-xs text-amber-200 leading-relaxed font-medium">
                     "{next.suggested_question}"
                   </p>
                 </div>
@@ -370,10 +370,10 @@ function IntelligenceSidebar({
 
               {next?.emotional_state && next.emotional_state !== 'neutral' && (
                 <div className="bg-white/5 rounded-xl border border-white/10 p-3">
-                  <div className="text-xs font-medium text-neutral-600 mb-1">Customer Mood</div>
+                  <div className="text-xs font-medium text-slate-400 mb-1">Customer Mood</div>
                   <div className="flex items-center gap-2">
                     <span className="text-lg">{emotionIcon(next.emotional_state)}</span>
-                    <span className="text-sm font-medium text-neutral-800 capitalize">
+                    <span className="text-sm font-medium text-slate-200 capitalize">
                       {next.emotional_state}
                     </span>
                   </div>
@@ -381,7 +381,7 @@ function IntelligenceSidebar({
               )}
 
               {!next?.latest_assessment && !next?.latest_strategy && (
-                <div className="text-center py-8 text-neutral-400">
+                <div className="text-center py-8 text-slate-500">
                   <Brain className="w-8 h-8 mx-auto mb-2 opacity-30" />
                   <p className="text-xs">Agent reasoning will appear here after the next conversation.</p>
                 </div>
@@ -394,7 +394,7 @@ function IntelligenceSidebar({
             <div className="space-y-3">
               {q?.business_type && (
                 <div className="bg-white/5 rounded-xl border border-white/10 p-3 space-y-2">
-                  <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wide">Business</div>
+                  <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Business</div>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     {q.business_type && <Row label="Type" value={q.business_type} />}
                     {q.niche && <Row label="Niche" value={q.niche} />}
@@ -406,23 +406,23 @@ function IntelligenceSidebar({
 
               {(q?.current_pain || q?.purchase_timeline) && (
                 <div className="bg-white/5 rounded-xl border border-white/10 p-3 space-y-2">
-                  <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wide">Buying Signals</div>
+                  <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Buying Signals</div>
                   {q.current_pain && (
                     <div>
-                      <div className="text-xs text-neutral-500 mb-0.5">Pain Point</div>
-                      <div className="text-xs text-neutral-800 font-medium">{q.current_pain}</div>
+                      <div className="text-xs text-slate-500 mb-0.5">Pain Point</div>
+                      <div className="text-xs text-slate-200 font-medium">{q.current_pain}</div>
                     </div>
                   )}
                   {q.purchase_timeline && (
                     <div>
-                      <div className="text-xs text-neutral-500 mb-0.5">Timeline</div>
-                      <div className="text-xs text-neutral-800 font-medium">{q.purchase_timeline}</div>
+                      <div className="text-xs text-slate-500 mb-0.5">Timeline</div>
+                      <div className="text-xs text-slate-200 font-medium">{q.purchase_timeline}</div>
                     </div>
                   )}
                   {q.budget_signals && (
                     <div>
-                      <div className="text-xs text-neutral-500 mb-0.5">Budget</div>
-                      <div className="text-xs text-neutral-800 font-medium">{q.budget_signals}</div>
+                      <div className="text-xs text-slate-500 mb-0.5">Budget</div>
+                      <div className="text-xs text-slate-200 font-medium">{q.budget_signals}</div>
                     </div>
                   )}
                 </div>
@@ -431,10 +431,10 @@ function IntelligenceSidebar({
               {q?.buying_readiness != null && q.buying_readiness > 0 && (
                 <div className="bg-white/5 rounded-xl border border-white/10 p-3">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wide">Buying Readiness</div>
+                    <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Buying Readiness</div>
                     <span className={cn('text-sm font-bold',
-                      q.buying_readiness >= 7 ? 'text-emerald-600' :
-                      q.buying_readiness >= 4 ? 'text-amber-600' : 'text-neutral-500'
+                      q.buying_readiness >= 7 ? 'text-emerald-400' :
+                      q.buying_readiness >= 4 ? 'text-amber-400' : 'text-slate-400'
                     )}>
                       {q.buying_readiness}/10
                     </span>
@@ -445,8 +445,8 @@ function IntelligenceSidebar({
                         key={i}
                         className={cn('flex-1 h-1.5 rounded-full',
                           i < q.buying_readiness
-                            ? q.buying_readiness >= 7 ? 'bg-emerald-500' : q.buying_readiness >= 4 ? 'bg-amber-500' : 'bg-neutral-300'
-                            : 'bg-neutral-100'
+                            ? q.buying_readiness >= 7 ? 'bg-emerald-500' : q.buying_readiness >= 4 ? 'bg-amber-500' : 'bg-slate-600'
+                            : 'bg-white/10'
                         )}
                       />
                     ))}
@@ -456,27 +456,27 @@ function IntelligenceSidebar({
 
               {(q?.communication_style || q?.price_sensitivity || q?.key_motivator) && (
                 <div className="bg-white/5 rounded-xl border border-white/10 p-3 space-y-2">
-                  <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wide">Psychology</div>
+                  <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Psychology</div>
                   <div className="grid grid-cols-1 gap-1.5 text-xs">
                     {q.communication_style && (
                       <div className="flex items-center justify-between">
-                        <span className="text-neutral-500">Style</span>
-                        <Badge variant="outline" className="text-xs capitalize">{q.communication_style}</Badge>
+                        <span className="text-slate-500">Style</span>
+                        <Badge variant="outline" className="border-white/20 text-slate-300 text-xs capitalize">{q.communication_style}</Badge>
                       </div>
                     )}
                     {q.price_sensitivity && (
                       <div className="flex items-center justify-between">
-                        <span className="text-neutral-500">Price Sensitivity</span>
+                        <span className="text-slate-500">Price Sensitivity</span>
                         <Badge variant="outline" className={cn('text-xs capitalize',
-                          q.price_sensitivity === 'high' ? 'border-red-300 text-red-600' :
-                          q.price_sensitivity === 'low' ? 'border-green-300 text-green-600' : ''
+                          q.price_sensitivity === 'high' ? 'border-red-500/40 text-red-400' :
+                          q.price_sensitivity === 'low' ? 'border-green-500/40 text-green-400' : 'border-white/20 text-slate-300'
                         )}>{q.price_sensitivity}</Badge>
                       </div>
                     )}
                     {q.key_motivator && (
                       <div className="flex items-center justify-between">
-                        <span className="text-neutral-500">Motivated By</span>
-                        <Badge variant="outline" className="text-xs capitalize">{q.key_motivator}</Badge>
+                        <span className="text-slate-500">Motivated By</span>
+                        <Badge variant="outline" className="border-white/20 text-slate-300 text-xs capitalize">{q.key_motivator}</Badge>
                       </div>
                     )}
                   </div>
@@ -485,13 +485,13 @@ function IntelligenceSidebar({
 
               {q?.objections && q.objections.length > 0 && (
                 <div className="bg-red-500/10 rounded-xl border border-red-500/20 p-3">
-                  <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-red-700">
+                  <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-red-400">
                     <XCircle className="w-3.5 h-3.5" />
                     Objections Raised
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {q.objections.map((obj, i) => (
-                      <Badge key={i} className="bg-red-50 text-red-700 border-red-200 text-xs">{obj}</Badge>
+                      <Badge key={i} className="bg-red-500/20 text-red-300 border border-red-500/30 text-xs">{obj}</Badge>
                     ))}
                   </div>
                 </div>
@@ -499,13 +499,13 @@ function IntelligenceSidebar({
 
               {q?.interests && q.interests.length > 0 && (
                 <div className="bg-emerald-500/10 rounded-xl border border-emerald-500/20 p-3">
-                  <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-emerald-700">
+                  <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-emerald-400">
                     <CheckCircle className="w-3.5 h-3.5" />
                     Interests & Hooks
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {q.interests.map((int, i) => (
-                      <Badge key={i} className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs">{int}</Badge>
+                      <Badge key={i} className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs">{int}</Badge>
                     ))}
                   </div>
                 </div>
@@ -513,13 +513,13 @@ function IntelligenceSidebar({
 
               {q?.personal_details && (
                 <div className="bg-white/5 rounded-xl border border-white/10 p-3">
-                  <div className="text-xs font-medium text-neutral-600 mb-1">Personal Context</div>
-                  <p className="text-xs text-neutral-700">{q.personal_details}</p>
+                  <div className="text-xs font-medium text-slate-400 mb-1">Personal Context</div>
+                  <p className="text-xs text-slate-300">{q.personal_details}</p>
                 </div>
               )}
 
               {!q?.business_type && !q?.current_pain && (
-                <div className="text-center py-8 text-neutral-400">
+                <div className="text-center py-8 text-slate-500">
                   <User className="w-8 h-8 mx-auto mb-2 opacity-30" />
                   <p className="text-xs">Qualification data collected as the conversation progresses.</p>
                 </div>
@@ -533,7 +533,7 @@ function IntelligenceSidebar({
               {/* Stage timeline */}
               {intelligence?.stage_progression && intelligence.stage_progression.length > 0 && (
                 <div className="bg-white/5 rounded-xl border border-white/10 p-3">
-                  <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wide mb-3">Stage Journey</div>
+                  <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Stage Journey</div>
                   <div className="relative">
                     {intelligence.stage_progression.map((s, i) => (
                       <div key={i} className="flex items-start gap-2 mb-2 last:mb-0">
@@ -543,7 +543,7 @@ function IntelligenceSidebar({
                             {s.stage.replace('_', ' ')}
                           </span>
                         </div>
-                        <span className="text-xs text-neutral-400">{formatTime(s.timestamp)}</span>
+                        <span className="text-xs text-slate-500">{formatTime(s.timestamp)}</span>
                       </div>
                     ))}
                   </div>
@@ -552,7 +552,7 @@ function IntelligenceSidebar({
 
               {/* Active follow-ups */}
               <div className="bg-white/5 rounded-xl border border-white/10 p-3">
-                <div className="flex items-center gap-1.5 mb-3 text-xs font-semibold text-neutral-700 uppercase tracking-wide">
+                <div className="flex items-center gap-1.5 mb-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">
                   <Calendar className="w-3.5 h-3.5" />
                   Scheduled Follow-ups
                 </div>
@@ -561,24 +561,24 @@ function IntelligenceSidebar({
                     {intelligence.follow_up_schedule.map((fu, i) => (
                       <div key={i} className="flex items-center justify-between text-xs bg-violet-500/10 rounded-lg px-3 py-2">
                         <div>
-                          <div className="font-medium text-violet-800">Follow-up #{fu.follow_up_number}</div>
-                          <div className="text-violet-600 capitalize">{fu.stage.replace('_', ' ')} stage</div>
+                          <div className="font-medium text-violet-300">Follow-up #{fu.follow_up_number}</div>
+                          <div className="text-violet-400 capitalize">{fu.stage.replace('_', ' ')} stage</div>
                           {fu.source === 'watchdog' && (
-                            <Badge className="mt-1 bg-amber-100 text-amber-700 text-xs">Proactive nudge</Badge>
+                            <Badge className="mt-1 bg-amber-500/20 text-amber-400 text-xs">Proactive nudge</Badge>
                           )}
                         </div>
                         <div className="text-right">
-                          <div className="text-violet-700 font-medium">{formatTime(fu.scheduled_at)}</div>
-                          <div className="text-violet-500">scheduled</div>
+                          <div className="text-violet-300 font-medium">{formatTime(fu.scheduled_at)}</div>
+                          <div className="text-violet-400">scheduled</div>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-4 text-neutral-400">
+                  <div className="text-center py-4 text-slate-400">
                     <Clock className="w-6 h-6 mx-auto mb-1 opacity-30" />
                     <p className="text-xs">No follow-ups queued</p>
-                    <p className="text-xs mt-0.5 text-neutral-300">Watchdog will queue a nudge if the lead goes cold</p>
+                    <p className="text-xs mt-0.5 text-slate-500">Watchdog will queue a nudge if the lead goes cold</p>
                   </div>
                 )}
               </div>
@@ -586,7 +586,7 @@ function IntelligenceSidebar({
               {/* Score trajectory mini chart */}
               {intelligence?.score_trajectory && intelligence.score_trajectory.length > 1 && (
                 <div className="bg-white/5 rounded-xl border border-white/10 p-3">
-                  <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wide mb-3">Score Trajectory</div>
+                  <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Score Trajectory</div>
                   <div className="flex items-end gap-1 h-12">
                     {intelligence.score_trajectory.slice(-12).map((pt, i) => (
                       <div
@@ -600,7 +600,7 @@ function IntelligenceSidebar({
                       />
                     ))}
                   </div>
-                  <div className="flex justify-between text-xs text-neutral-400 mt-1">
+                  <div className="flex justify-between text-xs text-slate-500 mt-1">
                     <span>Start</span>
                     <span>Latest: {intelligence.score_trajectory[intelligence.score_trajectory.length - 1]?.score ?? 0}</span>
                   </div>
@@ -625,7 +625,7 @@ function IntelligenceSidebar({
                           {entry.lead_priority}
                         </Badge>
                       </div>
-                      <span className="text-neutral-400">{formatTime(entry.timestamp)}</span>
+                      <span className="text-slate-500">{formatTime(entry.timestamp)}</span>
                     </div>
 
                     {entry.text_preview && (
@@ -636,45 +636,45 @@ function IntelligenceSidebar({
 
                     {entry.internal_assessment && (
                       <div>
-                        <span className="font-medium text-violet-700">Assessment: </span>
-                        <span className="text-neutral-700">{entry.internal_assessment}</span>
+                        <span className="font-medium text-violet-300">Assessment: </span>
+                        <span className="text-slate-300">{entry.internal_assessment}</span>
                       </div>
                     )}
 
                     {entry.selling_strategy && (
                       <div>
-                        <span className="font-medium text-blue-700">Strategy: </span>
-                        <span className="text-neutral-700">{entry.selling_strategy}</span>
+                        <span className="font-medium text-blue-300">Strategy: </span>
+                        <span className="text-slate-300">{entry.selling_strategy}</span>
                       </div>
                     )}
 
                     {entry.suggested_question && (
                       <div className="bg-amber-500/10 rounded px-2 py-1 border border-amber-500/20">
-                        <span className="font-medium text-amber-700">Asked: </span>
-                        <span className="text-amber-900">{entry.suggested_question}</span>
+                        <span className="font-medium text-amber-300">Asked: </span>
+                        <span className="text-amber-200">{entry.suggested_question}</span>
                       </div>
                     )}
 
                     {/* Full reasoning trace (v5.0+) */}
                     {entry.reasoning_trace && (
                       <details className="mt-1">
-                        <summary className="text-xs text-neutral-400 cursor-pointer hover:text-neutral-600 select-none">
+                        <summary className="text-xs text-slate-400 cursor-pointer hover:text-slate-300 select-none">
                           Why this answer? ({entry.reasoning_trace.confidence_level ?? '?'}% confidence)
                         </summary>
-                        <div className="mt-2 space-y-2 text-xs border-l-2 border-violet-200 pl-2">
+                        <div className="mt-2 space-y-2 text-xs border-l-2 border-violet-500/30 pl-2">
                           {entry.reasoning_trace.decision_factors && entry.reasoning_trace.decision_factors.length > 0 && (
                             <div>
-                              <p className="font-medium text-neutral-500 mb-0.5">Data used:</p>
+                              <p className="font-medium text-slate-400 mb-0.5">Data used:</p>
                               {entry.reasoning_trace.decision_factors.map((f, i) => (
-                                <p key={i} className="text-neutral-600">• {f}</p>
+                                <p key={i} className="text-slate-300">• {f}</p>
                               ))}
                             </div>
                           )}
                           {entry.reasoning_trace.alternatives_considered && entry.reasoning_trace.alternatives_considered.length > 0 && (
                             <div>
-                              <p className="font-medium text-neutral-500 mb-0.5">Alternatives rejected:</p>
+                              <p className="font-medium text-slate-400 mb-0.5">Alternatives rejected:</p>
                               {entry.reasoning_trace.alternatives_considered.map((a, i) => (
-                                <p key={i} className="text-neutral-500 line-through decoration-neutral-300">• {a}</p>
+                                <p key={i} className="text-slate-500 line-through decoration-slate-600">• {a}</p>
                               ))}
                             </div>
                           )}
@@ -702,7 +702,7 @@ function IntelligenceSidebar({
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8 text-neutral-400">
+                <div className="text-center py-8 text-slate-500">
                   <BarChart2 className="w-8 h-8 mx-auto mb-2 opacity-30" />
                   <p className="text-xs">Reasoning log appears as the agent works through conversations.</p>
                 </div>
@@ -718,8 +718,8 @@ function IntelligenceSidebar({
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div className="text-neutral-400">{label}</div>
-      <div className="font-medium text-neutral-800 truncate">{value}</div>
+      <div className="text-slate-500">{label}</div>
+      <div className="font-medium text-slate-200 truncate">{value}</div>
     </div>
   );
 }
@@ -767,6 +767,7 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
   const [analyseScope, setAnalyseScope] = useState<'recent' | 'all'>('recent');
   const [runningAnalysis, setRunningAnalysis] = useState(false);
   const [showScopeMenu, setShowScopeMenu] = useState(false);
+  const [mobilePane, setMobilePane] = useState<'list' | 'chat'>('list');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const endpoint = (config?.endpoint as string) || '/api/conversations';
@@ -914,10 +915,19 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
   });
 
   return (
-    <div className="flex h-[calc(100vh-10rem)] min-h-[550px] max-h-[920px] bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+    <div className={cn(
+      "flex bg-white/5 rounded-xl border border-white/10 overflow-hidden relative",
+      "h-[calc(100vh-6rem)] sm:h-[calc(100vh-8rem)] lg:h-[calc(100vh-10rem)]",
+      "min-h-[400px] sm:min-h-[480px]",
+      "max-h-[800px] sm:max-h-[920px]",
+    )}>
 
       {/* ── Column 1: Conversation List ── */}
-      <div className="w-72 flex-shrink-0 border-r border-white/10 flex flex-col">
+      <div className={cn(
+        'flex-shrink-0 border-r border-white/10 flex flex-col',
+        'w-full md:w-64 lg:w-72',
+        mobilePane === 'chat' ? 'hidden md:flex' : 'flex'
+      )}>
         <div className="p-4 border-b border-white/10">
           <div className="flex items-center gap-2 mb-3">
             <Instagram className="w-4 h-4 text-pink-500" />
@@ -926,18 +936,18 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
             <button
               onClick={loadConversations}
               title="Refresh conversation list"
-              className="p-1 rounded text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 transition-colors"
+              className="p-1 rounded text-slate-400 hover:text-slate-200 hover:bg-white/10 transition-colors"
             >
               <RefreshCw className="w-3.5 h-3.5" />
             </button>
           </div>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
             <Input
               placeholder="Search..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="pl-9 h-8 text-sm"
+              className="pl-9 h-8 text-sm bg-white/5 border-white/10 text-slate-200 placeholder:text-slate-500"
             />
           </div>
         </div>
@@ -945,10 +955,10 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
         <ScrollArea className="flex-1">
           {loading ? (
             <div className="flex justify-center items-center h-24">
-              <Loader2 className="w-5 h-5 animate-spin text-neutral-400" />
+              <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
             </div>
           ) : filteredConvs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-24 text-neutral-400">
+            <div className="flex flex-col items-center justify-center h-24 text-slate-400">
               <MessageCircle className="w-6 h-6 mb-1" />
               <p className="text-xs">No conversations</p>
             </div>
@@ -960,7 +970,7 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                 return (
                   <button
                     key={sid}
-                    onClick={() => { setSelected(conv); setShowNotes(false); setNoteText(''); }}
+                    onClick={() => { setSelected(conv); setShowNotes(false); setNoteText(''); setMobilePane('chat'); }}
                     className={cn(
                       'w-full p-3 flex items-start gap-2.5 text-left hover:bg-white/[0.07] transition-colors',
                       selected?.sender_id === sid && 'bg-violet-500/15 border-r-2 border-violet-400'
@@ -981,10 +991,10 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-0.5">
-                        <span className="text-xs font-semibold text-neutral-800 truncate">@{conv.username || sid?.slice(-6)}</span>
-                        <span className="text-xs text-neutral-400 flex-shrink-0">{formatTime(conv.updated_at || '')}</span>
+                        <span className="text-xs font-semibold text-slate-200 truncate">@{conv.username || sid?.slice(-6)}</span>
+                        <span className="text-xs text-slate-500 flex-shrink-0">{formatTime(conv.updated_at || '')}</span>
                       </div>
-                      <p className="text-xs text-neutral-500 truncate">{conv.lastMessage || '—'}</p>
+                      <p className="text-xs text-slate-500 truncate">{conv.lastMessage || '—'}</p>
                       <div className="flex items-center gap-1 mt-1">
                         {conv.conversation_stage && (
                           <Badge className={cn('text-xs px-1.5 py-0', stageColor(conv.conversation_stage))}>
@@ -1005,48 +1015,54 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
       </div>
 
       {/* ── Column 2: Chat ── */}
-      <div className="flex-1 flex flex-col min-w-0 border-r border-white/10">
+      <div className={cn(
+        'flex-1 flex-col min-w-[300px] border-r border-white/10 relative',
+        mobilePane === 'chat' ? 'flex' : 'hidden md:flex'
+      )}>
         {selected ? (
           <>
-            {/* Chat header */}
-            <div className="px-4 py-3 border-b border-white/10 bg-white/5 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <Avatar className="w-8 h-8">
+            {/* Chat header — two-row layout to prevent button/badge collision */}
+            <div className="px-3 py-2 border-b border-white/10 bg-white/5 flex flex-col gap-1.5">
+              {/* Row 1: identity */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setMobilePane('list')}
+                  className="md:hidden p-1 rounded text-slate-400 hover:text-slate-200 hover:bg-white/10 transition-colors flex-shrink-0"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+                <Avatar className="w-7 h-7 flex-shrink-0">
                   <AvatarFallback className="bg-gradient-to-br from-pink-500 to-purple-600 text-white text-xs">
                     {(selected.username || '??').slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <div>
-                  <p className="text-sm font-semibold">@{selected.username || selected.sender_id}</p>
-                  <div className="flex items-center gap-1">
-                    {selected.conversation_stage && (
-                      <Badge className={cn('text-xs px-1.5 py-0', stageColor(selected.conversation_stage))}>
-                        {selected.conversation_stage?.replace('_', ' ')}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
+                <p className="text-sm font-semibold truncate min-w-0">@{selected.username || selected.sender_id}</p>
+                {selected.conversation_stage && (
+                  <Badge className={cn('text-xs px-1.5 py-0 flex-shrink-0', stageColor(selected.conversation_stage))}>
+                    {selected.conversation_stage?.replace('_', ' ')}
+                  </Badge>
+                )}
               </div>
-              <div className="flex items-center gap-2">
+              {/* Row 2: actions */}
+              <div className="flex items-center gap-1 flex-wrap">
                 <Button
                   variant={selected.ai_paused ? 'default' : 'outline'}
                   size="sm"
-                  className={cn('h-7 text-xs', selected.ai_paused ? 'bg-orange-500 hover:bg-orange-600 text-white' : '')}
+                  className={cn('h-7 px-2 text-xs', selected.ai_paused ? 'bg-orange-500 hover:bg-orange-600 text-white' : '')}
                   onClick={handleAiToggle}
                 >
                   {selected.ai_paused
-                    ? <><Play className="w-3 h-3 mr-1" />Resume AI</>
-                    : <><Pause className="w-3 h-3 mr-1" />Pause AI</>
+                    ? <><Play className="w-3 h-3" /><span className="ml-1">Resume AI</span></>
+                    : <><Pause className="w-3 h-3" /><span className="ml-1">Pause AI</span></>
                   }
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={cn('h-7 text-xs', showNotes ? 'bg-amber-50 text-amber-700' : '')}
+                  className={cn('h-7 px-2 text-xs', showNotes ? 'bg-amber-500/20 text-amber-400' : '')}
                   onClick={() => setShowNotes(v => !v)}
                 >
-                  <MessageSquare className="w-3 h-3 mr-1" />
-                  Notes{selected.notes && selected.notes.length > 0 ? ` (${selected.notes.length})` : ''}
+                  <MessageSquare className="w-3 h-3" /><span className="ml-1">Notes{selected.notes && selected.notes.length > 0 ? ` (${selected.notes.length})` : ''}</span>
                 </Button>
                 {/* Analyse button with scope dropdown — per conversation */}
                 <div className="relative">
@@ -1059,7 +1075,7 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                       {runningAnalysis
                         ? <Loader2 className="w-3 h-3 animate-spin" />
                         : <Sparkles className="w-3 h-3" />}
-                      {runningAnalysis ? 'Analysing…' : `Analyse (${analyseScope})`}
+                      <span className="ml-1">{runningAnalysis ? 'Analysing…' : `Analyse (${analyseScope})`}</span>
                     </button>
                     <button
                       onClick={() => setShowScopeMenu(v => !v)}
@@ -1076,7 +1092,7 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                           key={s}
                           onClick={() => handleRunAnalysis(s)}
                           className={cn(
-                            'w-full text-left px-3 py-2 text-xs hover:bg-neutral-50 flex items-center gap-2',
+                            'w-full text-left px-3 py-2 text-xs hover:bg-white/10 flex items-center gap-2',
                             s === analyseScope ? 'text-violet-400 font-medium' : 'text-slate-300'
                           )}
                         >
@@ -1092,11 +1108,10 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 text-xs"
+                  className="h-7 px-2 text-xs"
                   onClick={() => setShowIntel(v => !v)}
                 >
-                  <Brain className="w-3 h-3 mr-1" />
-                  {showIntel ? 'Hide' : 'Intel'}
+                  <Brain className="w-3 h-3" /><span className="ml-1">{showIntel ? 'Hide Intel' : 'Intel'}</span>
                 </Button>
               </div>
             </div>
@@ -1130,13 +1145,13 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
 
                     {/* Inline reasoning pill below agent messages */}
                     {msg.role === 'assistant' && msg.metadata?.internal_assessment && (
-                      <div className="mt-1 mr-1 flex items-center gap-1.5 text-xs text-neutral-400">
+                      <div className="mt-1 mr-1 flex items-center gap-1.5 text-xs text-slate-400">
                         <Eye className="w-3 h-3" />
                         <span className="italic">{msg.metadata.internal_assessment}</span>
                       </div>
                     )}
                     {msg.role === 'assistant' && !msg.metadata?.internal_assessment && msg.metadata?.governor_reason && (
-                      <div className="mt-1 mr-1 flex items-center gap-1 text-xs text-neutral-400">
+                      <div className="mt-1 mr-1 flex items-center gap-1 text-xs text-slate-400">
                         <Zap className="w-3 h-3" />
                         <span>{msg.metadata.response_mode} · {msg.metadata.governor_reason}</span>
                       </div>
@@ -1158,7 +1173,7 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                   className="border-t border-amber-500/20 bg-amber-500/10 overflow-hidden"
                 >
                   <div className="p-3 space-y-2">
-                    <div className="flex items-center gap-1.5 text-xs font-medium text-amber-700">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-amber-400">
                       <MessageSquare className="w-3.5 h-3.5" />
                       Internal Notes
                     </div>
@@ -1166,13 +1181,13 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                       <div className="space-y-1.5 max-h-28 overflow-y-auto">
                         {(selected.notes || []).map(note => (
                           <div key={note.id} className="bg-white/5 rounded-lg px-3 py-2 text-xs border border-amber-500/20">
-                            <p className="text-neutral-700">{note.text}</p>
-                            <p className="text-neutral-400 mt-0.5">{formatTime(note.created_at)}</p>
+                            <p className="text-slate-300">{note.text}</p>
+                            <p className="text-slate-500 mt-0.5">{formatTime(note.created_at)}</p>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-amber-600 italic">No notes yet</p>
+                      <p className="text-xs text-amber-400/70 italic">No notes yet</p>
                     )}
                     <div className="flex gap-2">
                       <Input
@@ -1180,7 +1195,7 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                         value={noteText}
                         onChange={e => setNoteText(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter') handleAddNote(); }}
-                        className="h-7 text-xs bg-white border-amber-200 flex-1"
+                        className="h-7 text-xs bg-white/5 border-amber-500/30 text-slate-200 placeholder:text-slate-500 flex-1"
                       />
                       <Button
                         size="sm"
@@ -1226,9 +1241,39 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
             <p className="text-xs mt-1">Choose from the list to view messages and lead intelligence</p>
           </div>
         )}
+
+        {/* ── Intel overlay for md–lg (absolute, inside relative chat column) ── */}
+        <AnimatePresence>
+          {selected && showIntel && (
+            <motion.div
+              initial={{ x: '100%', opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: '100%', opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-y-0 right-0 z-30 w-72 lg:hidden bg-[#0d1525]/95 backdrop-blur-sm border-l border-white/10 flex flex-col shadow-2xl"
+            >
+              <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 flex-shrink-0">
+                <span className="text-xs font-medium text-slate-400">Lead Intelligence</span>
+                <button
+                  onClick={() => setShowIntel(false)}
+                  className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-slate-200 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <IntelligenceSidebar
+                  conversation={selected}
+                  intelligence={intelligence}
+                  loadingIntel={loadingIntel}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* ── Column 3: Intelligence Sidebar ── */}
+      {/* ── Column 3: Intelligence Sidebar (inline, lg+) ── */}
       <AnimatePresence>
         {selected && showIntel && (
           <motion.div
@@ -1236,7 +1281,7 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
             animate={{ width: 300, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="flex-shrink-0 border-l border-neutral-200 overflow-hidden"
+            className="flex-shrink-0 border-l border-white/10 overflow-hidden hidden lg:block"
             style={{ width: 300 }}
           >
             <IntelligenceSidebar
