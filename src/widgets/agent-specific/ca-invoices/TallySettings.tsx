@@ -56,19 +56,22 @@ interface ParsedTallyData {
   companyName?: string;
 }
 
-/** Decode ArrayBuffer handling UTF-16 LE BOM (FF FE) that Tally Prime uses */
+/** Decode ArrayBuffer handling UTF-16 LE BOM (FF FE) that Tally Prime uses.
+    Strips the BOM character (\uFEFF) so DOMParser doesn't reject the string. */
 function decodeTallyBuffer(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
+  let text: string;
   // Detect UTF-16 LE BOM: 0xFF 0xFE
   if (bytes[0] === 0xFF && bytes[1] === 0xFE) {
-    return new TextDecoder('utf-16le').decode(buffer);
-  }
+    text = new TextDecoder('utf-16le').decode(buffer);
   // Detect UTF-16 BE BOM: 0xFE 0xFF
-  if (bytes[0] === 0xFE && bytes[1] === 0xFF) {
-    return new TextDecoder('utf-16be').decode(buffer);
+  } else if (bytes[0] === 0xFE && bytes[1] === 0xFF) {
+    text = new TextDecoder('utf-16be').decode(buffer);
+  } else {
+    text = new TextDecoder('utf-8').decode(buffer);
   }
-  // Default: UTF-8
-  return new TextDecoder('utf-8').decode(buffer);
+  // Strip BOM character that TextDecoder leaves in the string
+  return text.replace(/^\uFEFF/, '');
 }
 
 /** Strip wide-character spaces: Tally sometimes emits UTF-16 as UTF-8
