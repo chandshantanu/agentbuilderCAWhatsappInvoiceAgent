@@ -38,7 +38,10 @@ export function useSubscription(): SubscriptionState {
   });
 
   const fetchStatus = useCallback(async () => {
-    if (!subdomain || !isAuthenticated) return;
+    if (!subdomain || !isAuthenticated) {
+      setState(prev => ({ ...prev, isLoading: false }));
+      return;
+    }
 
     setState(prev => ({ ...prev, isLoading: true, error: null }));
     try {
