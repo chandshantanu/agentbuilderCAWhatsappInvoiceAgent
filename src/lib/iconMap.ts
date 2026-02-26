@@ -6,6 +6,7 @@ import {
   Home,
   Settings,
   MessageSquare,
+  MessageCircle,
   Activity,
   Inbox,
   CreditCard,
@@ -19,6 +20,9 @@ import {
   Globe,
   Mail,
   Phone,
+  BookOpen,
+  Library,
+  Target,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -35,6 +39,13 @@ const iconMap: Record<string, LucideIcon> = {
   home: Home,
   settings: Settings,
   'message-square': MessageSquare,
+  'message-circle': MessageCircle,
+  conversations: MessageCircle,
+  'book-open': BookOpen,
+  'knowledge-base': BookOpen,
+  library: Library,
+  metrics: BarChart2,
+  'bar-chart-3': BarChart2,
   activity: Activity,
   inbox: Inbox,
   'credit-card': CreditCard,
@@ -50,6 +61,8 @@ const iconMap: Record<string, LucideIcon> = {
   globe: Globe,
   mail: Mail,
   phone: Phone,
+  target: Target,
+  campaigns: Target,
 };
 
 export function getIcon(name?: string): LucideIcon | null {

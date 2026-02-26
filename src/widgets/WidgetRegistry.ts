@@ -38,6 +38,7 @@ const WIDGET_REGISTRY: Record<string, WidgetLoader> = {
   instagram_knowledge_base: () => import('./agent-specific/instagram/KnowledgeBasePanel'),
   instagram_crm: () => import('./agent-specific/instagram/CRMPanel'),
   instagram_settings: () => import('./agent-specific/instagram/SettingsPanel'),
+  instagram_campaigns: () => import('./agent-specific/instagram/CampaignPanel'),
 };
 
 /**
