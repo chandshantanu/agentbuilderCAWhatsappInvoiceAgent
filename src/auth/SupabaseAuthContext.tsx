@@ -171,14 +171,28 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       ? `https://${subdomain}.agents.chatslytics.com/checkout`
       : undefined;
 
-    const { data, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName },
-        ...(redirectUrl && { emailRedirectTo: redirectUrl }),
-      },
-    });
+    let data: Awaited<ReturnType<typeof supabase.auth.signUp>>['data'];
+    let authError: Awaited<ReturnType<typeof supabase.auth.signUp>>['error'];
+
+    try {
+      ({ data, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: fullName },
+          ...(redirectUrl && { emailRedirectTo: redirectUrl }),
+        },
+      }));
+    } catch (networkErr: unknown) {
+      const isNetworkError =
+        networkErr instanceof TypeError &&
+        (networkErr.message === 'Failed to fetch' || networkErr.message === 'Load failed');
+      const msg = isNetworkError
+        ? 'Unable to reach the authentication service. This is likely a configuration issue — please contact support.'
+        : (networkErr instanceof Error ? networkErr.message : 'Sign up failed');
+      setError(msg);
+      throw new Error(msg);
+    }
 
     if (authError) {
       setError(authError.message);
@@ -208,10 +222,20 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
     if (!supabase) throw new Error('Supabase not initialized');
     setError(null);
 
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    let authError: Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>['error'];
+
+    try {
+      ({ error: authError } = await supabase.auth.signInWithPassword({ email, password }));
+    } catch (networkErr: unknown) {
+      const isNetworkError =
+        networkErr instanceof TypeError &&
+        (networkErr.message === 'Failed to fetch' || networkErr.message === 'Load failed');
+      const msg = isNetworkError
+        ? 'Unable to reach the authentication service. This is likely a configuration issue — please contact support.'
+        : (networkErr instanceof Error ? networkErr.message : 'Sign in failed');
+      setError(msg);
+      throw new Error(msg);
+    }
 
     if (authError) {
       setError(authError.message);
