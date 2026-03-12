@@ -6,6 +6,7 @@ import {
   TrendingUp, AlertCircle, Clock, Zap, Star, ArrowRight, ArrowLeft,
   Calendar, MessageSquare, CheckCircle, XCircle, Lightbulb,
   BarChart2, Heart, DollarSign, Eye, RefreshCw, Sparkles,
+  Check, CheckCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,9 +43,10 @@ interface InstagramMessage {
   timestamp: string;
   source?: string;
   metadata?: MessageMetadata;
-  send_status?: 'sent' | 'failed' | 'unknown';
+  send_status?: 'sent' | 'failed' | 'unknown' | 'rate_limited';
   send_error?: string;
   send_error_code?: number;
+  delivery_status?: 'sent' | 'delivered' | 'read' | 'failed' | 'not_sent';
 }
 
 interface InstagramConversation {
@@ -790,7 +792,7 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
     const sid = selected.sender_id || selected.id;
     if (!sid) return;
     setLoadingIntel(true);
-    apiClient.get(`/api/conversations/${sid}/intelligence`)
+    apiClient.get(`/api/conversations/${sid}/intelligence?scope=all`)
       .then((resp: any) => setIntelligence(resp.data))
       .catch(() => setIntelligence(null))
       .finally(() => setLoadingIntel(false));
@@ -875,7 +877,7 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
     }
   }, [selected, noteText]);
 
-  // Per-conversation analyse — loads intelligence for the selected conversation
+  // Per-conversation analyse — recalculates lead score then loads full intelligence
   const handleRunAnalysis = useCallback(async (scope: 'recent' | 'all') => {
     if (!selected) return;
     const sid = selected.sender_id || selected.id;
@@ -884,6 +886,8 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
     setRunningAnalysis(true);
     setShowIntel(true); // ensure sidebar is visible
     try {
+      // Recalculate lead score from stored signals before fetching intelligence
+      await apiClient.post(`/api/conversations/${sid}/recalculate-score`);
       const resp = await apiClient.get(`/api/conversations/${sid}/intelligence?scope=${scope}`);
       setIntelligence(resp.data);
     } catch (err) {
@@ -1135,13 +1139,39 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                       <div className="text-right text-xs opacity-60 mt-1">{formatTime(msg.timestamp)}</div>
                     </div>
 
-                    {/* Delivery failure indicator */}
-                    {msg.role === 'assistant' && msg.send_status === 'failed' && (
-                      <div className="flex items-center gap-1 text-xs text-red-400 mt-0.5">
-                        <AlertCircle className="w-3 h-3" />
-                        <span>Not delivered{msg.send_error ? `: ${msg.send_error}` : ''}</span>
-                      </div>
-                    )}
+                    {/* Delivery status indicator */}
+                    {msg.role === 'assistant' && (() => {
+                      const status = msg.delivery_status || (msg.send_status === 'failed' ? 'failed' : msg.send_status === 'rate_limited' ? 'not_sent' : msg.send_status === 'sent' ? 'sent' : undefined);
+                      if (status === 'read') return (
+                        <div className="flex items-center gap-1 text-xs text-violet-400 mt-0.5 justify-end">
+                          <CheckCheck className="w-3.5 h-3.5" />
+                          <span className="opacity-70">Seen</span>
+                        </div>
+                      );
+                      if (status === 'delivered') return (
+                        <div className="flex items-center gap-1 text-xs text-slate-400 mt-0.5 justify-end">
+                          <CheckCheck className="w-3.5 h-3.5" />
+                        </div>
+                      );
+                      if (status === 'sent') return (
+                        <div className="flex items-center gap-1 text-xs text-slate-500 mt-0.5 justify-end">
+                          <Check className="w-3.5 h-3.5" />
+                        </div>
+                      );
+                      if (status === 'failed') return (
+                        <div className="flex items-center gap-1 text-xs text-red-400 mt-0.5">
+                          <AlertCircle className="w-3 h-3" />
+                          <span>Not delivered{msg.send_error ? `: ${msg.send_error}` : ''}</span>
+                        </div>
+                      );
+                      if (status === 'not_sent') return (
+                        <div className="flex items-center gap-1 text-xs text-yellow-500 mt-0.5">
+                          <AlertCircle className="w-3 h-3" />
+                          <span>Rate limited</span>
+                        </div>
+                      );
+                      return null;
+                    })()}
 
                     {/* Inline reasoning pill below agent messages */}
                     {msg.role === 'assistant' && msg.metadata?.internal_assessment && (
