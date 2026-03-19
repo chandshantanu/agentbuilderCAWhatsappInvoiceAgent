@@ -42,6 +42,8 @@ type ConnectState =
   | 'idle'
   | 'connecting'
   | 'exchanging'
+  | 'confirming'
+  | 'saving'
   | 'connected'
   | 'error';
 
@@ -57,6 +59,11 @@ export default function InstagramConnectStep({
   const [connectedData, setConnectedData] = useState<{
     instagram_username: string;
     instagram_user_id: string;
+  } | null>(null);
+  const [previewData, setPreviewData] = useState<{
+    instagram_username: string;
+    instagram_user_id: string;
+    preview_token: string;
   } | null>(null);
   const [tokenStatus, setTokenStatus] = useState<{
     status: 'valid' | 'expiring_soon' | 'expired' | 'unknown';
@@ -134,7 +141,7 @@ export default function InstagramConnectStep({
         return;
       }
 
-      // Exchange code via backend
+      // Exchange code via backend — returns preview (not saved yet)
       setState('exchanging');
       const redirectUri = `${window.location.origin}/instagram-callback`;
 
@@ -142,13 +149,13 @@ export default function InstagramConnectStep({
         .connectInstagram(subdomain, code, redirectUri)
         .then((resp: any) => {
           const data = resp.data;
-          const connected = {
+          // Backend returns preview=true with a signed token — show confirmation
+          setPreviewData({
             instagram_username: data.instagram_username || '',
             instagram_user_id: data.instagram_user_id || '',
-          };
-          setConnectedData(connected);
-          onConnected(connected);
-          setState('connected');
+            preview_token: data.preview_token || '',
+          });
+          setState('confirming');
         })
         .catch((err: any) => {
           setError(err.message || 'Failed to connect Instagram. Please try again.');
@@ -220,6 +227,31 @@ export default function InstagramConnectStep({
     }, 500);
   }, [instagramAppId, subscriptionId]);
 
+  const handleConfirm = async () => {
+    if (!previewData?.preview_token) return;
+    setState('saving');
+    try {
+      const resp: any = await saasApi.confirmInstagram(subdomain, previewData.preview_token);
+      const data = resp.data;
+      const connected = {
+        instagram_username: data.instagram_username || '',
+        instagram_user_id: data.instagram_user_id || '',
+      };
+      setConnectedData(connected);
+      setPreviewData(null);
+      onConnected(connected);
+      setState('connected');
+    } catch (err: any) {
+      setError(err.message || 'Failed to save Instagram connection. Please try again.');
+      setState('error');
+    }
+  };
+
+  const handleCancelConfirm = () => {
+    setPreviewData(null);
+    setState('idle');
+  };
+
   const handleRetry = () => {
     setError('');
     setState('idle');
@@ -270,6 +302,67 @@ export default function InstagramConnectStep({
         >
           <RefreshCw className="w-3 h-3" /> Reconnect with a different account
         </button>
+      </div>
+    );
+  }
+
+  // Confirmation state — user must approve the account before it's saved
+  if (state === 'confirming' && previewData) {
+    return (
+      <div className="rounded-xl border-2 border-amber-300 bg-gradient-to-br from-amber-50 to-orange-50 p-5 space-y-4">
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center shrink-0">
+            <InstagramIcon className="w-5 h-5 text-pink-600" />
+          </div>
+          <div>
+            <p className="font-semibold text-gray-900 text-sm">Confirm Instagram Account</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              You're about to connect this account to your AI agent. Make sure it's correct.
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-lg bg-white border border-amber-200 p-3 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center shrink-0">
+            <span className="text-white font-bold text-sm">
+              {previewData.instagram_username?.[0]?.toUpperCase() || 'I'}
+            </span>
+          </div>
+          <div>
+            <p className="font-semibold text-gray-900">@{previewData.instagram_username || 'Unknown'}</p>
+            <p className="text-xs text-gray-400">ID: {previewData.instagram_user_id}</p>
+          </div>
+        </div>
+
+        <p className="text-xs text-amber-700 bg-amber-100 rounded-lg px-3 py-2">
+          All incoming DMs to this account will be handled by your AI agent. If this is the wrong account, click Cancel and connect the correct one.
+        </p>
+
+        <div className="flex gap-2">
+          <button
+            onClick={handleCancelConfirm}
+            className="flex-1 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleConfirm}
+            className="flex-1 py-2.5 rounded-xl text-white text-sm font-medium transition-colors"
+            style={{ background: 'linear-gradient(135deg, #E1306C, #833AB4)' }}
+          >
+            Yes, Connect @{previewData.instagram_username}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Saving state (after confirmation)
+  if (state === 'saving') {
+    return (
+      <div className="flex flex-col items-center py-8 gap-3">
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: primaryColor }} />
+        <p className="text-sm text-gray-600 font-medium">Saving your Instagram connection...</p>
       </div>
     );
   }

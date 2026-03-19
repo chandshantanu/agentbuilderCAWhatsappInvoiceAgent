@@ -102,16 +102,26 @@ export const saasApi = {
   getWhatsAppStatus: (subdomain: string) =>
     apiCall('GET', `/api/v1/saas/runtime/${subdomain}/whatsapp/status`),
 
-  // Connect Instagram via OAuth code (Instagram Login flow)
+  // Connect Instagram via OAuth code (Instagram Login flow) — returns preview, does NOT save
   connectInstagram: (subdomain: string, code: string, redirectUri: string) =>
     apiCall('POST', `/api/v1/saas/runtime/${subdomain}/instagram/connect`, {
       code,
       redirect_uri: redirectUri,
     }),
 
+  // Confirm Instagram connection after user reviews the account details
+  confirmInstagram: (subdomain: string, previewToken: string) =>
+    apiCall('POST', `/api/v1/saas/runtime/${subdomain}/instagram/confirm`, {
+      preview_token: previewToken,
+    }),
+
   // Get Instagram connection status for a subdomain
   getInstagramStatus: (subdomain: string) =>
     apiCall('GET', `/api/v1/saas/runtime/${subdomain}/instagram/status`),
+
+  // Disconnect Instagram account for a SaaS customer
+  disconnectInstagram: (subdomain: string) =>
+    apiCall('DELETE', `/api/v1/saas/runtime/${subdomain}/instagram/disconnect`),
 
   // Get available phones from seller's pool for CA to select
   getAvailablePhones: (subdomain: string) =>
@@ -180,4 +190,18 @@ export const saasApi = {
     razorpay_payment_id: string;
     razorpay_signature: string;
   }) => apiCall('POST', `/api/v1/subscriptions/${subscriptionId}/resume`, data),
+
+  // Schedule account deletion with a 12-hour grace period
+  deleteAccount: (subdomain: string) =>
+    apiCall<{ success: boolean; deletion_scheduled_at?: string; already_scheduled?: boolean }>(
+      'POST',
+      `/api/v1/saas/runtime/${subdomain}/account/delete`,
+    ),
+
+  // Cancel a pending account deletion within the 12-hour grace period
+  cancelDeleteAccount: (subdomain: string) =>
+    apiCall<{ success: boolean; message: string }>(
+      'POST',
+      `/api/v1/saas/runtime/${subdomain}/account/cancel-delete`,
+    ),
 };

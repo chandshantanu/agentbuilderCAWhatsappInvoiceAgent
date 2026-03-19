@@ -24,7 +24,7 @@ export interface SubscriptionState {
 
 export function useSubscription(): SubscriptionState {
   const { subdomain } = useSaaS();
-  const { isAuthenticated } = useSupabaseAuth();
+  const { isAuthenticated, isLoading: authLoading } = useSupabaseAuth();
   const [state, setState] = useState<Omit<SubscriptionState, 'refetch'>>({
     hasSubscription: false,
     isConfigured: false,
@@ -39,7 +39,11 @@ export function useSubscription(): SubscriptionState {
 
   const fetchStatus = useCallback(async () => {
     if (!subdomain || !isAuthenticated) {
-      setState(prev => ({ ...prev, isLoading: false }));
+      // Keep subLoading=true while auth is still resolving to prevent premature redirects.
+      // Only set isLoading=false once we're sure auth is done and user is not authenticated.
+      if (!authLoading) {
+        setState(prev => ({ ...prev, isLoading: false }));
+      }
       return;
     }
 
@@ -136,7 +140,7 @@ export function useSubscription(): SubscriptionState {
         error: err.message || 'Failed to check subscription',
       });
     }
-  }, [subdomain, isAuthenticated]);
+  }, [subdomain, isAuthenticated, authLoading]);
 
   useEffect(() => {
     fetchStatus();

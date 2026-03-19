@@ -27,6 +27,7 @@ const VerifyEmailPage = lazy(() => import('@/pages/VerifyEmailPage'));
 const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('@/pages/ResetPasswordPage'));
 const TrialExpiredPage = lazy(() => import('@/pages/TrialExpiredPage'));
+const AccountSettingsPage = lazy(() => import('@/pages/AccountSettingsPage'));
 
 // ── Shared UI ──
 
@@ -167,6 +168,14 @@ function SaaSModeApp() {
             element={
               <RequireConfigured>
                 <SaaSDashboardPage />
+              </RequireConfigured>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <RequireConfigured>
+                <AccountSettingsPage />
               </RequireConfigured>
             }
           />
