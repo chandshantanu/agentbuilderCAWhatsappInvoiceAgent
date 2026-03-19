@@ -5,7 +5,8 @@
 
 import React, { useState, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, Menu, LogOut } from 'lucide-react';
+import { ChevronLeft, Menu, LogOut, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useConfig } from '@/config/ConfigProvider';
 import { useBranding } from '@/branding/BrandingProvider';
 import { useSupabaseAuth } from '@/auth/SupabaseAuthContext';
@@ -46,8 +47,8 @@ function NavItem({
         'group relative w-full flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-200',
         isCollapsed ? 'justify-center px-2 py-3' : 'px-3 py-2.5',
         isActive
-          ? 'bg-green-50 text-green-800 border border-green-200'
-          : 'text-stone-500 hover:text-stone-800 hover:bg-stone-100 border border-transparent',
+          ? 'bg-white/[0.07] text-slate-100 border border-white/[0.1]'
+          : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] border border-transparent',
       )}
     >
       {Icon && (
@@ -55,7 +56,7 @@ function NavItem({
           className={cn(
             'shrink-0 transition-colors duration-200',
             isCollapsed ? 'h-5 w-5' : 'h-4 w-4',
-            isActive ? 'text-green-700' : 'text-stone-400 group-hover:text-stone-600',
+            isActive ? 'text-rose-400' : 'text-slate-500 group-hover:text-slate-300',
           )}
         />
       )}
@@ -75,7 +76,7 @@ function NavItem({
       {isActive && !isCollapsed && (
         <motion.div
           layoutId="sidebar-active"
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-green-600"
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-rose-500"
           transition={{ type: 'spring', stiffness: 400, damping: 30 }}
         />
       )}
@@ -96,6 +97,7 @@ function NavItem({
 
 function LogoutButton({ isCollapsed }: { isCollapsed: boolean }) {
   const { signOut, user } = useSupabaseAuth();
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     await signOut();
@@ -104,28 +106,46 @@ function LogoutButton({ isCollapsed }: { isCollapsed: boolean }) {
 
   if (isCollapsed) {
     return (
-      <Tooltip content="Log out" side="right">
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center justify-center p-2.5 rounded-lg text-stone-400 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
-          aria-label="Log out"
-        >
-          <LogOut className="h-4 w-4" />
-        </button>
-      </Tooltip>
+      <div className="space-y-1">
+        <Tooltip content="Account Settings" side="right">
+          <button
+            onClick={() => navigate('/settings')}
+            className="w-full flex items-center justify-center p-2.5 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/[0.06] transition-all duration-200"
+            aria-label="Account Settings"
+          >
+            <Settings className="h-4 w-4" />
+          </button>
+        </Tooltip>
+        <Tooltip content="Log out" side="right">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center p-2.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"
+            aria-label="Log out"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+        </Tooltip>
+      </div>
     );
   }
 
   return (
     <div className="space-y-1">
       {user?.email && (
-        <p className="text-xs text-stone-400 truncate px-1" title={user.email}>
+        <p className="text-xs text-slate-500 truncate px-1" title={user.email}>
           {user.email}
         </p>
       )}
       <button
+        onClick={() => navigate('/settings')}
+        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-slate-200 hover:bg-white/[0.06] transition-all duration-200"
+      >
+        <Settings className="h-4 w-4 shrink-0" />
+        <span>Account Settings</span>
+      </button>
+      <button
         onClick={handleLogout}
-        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-stone-500 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
+        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"
       >
         <LogOut className="h-4 w-4 shrink-0" />
         <span>Log out</span>
@@ -158,7 +178,7 @@ function SidebarContent({
       {/* Header */}
       <div
         className={cn(
-          'flex items-center border-b border-stone-200',
+          'flex items-center border-b border-white/[0.07]',
           isCollapsed ? 'justify-center p-3' : 'justify-between px-4 py-4',
         )}
       >
@@ -171,13 +191,13 @@ function SidebarContent({
                 className="h-8 w-8 rounded-lg shrink-0 object-cover"
               />
             ) : (
-              <div className="h-8 w-8 rounded-lg shrink-0 bg-green-700 flex items-center justify-center">
+              <div className="h-8 w-8 rounded-lg shrink-0 bg-gradient-to-br from-rose-500 to-purple-600 flex items-center justify-center shadow-lg">
                 <span className="text-white text-xs font-bold font-display">
                   {(branding.brand_name || 'D')[0].toUpperCase()}
                 </span>
               </div>
             )}
-            <span className="font-display text-base font-normal text-stone-800 truncate">
+            <span className="font-display text-base font-normal text-slate-200 truncate">
               {branding.brand_name || 'Dashboard'}
             </span>
           </div>
@@ -186,7 +206,7 @@ function SidebarContent({
           <img src={branding.logo_url} alt="" className="h-7 w-7 rounded-lg object-cover" />
         )}
         {isCollapsed && !branding.logo_url && (
-          <div className="h-7 w-7 rounded-lg bg-green-700 flex items-center justify-center">
+          <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-rose-500 to-purple-600 flex items-center justify-center shadow-md">
             <span className="text-white text-xs font-bold">
               {(branding.brand_name || 'D')[0].toUpperCase()}
             </span>
@@ -196,7 +216,7 @@ function SidebarContent({
           <button
             onClick={onToggle}
             className={cn(
-              'p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-all duration-200',
+              'p-1.5 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/[0.06] transition-all duration-200',
               isCollapsed && 'mt-1',
             )}
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -232,7 +252,7 @@ function SidebarContent({
       {/* Logout + Footer */}
       <div
         className={cn(
-          'border-t border-stone-200',
+          'border-t border-white/[0.07]',
           isCollapsed ? 'px-2 py-3' : 'px-3 py-3',
         )}
       >
@@ -246,7 +266,7 @@ function SidebarContent({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-[11px] mt-2 px-1 text-stone-400 hover:text-stone-600 transition-colors block"
+              className="text-[11px] mt-2 px-1 text-slate-600 hover:text-slate-400 transition-colors block"
             >
               Powered by chatslytics.com
             </motion.a>
@@ -273,6 +293,7 @@ function SidebarLayout({ children, tabs, activeTab, onTabChange }: LayoutProps) 
   const { signOut } = useSupabaseAuth();
   const mobileSheet = useMobileSheet();
 
+  const navigate = useNavigate();
   const handleMobileLogout = async () => {
     await signOut();
     window.location.href = '/';
@@ -281,28 +302,37 @@ function SidebarLayout({ children, tabs, activeTab, onTabChange }: LayoutProps) 
   /* ── Mobile ─── */
   if (isMobile) {
     return (
-      <div className="flex flex-col h-screen bg-stone-50">
+      <div className="flex flex-col h-screen" style={{ background: 'var(--color-background)' }}>
         {/* Mobile header */}
-        <header className="flex items-center justify-between px-4 py-3 bg-white border-b border-stone-200 shadow-sm">
+        <header className="flex items-center justify-between px-4 py-3 border-b" style={{ background: 'var(--sidebar-bg)', borderColor: 'var(--sidebar-border)' }}>
           <div className="flex items-center gap-3">
             <button
               onClick={mobileSheet.open}
-              className="p-1.5 rounded-lg text-stone-500 hover:text-stone-800 hover:bg-stone-100 transition-all duration-200"
+              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/[0.06] transition-all duration-200"
               aria-label="Open menu"
             >
               <Menu className="h-5 w-5" />
             </button>
-            <span className="font-display text-base text-stone-800">
+            <span className="font-display text-base text-slate-200">
               {branding.brand_name || 'Dashboard'}
             </span>
           </div>
-          <button
-            onClick={handleMobileLogout}
-            className="p-1.5 rounded-lg text-stone-400 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
-            aria-label="Log out"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => navigate('/settings')}
+              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/[0.06] transition-all duration-200"
+              aria-label="Account Settings"
+            >
+              <Settings className="h-4 w-4" />
+            </button>
+            <button
+              onClick={handleMobileLogout}
+              className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"
+              aria-label="Log out"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
         </header>
 
         <Sheet open={mobileSheet.isOpen} onClose={mobileSheet.close} side="left">
@@ -324,7 +354,7 @@ function SidebarLayout({ children, tabs, activeTab, onTabChange }: LayoutProps) 
 
   /* ── Desktop ─── */
   return (
-    <div className="flex h-screen bg-stone-50">
+    <div className="flex h-screen" style={{ background: 'var(--color-background)' }}>
       {/* Collapsible sidebar */}
       <motion.aside
         animate={{ width: isCollapsed ? 72 : 256 }}
@@ -351,6 +381,7 @@ function SidebarLayout({ children, tabs, activeTab, onTabChange }: LayoutProps) 
 function TopbarLayout({ children, tabs, activeTab, onTabChange }: LayoutProps) {
   const { branding, showPoweredBy } = useBranding();
   const { signOut, user } = useSupabaseAuth();
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     await signOut();
@@ -358,31 +389,39 @@ function TopbarLayout({ children, tabs, activeTab, onTabChange }: LayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50">
-      <header className="bg-white border-b border-stone-200 shadow-sm">
+    <div className="min-h-screen" style={{ background: 'var(--color-background)' }}>
+      <header className="border-b" style={{ background: 'var(--sidebar-bg)', borderColor: 'var(--sidebar-border)' }}>
         <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             {branding.logo_url && (
               <img src={branding.logo_url} alt="" className="h-7 w-7 rounded-lg object-cover" />
             )}
-            <h1 className="font-display text-base text-stone-800">
+            <h1 className="font-display text-base text-slate-200">
               {branding.brand_name || 'Dashboard'}
             </h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {showPoweredBy && (
               <a
                 href="https://chatslytics.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[11px] text-stone-400 hover:text-stone-600 transition-colors"
+                className="text-[11px] text-slate-600 hover:text-slate-400 transition-colors mr-1"
               >
                 Powered by chatslytics.com
               </a>
             )}
             <button
+              onClick={() => navigate('/settings')}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-slate-400 hover:text-slate-200 hover:bg-white/[0.06] transition-all duration-200"
+              title={user?.email ? `Account Settings (${user.email})` : 'Account Settings'}
+            >
+              <Settings className="h-4 w-4" />
+              <span className="hidden sm:inline">Settings</span>
+            </button>
+            <button
               onClick={handleLogout}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-stone-500 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"
               title={user?.email || 'Log out'}
             >
               <LogOut className="h-4 w-4" />
@@ -401,8 +440,8 @@ function TopbarLayout({ children, tabs, activeTab, onTabChange }: LayoutProps) {
                 className={cn(
                   'flex items-center gap-2 px-4 py-2.5 text-sm border-b-2 transition-all duration-200',
                   isActive
-                    ? 'font-medium text-green-700 border-green-700'
-                    : 'border-transparent text-stone-500 hover:text-stone-800 hover:border-stone-300',
+                    ? 'font-medium text-rose-400 border-rose-400'
+                    : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-600',
                 )}
               >
                 {Icon && <Icon className="h-4 w-4" />}

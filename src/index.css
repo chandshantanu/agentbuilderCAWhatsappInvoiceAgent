@@ -9,14 +9,14 @@
 ─────────────────────────────────────────────────────────────── */
 
 :root {
-  /* ── Core palette ──────────────────────────────────────── */
-  --color-primary:        #166534;   /* forest green — trust, money */
-  --color-primary-hover:  #14532d;
-  --color-primary-light:  #dcfce7;
-  --color-secondary:      #92400e;   /* amber ochre — accent, GST */
-  --color-secondary-light:#fef3c7;
-  --color-background:     #fafaf8;   /* warm off-white */
-  --color-text:           #1c1917;   /* warm charcoal ink */
+  /* ── Core palette — dark, Instagram-appropriate ─────────── */
+  --color-primary:        #e11d48;   /* rose-600 — Instagram energy */
+  --color-primary-hover:  #be123c;
+  --color-primary-light:  rgba(225,29,72,0.12);
+  --color-secondary:      #a78bfa;   /* violet — complementary accent */
+  --color-secondary-light:rgba(167,139,250,0.12);
+  --color-background:     #0c0e14;   /* deep navy — main page bg */
+  --color-text:           #e2e8f0;   /* slate-200 — primary text */
 
   /* ── Fonts ─────────────────────────────────────────────── */
   --font-display: 'DM Serif Display', Georgia, serif;
@@ -24,37 +24,37 @@
   --font-mono:    'JetBrains Mono', 'Courier New', monospace;
 
   /* ── Surface layers ─────────────────────────────────────── */
-  --color-surface:        #ffffff;
-  --color-surface-raised: #f5f3f0;
-  --color-surface-overlay:#ede9e3;
+  --color-surface:        #131620;   /* dark card background */
+  --color-surface-raised: #1a1d2e;   /* slightly elevated */
+  --color-surface-overlay:#21253a;   /* overlay / modal */
 
   /* ── Text tones ─────────────────────────────────────────── */
-  --color-muted:            #57534e;   /* warm stone */
-  --color-muted-foreground: #a8a29e;
+  --color-muted:            #94a3b8; /* slate-400 */
+  --color-muted-foreground: #64748b; /* slate-500 */
 
   /* ── Borders ────────────────────────────────────────────── */
-  --color-border:        #e7e2d9;
-  --color-border-subtle: #f0ece6;
+  --color-border:        rgba(255,255,255,0.08);
+  --color-border-subtle: rgba(255,255,255,0.04);
 
   /* ── Status / semantic accents ─────────────────────────── */
-  --color-accent-green:  #16a34a;
-  --color-accent-amber:  #d97706;
-  --color-accent-red:    #dc2626;
-  --color-accent-blue:   #2563eb;
-  --color-accent-violet: #7c3aed;
+  --color-accent-green:  #34d399;
+  --color-accent-amber:  #fbbf24;
+  --color-accent-red:    #fb7185;
+  --color-accent-blue:   #60a5fa;
+  --color-accent-violet: #a78bfa;
 
   /* ── Sidebar ────────────────────────────────────────────── */
-  --sidebar-bg:          #ffffff;
-  --sidebar-border:      #e7e2d9;
+  --sidebar-bg:          #0f1117;
+  --sidebar-border:      rgba(255,255,255,0.07);
   --sidebar-width:       16rem;
   --sidebar-collapsed-width: 4.5rem;
 
-  /* ── Shadows (warm, paper-like) ─────────────────────────── */
-  --shadow-xs: 0 1px 2px rgba(28,25,23,0.06);
-  --shadow-sm: 0 1px 3px rgba(28,25,23,0.08), 0 1px 2px -1px rgba(28,25,23,0.05);
-  --shadow-md: 0 4px 6px -1px rgba(28,25,23,0.08), 0 2px 4px -2px rgba(28,25,23,0.05);
-  --shadow-lg: 0 10px 15px -3px rgba(28,25,23,0.1), 0 4px 6px -4px rgba(28,25,23,0.06);
-  --shadow-card: 0 1px 4px rgba(28,25,23,0.08), 0 0 0 1px rgba(28,25,23,0.04);
+  /* ── Shadows (dark, deep) ────────────────────────────────── */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px -1px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.5), 0 2px 4px -2px rgba(0,0,0,0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.6), 0 4px 6px -4px rgba(0,0,0,0.4);
+  --shadow-card: 0 1px 4px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05);
 
   /* ── Transitions ────────────────────────────────────────── */
   --transition-smooth: 200ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -84,10 +84,10 @@ h1, h2, .font-display {
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: #d6d3d1;
+  background: rgba(255,255,255,0.12);
   border-radius: 9999px;
 }
-::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
 /* ── Card utility ─────────────────────────────────────────── */
 @layer components {
@@ -104,24 +104,37 @@ h1, h2, .font-display {
   }
   .card-hover:hover {
     box-shadow: var(--shadow-md);
-    border-color: #d6cfc4;
+    border-color: rgba(255,255,255,0.12);
     transform: translateY(-1px);
+  }
+
+  /* Glass card — dark glassmorphism surface */
+  .glass-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+    transition: box-shadow 250ms ease, border-color 250ms ease;
+  }
+  .glass-card:hover {
+    border-color: rgba(255,255,255,0.12);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07);
   }
 
   /* Sidebar surface */
   .sidebar-surface {
     background: var(--sidebar-bg);
     border-right: 1px solid var(--sidebar-border);
-    box-shadow: 2px 0 8px rgba(28,25,23,0.05);
+    box-shadow: 2px 0 16px rgba(0,0,0,0.4);
   }
 
-  /* Status badge helpers */
-  .badge-green  { background: #dcfce7; color: #15803d; }
-  .badge-amber  { background: #fef3c7; color: #b45309; }
-  .badge-red    { background: #fee2e2; color: #b91c1c; }
-  .badge-blue   { background: #dbeafe; color: #1d4ed8; }
-  .badge-violet { background: #ede9fe; color: #6d28d9; }
-  .badge-stone  { background: #f5f5f4; color: #57534e; }
+  /* Status badge helpers — adjusted for dark */
+  .badge-green  { background: rgba(52,211,153,0.12);  color: #34d399; border: 1px solid rgba(52,211,153,0.2); }
+  .badge-amber  { background: rgba(251,191,36,0.12);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.2); }
+  .badge-red    { background: rgba(251,113,133,0.12); color: #fb7185; border: 1px solid rgba(251,113,133,0.2); }
+  .badge-blue   { background: rgba(96,165,250,0.12);  color: #60a5fa; border: 1px solid rgba(96,165,250,0.2); }
+  .badge-violet { background: rgba(167,139,250,0.12); color: #a78bfa; border: 1px solid rgba(167,139,250,0.2); }
+  .badge-stone  { background: rgba(148,163,184,0.1);  color: #94a3b8; border: 1px solid rgba(148,163,184,0.15); }
 
   /* Primary action button */
   .btn-primary {
@@ -135,7 +148,7 @@ h1, h2, .font-display {
   }
   .btn-primary:hover {
     background: var(--color-primary-hover);
-    box-shadow: 0 2px 8px rgba(22,101,52,0.25);
+    box-shadow: 0 2px 12px rgba(225,29,72,0.35);
   }
 
   /* Subtle text helpers */

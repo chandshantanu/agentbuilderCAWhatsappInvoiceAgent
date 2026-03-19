@@ -74,19 +74,56 @@ const FEATURE_ICONS = [MessageSquare, Database, Receipt, Shield, BarChart3, Scan
 
 const CDN_BASE = 'https://stagentbuilderwidgets.blob.core.windows.net/widgets/saas-images';
 const CA_CDN = `${CDN_BASE}/ca`;
+const IG_CDN = `${CDN_BASE}/instagram`;
 
-const DEFAULT_IMAGES = {
-  hero: `${CA_CDN}/hero.jpg`,
+/* ─── Agent-type detection from branding/config ───── */
+
+function detectAgentType(config: any): 'instagram' | 'ca' | 'generic' {
+  const name = (config?.branding?.brand_name || '').toLowerCase();
+  const tagline = (config?.branding?.tagline || '').toLowerCase();
+  const agentId = (config?.agent_id || '').toLowerCase();
+  if (name.includes('instagram') || tagline.includes('instagram') || tagline.includes('dm') || agentId.includes('instagram')) return 'instagram';
+  if (name.includes('invoice') || name.includes('ca ') || tagline.includes('tally') || tagline.includes('gst')) return 'ca';
+  return 'generic';
+}
+
+/* ─── Instagram-specific default content ─────────── */
+
+const IG_DEFAULTS = {
+  hero_title: 'Your AI Sales Agent That Actually Sells',
+  hero_subtitle: 'Not a chatbot — a professional sales agent with chain-of-thought reasoning, lead scoring, and adaptive selling. Handles DMs, comments, objections & closing 24/7 in your brand voice.',
+  hero_badges: ['AI Sales Agent', 'Instagram DMs', '24/7 Automation'],
+  cta_text: 'Start Free Trial',
   features: [
-    `${CA_CDN}/feature-whatsapp.jpg`,
-    `${CA_CDN}/feature-clients.jpg`,
-    `${CA_CDN}/feature-tally.jpg`,
-    `${CA_CDN}/feature-gst.jpg`,
-    `${CA_CDN}/feature-analytics.jpg`,
-    `${CA_CDN}/feature-ocr.jpg`,
+    { title: 'Professional Sales Agent, Not a Chatbot', description: 'Chain-of-thought reasoning analyzes each customer\'s emotional state, buying signals, and conversation history before crafting a response. Every message moves toward a sale.' },
+    { title: 'Adaptive Lead Intelligence', description: 'Scores every lead (0-100) and adapts response depth automatically. Hot leads get VIP treatment with detailed, personalized responses. Cold leads get efficient nudges.' },
+    { title: 'Comment-to-DM Conversion', description: 'Detects purchase intent in comments, replies with curiosity-driven hooks, and initiates DM conversations automatically. Turns passive engagement into active sales.' },
+    { title: 'CRM & Follow-Page Tracking', description: 'Full CRM with lead tagging, conversation history, and follow-page tracking. Knows who follows you and adapts behavior — followers get insider treatment.' },
+    { title: 'Sells Any Product Category', description: 'Fashion, electronics, beauty, food, jewelry, education, real estate, D2C — works for any business.' },
+    { title: 'Brand Protection & Security', description: 'Quality gate validates every response before sending. Prompt injection protection, prohibited items detection, and brand guideline enforcement built-in.' },
   ],
-  humanEntrepreneur: `${CA_CDN}/social-proof.jpg`,
-  humanTeam: `${CA_CDN}/team-banner.jpg`,
+  pricing_features: [
+    'Unlimited AI-powered DM responses 24/7',
+    'Chain-of-thought sales reasoning',
+    'Adaptive response depth based on lead quality',
+    'Comment-to-DM conversion with intent detection',
+    'Lead scoring (0-100) with CRM auto-tagging',
+    'Follow-page tracking & engagement-based behavior',
+    'Multi-language: Hindi, English, Hinglish',
+    'Knowledge base & product catalog search',
+    'Quality gate with prompt injection protection',
+    '14-day free trial — no commitment',
+  ],
+  social_proof_title: 'Trusted by Indian businesses on Instagram',
+  social_proof_description: 'Brands using our AI agent see 3x higher DM conversion rates and close more deals — without hiring extra staff.',
+  social_proof_count: '500+',
+  social_proof_stats: [
+    { value: '3x', label: 'DM conversions' },
+    { value: '24/7', label: 'Always on' },
+    { value: '< 5s', label: 'Response time' },
+  ],
+  cta_section_title: 'Ready to turn DMs into sales?',
+  cta_section_subtitle: 'Set up in under 10 minutes. Your first 14 days are completely free.',
 };
 
 /* ─── CA-specific default content ────────────────── */
@@ -97,30 +134,12 @@ const CA_DEFAULTS = {
   hero_badges: ['GST Compliant', 'Tally Integration', 'WhatsApp Native'],
   cta_text: 'Start Free Trial',
   features: [
-    {
-      title: 'WhatsApp Invoice Capture',
-      description: 'Clients simply photograph and send invoices on WhatsApp. No app downloads, no portals — just the messaging app they already use.',
-    },
-    {
-      title: 'Smart Client Management',
-      description: 'Link phone numbers to client accounts. Bills from multiple branches auto-route to the right client. Unlimited clients, zero confusion.',
-    },
-    {
-      title: 'One-Click Tally XML Export',
-      description: 'Export verified invoices directly as Tally Prime XML. Correct GST ledgers, voucher types, and bill-wise allocations — ready to import.',
-    },
-    {
-      title: 'Automated GST Computation',
-      description: 'CGST, SGST, IGST, and cess computed automatically per line item. Supply type (intra/inter-state) detected from GSTIN. Zero manual entry.',
-    },
-    {
-      title: 'Invoice Analytics Dashboard',
-      description: 'Track pending reviews, approval rates, and monthly volumes at a glance. Filter by client, date range, or status in seconds.',
-    },
-    {
-      title: 'AI Document Extraction',
-      description: 'Advanced OCR reads printed and handwritten bills. HSN/SAC codes, quantities, rates — all extracted with confidence scoring.',
-    },
+    { title: 'WhatsApp Invoice Capture', description: 'Clients simply photograph and send invoices on WhatsApp. No app downloads, no portals — just the messaging app they already use.' },
+    { title: 'Smart Client Management', description: 'Link phone numbers to client accounts. Bills from multiple branches auto-route to the right client. Unlimited clients, zero confusion.' },
+    { title: 'One-Click Tally XML Export', description: 'Export verified invoices directly as Tally Prime XML. Correct GST ledgers, voucher types, and bill-wise allocations — ready to import.' },
+    { title: 'Automated GST Computation', description: 'CGST, SGST, IGST, and cess computed automatically per line item. Supply type (intra/inter-state) detected from GSTIN. Zero manual entry.' },
+    { title: 'Invoice Analytics Dashboard', description: 'Track pending reviews, approval rates, and monthly volumes at a glance. Filter by client, date range, or status in seconds.' },
+    { title: 'AI Document Extraction', description: 'Advanced OCR reads printed and handwritten bills. HSN/SAC codes, quantities, rates — all extracted with confidence scoring.' },
   ],
   pricing_features: [
     'Unlimited WhatsApp invoice capture',
@@ -247,17 +266,34 @@ export default function LandingPage() {
   const rgb = hexToRgb(primary);
   const lightAccent = lightenColor(primary, 0.35);
 
-  // Merge CA defaults with config-provided values
-  const lp = { ...CA_DEFAULTS, ...landing_page };
-  const features: Array<{ title: string; description: string }> = lp.features || CA_DEFAULTS.features;
+  // Pick defaults based on agent type
+  const agentType = detectAgentType(config);
+  const DEFAULTS = agentType === 'instagram' ? IG_DEFAULTS : CA_DEFAULTS;
+  const DEFAULT_IMAGES = agentType === 'instagram' ? {
+    hero: `${IG_CDN}/hero.jpg`,
+    features: Array(6).fill(null).map((_, i) => `${IG_CDN}/feature-${i + 1}.jpg`),
+    humanEntrepreneur: `${IG_CDN}/social-proof.jpg`,
+    humanTeam: `${IG_CDN}/team-banner.jpg`,
+  } : {
+    hero: `${CA_CDN}/hero.jpg`,
+    features: [`${CA_CDN}/feature-whatsapp.jpg`, `${CA_CDN}/feature-clients.jpg`, `${CA_CDN}/feature-tally.jpg`, `${CA_CDN}/feature-gst.jpg`, `${CA_CDN}/feature-analytics.jpg`, `${CA_CDN}/feature-ocr.jpg`],
+    humanEntrepreneur: `${CA_CDN}/social-proof.jpg`,
+    humanTeam: `${CA_CDN}/team-banner.jpg`,
+  };
+
+  // Merge agent-type defaults with config-provided values
+  const lp = { ...DEFAULTS, ...landing_page };
+  const features: Array<{ title: string; description: string }> = lp.features?.length ? lp.features : DEFAULTS.features;
   const currencySymbol = pricing.currency === 'INR' ? '\u20B9' : '$';
   const displayPrice = pricing.display_price || pricing.monthly_price;
 
   const handleCta = () => navigate(isAuthenticated ? '/checkout' : '/signup');
 
   // SEO meta tags
-  const pageTitle = `${branding.brand_name || 'CA Invoice Assistant'} — WhatsApp Invoice Processing & Tally Export`;
-  const pageDesc = lp.hero_subtitle || CA_DEFAULTS.hero_subtitle;
+  const pageTitle = agentType === 'instagram'
+    ? `${branding.brand_name || 'Instagram AI Sales Agent'} — AI-Powered Instagram DM Sales`
+    : `${branding.brand_name || 'CA Invoice Assistant'} — WhatsApp Invoice Processing & Tally Export`;
+  const pageDesc = lp.hero_subtitle || DEFAULTS.hero_subtitle;
 
   useEffect(() => {
     document.title = pageTitle;
@@ -267,7 +303,9 @@ export default function LandingPage() {
       el.setAttribute('content', content);
     };
     setMeta('description', pageDesc);
-    setMeta('keywords', 'CA invoice assistant, WhatsApp invoice, Tally Prime XML export, GST automation, chartered accountant software, invoice processing India');
+    setMeta('keywords', agentType === 'instagram'
+      ? 'Instagram AI sales agent, Instagram DM automation, Instagram chatbot, lead scoring, comment to DM, Instagram ecommerce India'
+      : 'CA invoice assistant, WhatsApp invoice, Tally Prime XML export, GST automation, chartered accountant software, invoice processing India');
     setMeta('robots', 'index, follow');
     setMeta('og:title', pageTitle, 'property');
     setMeta('og:description', pageDesc, 'property');
@@ -354,7 +392,7 @@ export default function LandingPage() {
 
               {/* Trust pills */}
               <motion.div variants={fadeUp} className="flex items-center gap-3 sm:gap-5 mb-9 flex-wrap">
-                {(lp.hero_badges || CA_DEFAULTS.hero_badges).map((label: string) => (
+                {(lp.hero_badges || DEFAULTS.hero_badges).map((label: string) => (
                   <span
                     key={label}
                     className="inline-flex items-center gap-2 text-[13px] font-medium tracking-wide text-white/80"
@@ -423,7 +461,7 @@ export default function LandingPage() {
               >
                 <img
                   src={landing_page.hero_image || DEFAULT_IMAGES.hero}
-                  alt="Chartered Accountant using WhatsApp invoice assistant"
+                  alt={agentType === 'instagram' ? 'Instagram AI sales agent dashboard' : 'Chartered Accountant using WhatsApp invoice assistant'}
                   className="w-full h-auto object-cover rounded-2xl"
                   loading="eager"
                 />
@@ -471,7 +509,7 @@ export default function LandingPage() {
                 variants={fadeUp}
                 className="text-3xl sm:text-[2.5rem] font-bold text-slate-100 tracking-[-0.02em]"
               >
-                Everything a CA practice needs
+                {agentType === 'instagram' ? 'Everything your Instagram sales needs' : 'Everything a CA practice needs'}
               </motion.h2>
             </motion.div>
 
@@ -636,7 +674,7 @@ export default function LandingPage() {
             <motion.div variants={scaleUp} className="relative">
               <img
                 src={landing_page.social_proof_image || DEFAULT_IMAGES.humanEntrepreneur}
-                alt="Chartered Accountant using the platform"
+                alt={agentType === 'instagram' ? 'Business owner using Instagram AI agent' : 'Chartered Accountant using the platform'}
                 className="w-full rounded-2xl shadow-xl object-cover aspect-square"
                 loading="lazy"
               />
@@ -658,7 +696,7 @@ export default function LandingPage() {
                   </div>
                   <div className="ml-1">
                     <p className="text-sm font-semibold text-slate-200">
-                      {lp.social_proof_count || CA_DEFAULTS.social_proof_count} CAs
+                      {lp.social_proof_count || DEFAULTS.social_proof_count} {agentType === 'instagram' ? 'brands' : 'CAs'}
                     </p>
                     <p className="text-xs text-slate-400">trust this platform</p>
                   </div>
@@ -671,7 +709,7 @@ export default function LandingPage() {
               <div className="inline-flex items-center gap-1.5 mb-4">
                 <Users className="w-4 h-4" style={{ color: primary }} />
                 <span className="text-xs font-bold uppercase tracking-[0.15em]" style={{ color: primary }}>
-                  Trusted by CAs across India
+                  {agentType === 'instagram' ? 'Trusted by Indian businesses' : 'Trusted by CAs across India'}
                 </span>
               </div>
               <h2 className="text-3xl sm:text-[2.5rem] font-bold text-slate-100 tracking-[-0.02em] mb-4">
@@ -681,7 +719,7 @@ export default function LandingPage() {
                 {lp.social_proof_description}
               </p>
               <div className="grid grid-cols-3 gap-4">
-                {(lp.social_proof_stats || CA_DEFAULTS.social_proof_stats).map((stat: any) => (
+                {(lp.social_proof_stats || DEFAULTS.social_proof_stats).map((stat: any) => (
                   <div key={stat.label} className="text-center p-3 bg-white/5 rounded-xl border border-white/10">
                     <p className="text-xl font-bold text-slate-100">{stat.value}</p>
                     <p className="text-xs text-slate-400 mt-0.5">{stat.label}</p>
