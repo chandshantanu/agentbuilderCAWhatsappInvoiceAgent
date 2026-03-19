@@ -260,7 +260,7 @@ export default function DashboardOverview({
     <div className="space-y-6">
 
       {/* ── KPI Cards ────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {KPI_CONFIG.map((cfg, idx) => (
           <GlassCard
             key={cfg.key}
@@ -333,7 +333,7 @@ export default function DashboardOverview({
       </div>
 
       {/* ── Lead Distribution + Deal Pipeline ────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
 
         {/* Lead Distribution */}
         <GlassCard className="p-6">
@@ -572,11 +572,11 @@ export default function DashboardOverview({
                 </div>
 
                 {/* Badges */}
-                <div className="flex items-center gap-2 shrink-0 ml-4">
+                <div className="flex items-center gap-1.5 shrink-0 ml-2 sm:ml-4 flex-wrap justify-end max-w-[160px] sm:max-w-none">
                   {conv.tags?.slice(0, 2).map((tag) => (
                     <span
                       key={tag}
-                      className="text-xs px-2.5 py-0.5 rounded-full"
+                      className="text-xs px-2 py-0.5 rounded-full hidden sm:inline-block"
                       style={{
                         background: 'rgba(167,139,250,0.1)',
                         color: '#C4B5FD',

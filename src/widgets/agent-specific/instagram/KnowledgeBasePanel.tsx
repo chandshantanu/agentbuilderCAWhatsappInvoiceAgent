@@ -120,35 +120,35 @@ export default function KnowledgeBasePanel({ config }: { config: Record<string, 
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold flex items-center gap-2">
-          <BookOpen className="w-5 h-5 text-indigo-500" />
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h3 className="font-semibold flex items-center gap-2 text-slate-200">
+          <BookOpen className="w-5 h-5 text-indigo-400" />
           Knowledge Base
           <Badge variant="secondary">{articles.length}</Badge>
         </h3>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <label className="cursor-pointer">
             <input type="file" accept=".txt,.pdf" onChange={handleFileUpload} className="hidden" />
-            <Button variant="outline" size="sm" asChild>
-              <span><Upload className="w-4 h-4 mr-1" /> Upload File</span>
+            <Button variant="outline" size="sm" asChild className="border-white/10 text-slate-300 hover:bg-white/5">
+              <span><Upload className="w-4 h-4 mr-1" /> <span className="hidden sm:inline">Upload </span>File</span>
             </Button>
           </label>
           <Button size="sm" onClick={openCreate}>
-            <Plus className="w-4 h-4 mr-1" /> Add Article
+            <Plus className="w-4 h-4 mr-1" /> <span className="hidden sm:inline">Add </span>Article
           </Button>
         </div>
       </div>
 
       {/* Search + Category Filter */}
-      <div className="flex gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
-          <Input placeholder="Search articles..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+      <div className="flex flex-wrap gap-3">
+        <div className="relative flex-1 min-w-[160px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <Input placeholder="Search articles..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-white/5 border-white/10 text-slate-200 placeholder:text-slate-500" />
         </div>
         <select
           value={filterCategory}
           onChange={e => setFilterCategory(e.target.value)}
-          className="px-3 py-2 border border-white/10 rounded-lg text-sm bg-white/5 text-slate-200"
+          className="px-3 py-2 border border-white/10 rounded-lg text-sm bg-white/5 text-slate-300 w-full sm:w-auto"
         >
           <option value="">All Categories</option>
           {CATEGORIES.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1).replace('_', ' ')}</option>)}
@@ -192,8 +192,8 @@ export default function KnowledgeBasePanel({ config }: { config: Record<string, 
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowModal(false)}>
-          <div className="bg-[#0d1525] border border-white/10 rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4" onClick={() => setShowModal(false)}>
+          <div className="bg-[#0d1525] border border-white/10 rounded-t-2xl sm:rounded-xl p-5 sm:p-6 w-full sm:max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-lg text-slate-100">{editingArticle ? 'Edit Article' : 'Add Article'}</h3>
               <Button variant="ghost" size="icon" onClick={() => setShowModal(false)}><X className="w-4 h-4" /></Button>

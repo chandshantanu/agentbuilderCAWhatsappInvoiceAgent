@@ -906,11 +906,21 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
     }
   }, [endpoint]);
 
-  // Auto-refresh every 30s
+  // Auto-refresh conversation list every 30s
   useEffect(() => {
     const interval = setInterval(loadConversations, 30000);
     return () => clearInterval(interval);
   }, [loadConversations]);
+
+  // Auto-refresh messages for the open conversation every 5s
+  useEffect(() => {
+    if (!selected) return;
+    const sid = selected.sender_id || selected.id;
+    const msgInterval = setInterval(() => {
+      reloadSelectedConversation(sid).catch(() => {}); // Silent fail — no error toast for background poll
+    }, 5000);
+    return () => clearInterval(msgInterval);
+  }, [selected?.sender_id, reloadSelectedConversation]);
 
   const filteredConvs = conversations.filter(c => {
     const u = c.username || c.sender_id || '';

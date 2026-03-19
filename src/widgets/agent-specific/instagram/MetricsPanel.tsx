@@ -36,31 +36,32 @@ const StatCard: React.FC<{
   change?: number;
   icon: React.ElementType;
   iconColor?: string;
+  iconBg?: string;
   delay?: number;
-}> = ({ title, value, subtitle, change, icon: Icon, iconColor = 'text-pink-500', delay = 0 }) => (
+}> = ({ title, value, subtitle, change, icon: Icon, iconColor = 'text-pink-400', iconBg = 'bg-pink-500/15', delay = 0 }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay }}
-    className="glass-card rounded-xl p-5 hover:bg-white/[0.07] transition-colors"
+    className="glass-card rounded-xl p-4 sm:p-5 hover:bg-white/[0.07] transition-colors"
   >
     <div className="flex items-start justify-between mb-3">
-      <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", iconColor.replace('text-', 'bg-').replace('500', '100'))}>
-        <Icon className={cn("w-5 h-5", iconColor)} />
+      <div className={cn("w-9 h-9 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center", iconBg)}>
+        <Icon className={cn("w-4 h-4 sm:w-5 sm:h-5", iconColor)} />
       </div>
       {change !== undefined && (
         <div className={cn(
-          "flex items-center gap-1 text-sm font-medium",
-          change >= 0 ? "text-emerald-600" : "text-red-500"
+          "flex items-center gap-1 text-xs sm:text-sm font-medium",
+          change >= 0 ? "text-emerald-400" : "text-red-400"
         )}>
-          {change >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+          {change >= 0 ? <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" /> : <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4" />}
           {Math.abs(change)}%
         </div>
       )}
     </div>
-    <p className="text-4xl font-bold text-slate-100 mb-1">{value}</p>
-    <p className="text-lg text-slate-400">{title}</p>
-    {subtitle && <p className="text-base text-slate-500 mt-1">{subtitle}</p>}
+    <p className="text-2xl sm:text-4xl font-bold text-slate-100 mb-1">{value}</p>
+    <p className="text-sm sm:text-base text-slate-400">{title}</p>
+    {subtitle && <p className="text-xs sm:text-sm text-slate-500 mt-1">{subtitle}</p>}
   </motion.div>
 );
 
@@ -77,18 +78,18 @@ const SentimentBar: React.FC<{ positive: number; neutral: number; negative: numb
         <motion.div initial={{ width: 0 }} animate={{ width: `${neutralPercent}%` }} transition={{ duration: 0.8, delay: 0.4 }} className="bg-amber-400" />
         <motion.div initial={{ width: 0 }} animate={{ width: `${negativePercent}%` }} transition={{ duration: 0.8, delay: 0.6 }} className="bg-red-400" />
       </div>
-      <div className="flex justify-between text-lg">
-        <div className="flex items-center gap-2">
-          <ThumbsUp className="w-5 h-5 text-emerald-500" />
-          <span className="text-neutral-600">{positivePercent.toFixed(0)}% Positive</span>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+        <div className="flex items-center gap-1.5">
+          <ThumbsUp className="w-4 h-4 text-emerald-400" />
+          <span className="text-slate-400">{positivePercent.toFixed(0)}% Positive</span>
         </div>
-        <div className="flex items-center gap-2">
-          <Minus className="w-5 h-5 text-amber-400" />
-          <span className="text-neutral-600">{neutralPercent.toFixed(0)}% Neutral</span>
+        <div className="flex items-center gap-1.5">
+          <Minus className="w-4 h-4 text-amber-400" />
+          <span className="text-slate-400">{neutralPercent.toFixed(0)}% Neutral</span>
         </div>
-        <div className="flex items-center gap-2">
-          <ThumbsDown className="w-5 h-5 text-red-400" />
-          <span className="text-neutral-600">{negativePercent.toFixed(0)}% Negative</span>
+        <div className="flex items-center gap-1.5">
+          <ThumbsDown className="w-4 h-4 text-red-400" />
+          <span className="text-slate-400">{negativePercent.toFixed(0)}% Negative</span>
         </div>
       </div>
     </div>
@@ -137,9 +138,9 @@ const ConversionFunnel: React.FC<{ leads: number; qualified: number; converted: 
         const widthPercent = leads > 0 ? (step.value / leads) * 100 : 0;
         return (
           <div key={step.label} className="space-y-1">
-            <div className="flex justify-between text-lg">
-              <span className="text-neutral-600">{step.label}</span>
-              <span className="font-medium">{step.value}</span>
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-400">{step.label}</span>
+              <span className="font-medium text-slate-200">{step.value}</span>
             </div>
             <motion.div
               initial={{ width: 0 }}
@@ -210,71 +211,71 @@ export default function MetricsPanel({ config }: { config: Record<string, unknow
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-2xl font-semibold flex items-center gap-2">
-          <BarChart3 className="w-6 h-6 text-pink-500" />
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h3 className="text-lg sm:text-2xl font-semibold flex items-center gap-2">
+          <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-pink-500" />
           Performance Metrics
         </h3>
-        <span className="text-lg text-slate-400">Last 30 days</span>
+        <span className="text-sm text-slate-400">Last 30 days</span>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Messages Today" value={metrics.messagesHandled.today.toLocaleString()} subtitle={`${metrics.messagesHandled.week.toLocaleString()} this week`} change={metrics.messagesHandled.change} icon={MessageCircle} iconColor="text-pink-500" delay={0} />
-        <StatCard title="Avg Response Time" value={formatResponseTime(metrics.responseTime.average)} subtitle={`Fastest: ${formatResponseTime(metrics.responseTime.fastest)}`} change={-metrics.responseTime.change} icon={Clock} iconColor="text-purple-500" delay={0.1} />
-        <StatCard title="Unique Conversations" value={metrics.uniqueConversations.total.toLocaleString()} subtitle={`${metrics.uniqueConversations.new} new today`} icon={Users} iconColor="text-blue-500" delay={0.2} />
-        <StatCard title="Conversion Rate" value={`${metrics.conversions.rate}%`} subtitle={`${metrics.conversions.converted} conversions`} icon={Target} iconColor="text-emerald-500" delay={0.3} />
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <StatCard title="Messages Today" value={metrics.messagesHandled.today.toLocaleString()} subtitle={`${metrics.messagesHandled.week.toLocaleString()} this week`} change={metrics.messagesHandled.change} icon={MessageCircle} iconColor="text-pink-400" iconBg="bg-pink-500/15" delay={0} />
+        <StatCard title="Avg Response" value={formatResponseTime(metrics.responseTime.average)} subtitle={`Fastest: ${formatResponseTime(metrics.responseTime.fastest)}`} change={-metrics.responseTime.change} icon={Clock} iconColor="text-purple-400" iconBg="bg-purple-500/15" delay={0.1} />
+        <StatCard title="Conversations" value={metrics.uniqueConversations.total.toLocaleString()} subtitle={`${metrics.uniqueConversations.new} new today`} icon={Users} iconColor="text-blue-400" iconBg="bg-blue-500/15" delay={0.2} />
+        <StatCard title="Conversion Rate" value={`${metrics.conversions.rate}%`} subtitle={`${metrics.conversions.converted} conversions`} icon={Target} iconColor="text-emerald-400" iconBg="bg-emerald-500/15" delay={0.3} />
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="glass-card rounded-xl p-5">
-          <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Heart className="w-6 h-6 text-pink-500" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="glass-card rounded-xl p-4 sm:p-5">
+          <h4 className="text-sm sm:text-base font-semibold mb-4 flex items-center gap-2">
+            <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-pink-500" />
             Sentiment Analysis
           </h4>
           <SentimentBar positive={metrics.sentiment.positive} neutral={metrics.sentiment.neutral} negative={metrics.sentiment.negative} />
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="glass-card rounded-xl p-5">
-          <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Target className="w-6 h-6 text-purple-500" />
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="glass-card rounded-xl p-4 sm:p-5">
+          <h4 className="text-sm sm:text-base font-semibold mb-4 flex items-center gap-2">
+            <Target className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500" />
             Conversion Funnel
           </h4>
           <ConversionFunnel leads={metrics.conversions.leads} qualified={metrics.conversions.qualified} converted={metrics.conversions.converted} />
         </motion.div>
       </div>
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="glass-card rounded-xl p-5">
-        <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Activity className="w-6 h-6 text-pink-500" />
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="glass-card rounded-xl p-4 sm:p-5">
+        <h4 className="text-sm sm:text-base font-semibold mb-4 flex items-center gap-2">
+          <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-pink-500" />
           Activity by Hour
         </h4>
         <ActivityChart data={metrics.peakHours} />
-        <div className="flex justify-between text-sm text-slate-500 mt-2">
+        <div className="flex justify-between text-xs text-slate-500 mt-2">
           <span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span><span>11 PM</span>
         </div>
       </motion.div>
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="grid grid-cols-3 gap-4">
-        <div className="bg-pink-500/10 rounded-xl border border-pink-500/20 p-6 text-center">
-          <div className="w-16 h-16 rounded-full bg-pink-500/20 flex items-center justify-center mx-auto mb-3">
-            <Zap className="w-8 h-8 text-pink-500" />
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+        <div className="bg-pink-500/10 rounded-xl border border-pink-500/20 p-4 sm:p-6 text-center">
+          <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-pink-500/20 flex items-center justify-center mx-auto mb-2 sm:mb-3">
+            <Zap className="w-5 h-5 sm:w-8 sm:h-8 text-pink-500" />
           </div>
-          <p className="text-4xl font-bold text-slate-100">{metrics.engagement.responseRate}%</p>
-          <p className="text-lg text-slate-400 mt-1">Response Rate</p>
+          <p className="text-2xl sm:text-4xl font-bold text-slate-100">{metrics.engagement.responseRate}%</p>
+          <p className="text-sm sm:text-base text-slate-400 mt-1">Response Rate</p>
         </div>
-        <div className="bg-purple-500/10 rounded-xl border border-purple-500/20 p-6 text-center">
-          <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-3">
-            <Sparkles className="w-8 h-8 text-purple-500" />
+        <div className="bg-purple-500/10 rounded-xl border border-purple-500/20 p-4 sm:p-6 text-center">
+          <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-2 sm:mb-3">
+            <Sparkles className="w-5 h-5 sm:w-8 sm:h-8 text-purple-500" />
           </div>
-          <p className="text-4xl font-bold text-slate-100">{metrics.engagement.resolutionRate}%</p>
-          <p className="text-lg text-slate-400 mt-1">Resolution Rate</p>
+          <p className="text-2xl sm:text-4xl font-bold text-slate-100">{metrics.engagement.resolutionRate}%</p>
+          <p className="text-sm sm:text-base text-slate-400 mt-1">Resolution Rate</p>
         </div>
-        <div className="bg-amber-500/10 rounded-xl border border-amber-500/20 p-6 text-center">
-          <div className="w-16 h-16 rounded-full bg-amber-500/20 flex items-center justify-center mx-auto mb-3">
-            <Users className="w-8 h-8 text-amber-500" />
+        <div className="bg-amber-500/10 rounded-xl border border-amber-500/20 p-4 sm:p-6 text-center">
+          <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-amber-500/20 flex items-center justify-center mx-auto mb-2 sm:mb-3">
+            <Users className="w-5 h-5 sm:w-8 sm:h-8 text-amber-500" />
           </div>
-          <p className="text-4xl font-bold text-slate-100">{metrics.engagement.handoffRate}%</p>
-          <p className="text-lg text-slate-400 mt-1">Human Handoff</p>
+          <p className="text-2xl sm:text-4xl font-bold text-slate-100">{metrics.engagement.handoffRate}%</p>
+          <p className="text-sm sm:text-base text-slate-400 mt-1">Human Handoff</p>
         </div>
       </motion.div>
     </div>
