@@ -340,16 +340,22 @@ export default function ProductsStep({
         {/* Buy Link */}
         <div>
           <label className="block text-xs font-medium text-slate-400 mb-1.5">
-            Payment / Order Link <span className="text-slate-600">(optional)</span>
+            Buy / Trial Link
+            <span className="ml-1.5 text-amber-400 font-normal">(recommended)</span>
           </label>
           <input
             type="text"
             value={buyLink}
             onChange={(e) => setBuyLink(e.target.value)}
-            placeholder="Payment/order link"
+            placeholder="https://yoursite.com/buy or payment link"
             className={inputClass}
             style={{ '--tw-ring-color': `rgba(${rgb}, 0.4)` } as React.CSSProperties}
           />
+          {!buyLink.trim() && (
+            <p className="mt-1 text-xs text-amber-400/80">
+              Without this, the AI cannot share a purchase link when a customer says "how do I buy?"
+            </p>
+          )}
         </div>
 
         {/* Form error */}
@@ -464,13 +470,18 @@ export default function ProductsStep({
                 }}
               >
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-medium text-slate-200 truncate">
                       {product.name}
                     </span>
                     <span className="text-xs font-medium text-slate-400 shrink-0">
                       &#x20B9;{product.price.toLocaleString('en-IN')}
                     </span>
+                    {!product.buy_link && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
+                        No buy link
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5 truncate">
                     {product.description}
@@ -504,6 +515,19 @@ export default function ProductsStep({
           </span>
         )}
       </div>
+
+      {/* Soft warning: products without buy links */}
+      {products.length > 0 && products.some((p) => !p.buy_link) && (
+        <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs text-amber-400">
+          <span className="shrink-0 mt-0.5">⚠️</span>
+          <span>
+            {products.filter((p) => !p.buy_link).length} product
+            {products.filter((p) => !p.buy_link).length !== 1 ? 's are' : ' is'} missing a buy link.
+            The AI will engage but won't be able to send a direct purchase link in DMs.
+            You can add these from the Products tab after setup.
+          </span>
+        </div>
+      )}
 
       {/* Continue button */}
       <button

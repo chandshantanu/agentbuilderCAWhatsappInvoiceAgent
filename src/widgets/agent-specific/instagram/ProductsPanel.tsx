@@ -136,6 +136,17 @@ export default function ProductsPanel({ config }: { config: Record<string, unkno
         </div>
       </div>
 
+      {/* Missing buy-link banner */}
+      {!loading && products.length > 0 && products.some((p) => !p.buy_link) && (
+        <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs text-amber-400">
+          <span className="shrink-0 mt-0.5">⚠️</span>
+          <span>
+            <strong>{products.filter((p) => !p.buy_link).length} product{products.filter((p) => !p.buy_link).length !== 1 ? 's are' : ' is'} missing a buy link.</strong>
+            {' '}The AI can recommend these products but can't send a purchase URL in DMs. Click the edit icon to add a link.
+          </span>
+        </div>
+      )}
+
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
@@ -185,7 +196,14 @@ export default function ProductsPanel({ config }: { config: Record<string, unkno
                           </div>
                         )}
                         <div className="min-w-0">
-                          <p className="font-medium text-slate-200 truncate">{p.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-slate-200 truncate">{p.name}</p>
+                            {!p.buy_link && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded shrink-0 bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                No buy link
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs text-slate-500 truncate max-w-[180px]">{p.description}</p>
                         </div>
                       </div>
@@ -231,9 +249,16 @@ export default function ProductsPanel({ config }: { config: Record<string, unkno
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-slate-200 text-sm truncate">{p.name}</p>
                   <p className="text-xs text-slate-400">{p.currency === 'INR' ? '₹' : '$'}{p.price.toLocaleString()} · {p.category || 'Uncategorized'}</p>
-                  <Badge className={cn('text-[10px] mt-1 border-0', p.in_stock ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400')}>
-                    {p.in_stock ? 'In Stock' : 'Out of Stock'}
-                  </Badge>
+                  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                    <Badge className={cn('text-[10px] border-0', p.in_stock ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400')}>
+                      {p.in_stock ? 'In Stock' : 'Out of Stock'}
+                    </Badge>
+                    {!p.buy_link && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                        No buy link
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex flex-col gap-1 shrink-0">
                   <Button variant="ghost" size="icon" className="w-8 h-8 text-slate-400" onClick={() => openEdit(p)}>
@@ -301,8 +326,14 @@ export default function ProductsPanel({ config }: { config: Record<string, unkno
                 <Input value={form.image_url} onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))} placeholder="https://..." />
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-400">Buy Link</label>
-                <Input value={form.buy_link} onChange={e => setForm(f => ({ ...f, buy_link: e.target.value }))} placeholder="https://..." />
+                <label className="text-sm font-medium text-slate-400 flex items-center gap-1.5">
+                  Buy / Trial Link
+                  <span className="text-[10px] text-amber-400 font-normal">(recommended — AI uses this to close sales)</span>
+                </label>
+                <Input value={form.buy_link} onChange={e => setForm(f => ({ ...f, buy_link: e.target.value }))} placeholder="https://yoursite.com/buy or payment link" />
+                {!form.buy_link && (
+                  <p className="text-[11px] text-amber-400/70 mt-1">Without this, the AI can't share a purchase link when a customer says "how do I buy?"</p>
+                )}
               </div>
               <div>
                 <label className="text-sm font-medium text-slate-400">Tags (comma separated)</label>
