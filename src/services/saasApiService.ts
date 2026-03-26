@@ -29,11 +29,41 @@ async function apiCall<T = any>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const resp = await fetch(`${PLATFORM_API_URL}${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  // Add 15s timeout for all API calls (important for mobile/slow networks)
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+
+  let resp: Response;
+  try {
+    resp = await fetch(`${PLATFORM_API_URL}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
+    });
+  } catch (err: any) {
+    clearTimeout(timeout);
+    if (err.name === 'AbortError') {
+      throw new Error('Request timed out. Please check your connection and try again.');
+    }
+    throw new Error('Network error. Please check your connection.');
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  // Handle 401 — session expired, redirect to login
+  if (resp.status === 401) {
+    setSaaSAuthToken(null);
+    if (!window.location.pathname.startsWith('/login')) {
+      window.location.href = '/login';
+    }
+    throw new Error('Session expired. Please log in again.');
+  }
+
+  // Handle 429 — rate limited
+  if (resp.status === 429) {
+    throw new Error('Please wait a moment before trying again.');
+  }
 
   const data = await resp.json();
   if (!resp.ok) {
@@ -68,6 +98,10 @@ export const saasApi = {
     apiCall('POST', `/api/v1/saas/subscribe/${subdomain}/validate-coupon`, {
       coupon_code: couponCode,
     }),
+
+  // Start cardless trial (no payment required)
+  startTrial: (subdomain: string) =>
+    apiCall('POST', `/api/v1/saas/start-trial/${subdomain}`),
 
   // Get subscription status
   getSubscription: (subdomain: string) =>

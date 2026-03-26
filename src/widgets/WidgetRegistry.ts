@@ -39,6 +39,8 @@ const WIDGET_REGISTRY: Record<string, WidgetLoader> = {
   instagram_crm: () => import('./agent-specific/instagram/CRMPanel'),
   instagram_settings: () => import('./agent-specific/instagram/SettingsPanel'),
   instagram_campaigns: () => import('./agent-specific/instagram/CampaignPanel'),
+  instagram_posts: () => import('./agent-specific/instagram/PostsPanel'),
+  instagram_outreach: () => import('./agent-specific/instagram/OutreachPanel'),
 };
 
 /**

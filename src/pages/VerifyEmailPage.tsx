@@ -17,28 +17,50 @@ export default function VerifyEmailPage() {
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
   const [error, setError] = useState('');
+  const [timedOut, setTimedOut] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const branding = config?.branding || {};
   const primaryColor = branding.primary_color || '#7C3AED';
   const email = user?.email || '';
 
-  // Poll for email confirmation
+  // Poll for email confirmation (max 5 minutes)
   useEffect(() => {
     if (!supabase) return;
 
+    const startTime = Date.now();
+    const maxWait = 5 * 60 * 1000; // 5 minutes
+
     const interval = setInterval(async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data.user?.email_confirmed_at) {
-        await supabase.auth.refreshSession();
-        navigate('/checkout', { replace: true });
+      if (Date.now() - startTime > maxWait) {
+        clearInterval(interval);
+        setTimedOut(true);
+        return;
+      }
+      try {
+        const { data } = await supabase.auth.getUser();
+        if (data.user?.email_confirmed_at) {
+          clearInterval(interval);
+          await supabase.auth.refreshSession();
+          navigate('/onboarding', { replace: true });
+        }
+      } catch {
+        // Network error during poll — continue
       }
     }, 3000);
 
     return () => clearInterval(interval);
   }, [supabase, navigate]);
 
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
+
   const handleResend = async () => {
-    if (!supabase || !email) return;
+    if (!supabase || !email || resendCooldown > 0) return;
     setResending(true);
     setError('');
     setResent(false);
@@ -49,9 +71,15 @@ export default function VerifyEmailPage() {
         email,
       });
       if (resendError) {
-        setError(resendError.message);
+        if (resendError.message.includes('rate') || resendError.status === 429) {
+          setError('Please wait a moment before trying again.');
+        } else {
+          setError(resendError.message);
+        }
       } else {
         setResent(true);
+        setResendCooldown(60); // 60-second cooldown
+        setTimedOut(false); // Reset timeout if they resend
       }
     } catch (err: any) {
       setError(err.message || 'Failed to resend');
@@ -128,6 +156,12 @@ export default function VerifyEmailPage() {
               </div>
             )}
 
+            {timedOut && (
+              <div className="text-sm text-yellow-400 bg-yellow-500/10 rounded-lg p-3 mb-4 border border-yellow-500/20">
+                Verification link may have expired. Try resending the email.
+              </div>
+            )}
+
             {resent && (
               <div className="text-sm text-emerald-400 bg-emerald-500/10 rounded-lg p-3 mb-4 border border-emerald-500/20">
                 Verification email resent!
@@ -136,11 +170,17 @@ export default function VerifyEmailPage() {
 
             <button
               onClick={handleResend}
-              disabled={resending}
+              disabled={resending || resendCooldown > 0}
               className="w-full h-11 rounded-xl text-white font-medium text-sm disabled:opacity-50 flex items-center justify-center gap-2 mb-3 transition-all hover:opacity-90 active:scale-[0.99]"
               style={{ background: 'linear-gradient(135deg, #7C3AED, #EC4899)', boxShadow: '0 0 20px rgba(124,58,237,0.3)' }}
             >
-              {resending ? <><Loader2 className="w-4 h-4 animate-spin" />Sending...</> : 'Resend verification email'}
+              {resending ? (
+                <><Loader2 className="w-4 h-4 animate-spin" />Sending...</>
+              ) : resendCooldown > 0 ? (
+                `Resend in ${resendCooldown}s`
+              ) : (
+                'Resend verification email'
+              )}
             </button>
 
             <p className="text-xs text-slate-500">

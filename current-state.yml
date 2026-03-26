@@ -1,0 +1,182 @@
+- generic [ref=e39]:
+  - complementary [ref=e40]:
+    - generic [ref=e41]:
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - generic [ref=e45]: I
+          - generic [ref=e46]: Instagram E-commerce Agent
+        - button "Collapse sidebar" [ref=e47] [cursor=pointer]:
+          - img [ref=e49]
+      - navigation [ref=e51]:
+        - button "Overview" [ref=e52] [cursor=pointer]:
+          - img [ref=e53]
+          - generic [ref=e58]: Overview
+        - button "Conversations" [ref=e59] [cursor=pointer]:
+          - img [ref=e60]
+          - generic [ref=e62]: Conversations
+        - button "Products" [ref=e63] [cursor=pointer]:
+          - img [ref=e64]
+          - generic [ref=e67]: Products
+        - button "Knowledge Base" [ref=e68] [cursor=pointer]:
+          - img [ref=e69]
+          - generic [ref=e72]: Knowledge Base
+        - button "CRM" [ref=e73] [cursor=pointer]:
+          - img [ref=e74]
+          - generic [ref=e79]: CRM
+        - button "Posts" [ref=e80] [cursor=pointer]:
+          - img [ref=e81]
+          - generic [ref=e85]: Posts
+        - button "Metrics" [ref=e86] [cursor=pointer]:
+          - img [ref=e87]
+          - generic [ref=e88]: Metrics
+        - button "Settings" [ref=e89] [cursor=pointer]:
+          - img [ref=e90]
+          - generic [ref=e93]: Settings
+      - generic [ref=e94]:
+        - generic [ref=e95]:
+          - paragraph [ref=e96]: instagramadmin@chatslytics.com
+          - button "Account Settings" [ref=e97] [cursor=pointer]:
+            - img [ref=e98]
+            - generic [ref=e101]: Account Settings
+          - button "Log out" [ref=e102] [cursor=pointer]:
+            - img [ref=e103]
+            - generic [ref=e106]: Log out
+        - link "Powered by chatslytics.com" [ref=e107] [cursor=pointer]:
+          - /url: https://chatslytics.com
+  - main [ref=e108]:
+    - generic [ref=e109]:
+      - generic [ref=e110]:
+        - heading "Posts" [level=2] [ref=e535]
+        - paragraph [ref=e112]: Wednesday, March 25, 2026
+      - generic [ref=e538]:
+        - generic [ref=e539]:
+          - generic [ref=e540]:
+            - heading "Posts & SKU Mapping" [level=2] [ref=e541]
+            - paragraph [ref=e542]: Link each Instagram post to the correct product so the AI knows exactly what to recommend.
+          - generic [ref=e543]:
+            - generic [ref=e544]: 6 unmapped
+            - button "Refresh" [ref=e545] [cursor=pointer]:
+              - img [ref=e546]
+              - text: Refresh
+        - generic [ref=e551]:
+          - generic [ref=e552]:
+            - img [ref=e553]
+            - textbox "Search posts or products..." [ref=e556]
+          - generic [ref=e557]:
+            - button "All" [ref=e558] [cursor=pointer]
+            - button "Unmapped" [ref=e559] [cursor=pointer]
+            - button "Mapped" [ref=e560] [cursor=pointer]
+        - generic [ref=e561]:
+          - generic [ref=e564]:
+            - generic [ref=e565]:
+              - paragraph [ref=e566]: What if your DMs sold for you? 💰 Stop drowning in DMs. Start automating them. Your customers DM at midnight. Your tea…
+              - generic [ref=e567]:
+                - generic [ref=e568]:
+                  - img [ref=e569]
+                  - text: Mapped
+                - link [ref=e572] [cursor=pointer]:
+                  - /url: https://www.instagram.com/reel/DVEtnVeCtlQ/
+                  - img [ref=e573]
+            - generic [ref=e577]:
+              - img [ref=e578]
+              - generic [ref=e582]: Cotton Kurti — Royal Blue
+              - button "Clear" [ref=e583] [cursor=pointer]
+          - generic [ref=e584]:
+            - img [ref=e587]
+            - generic [ref=e591]:
+              - generic [ref=e592]:
+                - paragraph [ref=e593]: Drop your number in the comments! 👇 We're building something for sellers who are drowning in DMs. The more you get, th…
+                - generic [ref=e594]:
+                  - generic [ref=e595]:
+                    - img [ref=e596]
+                    - text: Unmapped
+                  - link [ref=e598] [cursor=pointer]:
+                    - /url: https://www.instagram.com/p/DWLbRdZEajt/
+                    - img [ref=e599]
+              - generic [ref=e603]:
+                - generic [ref=e604]:
+                  - textbox "Type to search products..." [active] [ref=e605]: saree
+                  - list [ref=e701]:
+                    - listitem [ref=e703] [cursor=pointer]: Silk Saree — Banarasi RedSarees
+                - button "Map" [disabled]:
+                  - img
+                  - text: Map
+          - generic [ref=e606]:
+            - img [ref=e609]
+            - generic [ref=e613]:
+              - generic [ref=e614]:
+                - paragraph [ref=e615]: Speed kills — in a good way. 🚀 The seller who replies first wins the sale. Our AI makes you first. Every time. 3 seco…
+                - generic [ref=e616]:
+                  - generic [ref=e617]:
+                    - img [ref=e618]
+                    - text: Unmapped
+                  - link [ref=e620] [cursor=pointer]:
+                    - /url: https://www.instagram.com/p/DWLbd-CEZpD/
+                    - img [ref=e621]
+              - generic [ref=e625]:
+                - textbox "Type to search products..." [ref=e627]
+                - button "Map" [disabled]:
+                  - img
+                  - text: Map
+          - generic [ref=e628]:
+            - img [ref=e631]
+            - generic [ref=e635]:
+              - generic [ref=e636]:
+                - paragraph [ref=e637]: "Yeh story har seller ki hai 😔 Customer ne raat ko 2 baje DM kiya: \"Ye saree available hai kya?\" Aapne reply kiya subah…"
+                - generic [ref=e638]:
+                  - generic [ref=e639]:
+                    - img [ref=e640]
+                    - text: Unmapped
+                  - link [ref=e642] [cursor=pointer]:
+                    - /url: https://www.instagram.com/p/DWLbp0Tkd1t/
+                    - img [ref=e643]
+              - generic [ref=e647]:
+                - textbox "Type to search products..." [ref=e649]
+                - button "Map" [disabled]:
+                  - img
+                  - text: Map
+          - generic [ref=e652]:
+            - generic [ref=e653]:
+              - paragraph [ref=e654]: No caption
+              - generic [ref=e655]:
+                - generic [ref=e656]:
+                  - img [ref=e657]
+                  - text: Unmapped
+                - link [ref=e659] [cursor=pointer]:
+                  - /url: https://www.instagram.com/reel/DWM3SUMk9md/
+                  - img [ref=e660]
+            - generic [ref=e664]:
+              - textbox "Type to search products..." [ref=e666]
+              - button "Map" [disabled]:
+                - img
+                - text: Map
+          - generic [ref=e669]:
+            - generic [ref=e670]:
+              - paragraph [ref=e671]: No caption
+              - generic [ref=e672]:
+                - generic [ref=e673]:
+                  - img [ref=e674]
+                  - text: Unmapped
+                - link [ref=e676] [cursor=pointer]:
+                  - /url: https://www.instagram.com/reel/DWM6vvskxcA/
+                  - img [ref=e677]
+            - generic [ref=e681]:
+              - textbox "Type to search products..." [ref=e683]
+              - button "Map" [disabled]:
+                - img
+                - text: Map
+          - generic [ref=e686]:
+            - generic [ref=e687]:
+              - paragraph [ref=e688]: "Comment if you find this reel low effort #aiautomation #d2cbrands #chatbotsforbusiness"
+              - generic [ref=e689]:
+                - generic [ref=e690]:
+                  - img [ref=e691]
+                  - text: Unmapped
+                - link [ref=e693] [cursor=pointer]:
+                  - /url: https://www.instagram.com/reel/DWPXMafkxqY/
+                  - img [ref=e694]
+            - generic [ref=e698]:
+              - textbox "Type to search products..." [ref=e700]
+              - button "Map" [disabled]:
+                - img
+                - text: Map

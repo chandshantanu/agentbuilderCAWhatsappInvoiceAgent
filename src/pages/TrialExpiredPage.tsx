@@ -113,13 +113,30 @@ export default function TrialExpiredPage() {
     return `$${amount}`;
   };
 
-  const features = [
+  // Detect agent type for correct feature list
+  const agentType = (() => {
+    const name = (config?.branding?.brand_name || '').toLowerCase();
+    const tagline = (config?.branding?.tagline || '').toLowerCase();
+    const agentId = (config?.agent_id || '').toLowerCase();
+    if (name.includes('instagram') || tagline.includes('instagram') || tagline.includes('dm') || agentId.includes('instagram')) return 'instagram';
+    if (name.includes('invoice') || name.includes('ca ') || tagline.includes('tally') || tagline.includes('gst')) return 'ca';
+    return 'generic';
+  })();
+
+  const features = agentType === 'instagram' ? [
     { icon: MessageSquare, text: 'Unlimited AI-powered DM responses' },
     { icon: Zap, text: 'Chain-of-thought sales reasoning' },
     { icon: Users, text: 'Lead scoring & CRM dashboard' },
     { icon: BarChart3, text: 'Full analytics & conversion metrics' },
     { icon: Shield, text: 'Brand protection & quality gate' },
     { icon: Sparkles, text: 'Automated follow-ups & comment-to-DM' },
+  ] : [
+    { icon: MessageSquare, text: 'Unlimited WhatsApp automation' },
+    { icon: Zap, text: 'Intelligent document processing' },
+    { icon: Users, text: 'Client management dashboard' },
+    { icon: BarChart3, text: 'Full analytics & reporting' },
+    { icon: Shield, text: 'Secure data handling' },
+    { icon: Sparkles, text: 'Automated reminders & follow-ups' },
   ];
 
   return (

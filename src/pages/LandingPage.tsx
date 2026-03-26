@@ -114,13 +114,13 @@ const IG_DEFAULTS = {
     'Quality gate with prompt injection protection',
     '14-day free trial — no commitment',
   ],
-  social_proof_title: 'Trusted by Indian businesses on Instagram',
-  social_proof_description: 'Brands using our AI agent see 3x higher DM conversion rates and close more deals — without hiring extra staff.',
-  social_proof_count: '500+',
+  social_proof_title: 'Early access — be among the first',
+  social_proof_description: 'We\'re onboarding our first cohort of Instagram sellers. Early access means direct founder support and lifetime early-bird pricing.',
+  social_proof_count: null,
   social_proof_stats: [
-    { value: '3x', label: 'DM conversions' },
     { value: '24/7', label: 'Always on' },
     { value: '< 5s', label: 'Response time' },
+    { value: 'Hindi', label: 'Native support' },
   ],
   cta_section_title: 'Ready to turn DMs into sales?',
   cta_section_subtitle: 'Set up in under 10 minutes. Your first 14 days are completely free.',
@@ -453,7 +453,7 @@ export default function LandingPage() {
               initial={{ opacity: 0, x: 40, scale: 0.95 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
               transition={{ duration: 0.8, ease, delay: 0.3 }}
-              className="hidden lg:block"
+              className="mt-8 lg:mt-0"
             >
               <div
                 className="relative rounded-2xl overflow-hidden shadow-2xl"
@@ -696,9 +696,13 @@ export default function LandingPage() {
                   </div>
                   <div className="ml-1">
                     <p className="text-sm font-semibold text-slate-200">
-                      {lp.social_proof_count || DEFAULTS.social_proof_count} {agentType === 'instagram' ? 'brands' : 'CAs'}
+                      {lp.social_proof_count
+                        ? `${lp.social_proof_count} ${agentType === 'instagram' ? 'brands' : 'CAs'}`
+                        : 'Early access'}
                     </p>
-                    <p className="text-xs text-slate-400">trust this platform</p>
+                    <p className="text-xs text-slate-400">
+                      {lp.social_proof_count ? 'trust this platform' : 'now open'}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -823,7 +827,7 @@ export default function LandingPage() {
 
       {/* ═══════════ FOOTER ═══════════ */}
       <footer className="border-t border-white/10 py-8 px-5 sm:px-8">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             {branding.logo_url && (
               <img src={branding.logo_url} alt="" className="h-5 w-auto opacity-50" />
@@ -832,14 +836,18 @@ export default function LandingPage() {
               {branding.brand_name || config.subdomain}
             </span>
           </div>
-          <a
-            href="https://chatslytics.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
-          >
-            Powered by chatslytics.com
-          </a>
+          <div className="flex items-center gap-4 text-xs text-slate-500">
+            <a href="/privacy" className="hover:text-slate-300 transition-colors">Privacy Policy</a>
+            <a href="/terms" className="hover:text-slate-300 transition-colors">Terms of Service</a>
+            <a
+              href="https://chatslytics.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-slate-300 transition-colors"
+            >
+              Powered by chatslytics.com
+            </a>
+          </div>
         </div>
       </footer>
     </div>

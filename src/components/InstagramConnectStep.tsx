@@ -117,6 +117,41 @@ export default function InstagramConnectStep({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subdomain]);
 
+  // Handle redirect flow (mobile): check for ?code= in URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    const isPending = sessionStorage.getItem('ig_oauth_pending');
+
+    if (code && isPending) {
+      sessionStorage.removeItem('ig_oauth_pending');
+      // Clean the URL without reload
+      window.history.replaceState({}, '', window.location.pathname);
+      // Process the code
+      setState('exchanging');
+      (async () => {
+        try {
+          const redirectUri = `${window.location.origin}/onboarding`;
+          const resp: any = await saasApi.connectInstagram(subdomain, code, redirectUri);
+          if (resp.data?.instagram_username) {
+            setPreviewData({
+              instagram_username: resp.data.instagram_username,
+              instagram_user_id: resp.data.instagram_user_id || '',
+              preview_token: resp.data.preview_token || '',
+            });
+            setState('confirming');
+          } else {
+            setError('Failed to connect Instagram account');
+            setState('error');
+          }
+        } catch (err: any) {
+          setError(err.message || 'Failed to exchange authorization code');
+          setState('error');
+        }
+      })();
+    }
+  }, [subdomain]);
+
   // Listen for postMessage from callback popup
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
@@ -177,6 +212,12 @@ export default function InstagramConnectStep({
     };
   }, []);
 
+  // Detect mobile (popup blockers are aggressive on mobile)
+  const isMobile = typeof window !== 'undefined' && (
+    window.innerWidth < 768 ||
+    /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  );
+
   const handleConnect = useCallback(() => {
     if (!instagramAppId) {
       setError('Instagram App ID not configured. Please contact support.');
@@ -187,10 +228,13 @@ export default function InstagramConnectStep({
     setState('connecting');
     setError('');
 
-    const redirectUri = `${window.location.origin}/instagram-callback`;
+    // On mobile: use redirect flow (popups are blocked by default)
+    // On desktop: use popup flow (better UX, doesn't lose page state)
+    const redirectUri = isMobile
+      ? `${window.location.origin}/onboarding`  // redirect back to onboarding with ?code= query param
+      : `${window.location.origin}/instagram-callback`;
+
     const scope = 'instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments';
-    // Business Login for Instagram uses www.instagram.com (NOT api.instagram.com)
-    // See: https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/business-login
     const authUrl =
       `https://www.instagram.com/oauth/authorize` +
       `?client_id=${encodeURIComponent(instagramAppId)}` +
@@ -201,7 +245,15 @@ export default function InstagramConnectStep({
       `&enable_fb_login=false` +
       `&state=${encodeURIComponent(subscriptionId)}`;
 
-    // Open popup
+    if (isMobile) {
+      // Mobile: full-page redirect (no popup)
+      // Save state so we can resume onboarding after redirect
+      try { sessionStorage.setItem('ig_oauth_pending', 'true'); } catch {}
+      window.location.href = authUrl;
+      return;
+    }
+
+    // Desktop: popup flow
     const width = 500;
     const height = 700;
     const left = window.screenX + (window.outerWidth - width) / 2;
@@ -213,6 +265,13 @@ export default function InstagramConnectStep({
       `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,status=yes`,
     );
 
+    // Check if popup was blocked
+    if (!popupRef.current || popupRef.current.closed) {
+      // Fallback to redirect flow if popup is blocked
+      window.location.href = authUrl;
+      return;
+    }
+
     // Monitor popup close (user might close without completing)
     popupCheckInterval.current = setInterval(() => {
       if (popupRef.current && popupRef.current.closed) {
@@ -221,11 +280,10 @@ export default function InstagramConnectStep({
           popupCheckInterval.current = null;
         }
         popupRef.current = null;
-        // Only reset to idle if we're still in connecting state
         setState((prev) => (prev === 'connecting' ? 'idle' : prev));
       }
     }, 500);
-  }, [instagramAppId, subscriptionId]);
+  }, [instagramAppId, subscriptionId, isMobile]);
 
   const handleConfirm = async () => {
     if (!previewData?.preview_token) return;

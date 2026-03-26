@@ -167,8 +167,9 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
     setError(null);
 
     // Build redirect URL: use agent subdomain if in SaaS mode, else default
+    // Cardless trial: redirect to /onboarding (trial auto-starts via RequireSubscription)
     const redirectUrl = subdomain
-      ? `https://${subdomain}.agents.chatslytics.com/checkout`
+      ? `https://${subdomain}.agents.chatslytics.com/onboarding`
       : undefined;
 
     let data: Awaited<ReturnType<typeof supabase.auth.signUp>>['data'];

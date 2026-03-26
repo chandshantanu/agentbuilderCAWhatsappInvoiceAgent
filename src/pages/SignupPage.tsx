@@ -24,7 +24,7 @@ function lightenColor(hex: string, amount: number): string {
 
 export default function SignupPage() {
   const { config } = useSaaS();
-  const { signUp } = useSupabaseAuth();
+  const { signUp, supabase } = useSupabaseAuth();
   const navigate = useNavigate();
 
   const [fullName, setFullName] = useState('');
@@ -49,7 +49,14 @@ export default function SignupPage() {
     setLoading(true);
     try {
       await signUp(email, password, fullName);
-      navigate('/verify-email');
+      // If auto-confirm is enabled, user is already verified — go straight to onboarding
+      // Otherwise, show the verify-email page which polls for confirmation
+      const { data } = await supabase!.auth.getUser();
+      if (data.user?.email_confirmed_at) {
+        navigate('/onboarding', { replace: true });
+      } else {
+        navigate('/verify-email');
+      }
     } catch (err: any) {
       setError(err.message || 'Sign up failed');
     } finally {
@@ -114,7 +121,7 @@ export default function SignupPage() {
             <div>
               <label className="block text-sm font-medium text-slate-400 mb-1.5">Email</label>
               <input
-                type="email"
+                type="email" inputMode="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -161,7 +168,12 @@ export default function SignupPage() {
               {loading ? <><Loader2 className="w-4 h-4 animate-spin" />Creating account...</> : 'Create Account'}
             </button>
 
-            <p className="text-xs text-slate-500 text-center">By signing up, you agree to our terms of service</p>
+            <p className="text-xs text-slate-500 text-center">
+              By signing up, you agree to our{' '}
+              <Link to="/terms" className="text-violet-400 hover:underline">Terms of Service</Link>
+              {' '}and{' '}
+              <Link to="/privacy" className="text-violet-400 hover:underline">Privacy Policy</Link>
+            </p>
           </form>
 
           <p className="text-center text-sm text-slate-500 mt-5">

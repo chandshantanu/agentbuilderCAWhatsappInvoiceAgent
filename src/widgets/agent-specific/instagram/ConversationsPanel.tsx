@@ -6,7 +6,9 @@ import {
   TrendingUp, AlertCircle, Clock, Zap, Star, ArrowRight, ArrowLeft,
   Calendar, MessageSquare, CheckCircle, XCircle, Lightbulb,
   BarChart2, Heart, DollarSign, Eye, RefreshCw, Sparkles,
-  Check, CheckCheck,
+  Check, CheckCheck, ShoppingCart, Package, AtSign, Hash,
+  MessageSquareDot, Image as ImageIcon, Filter, Mic2, Globe,
+  Cpu, UserCircle2, Film, Layers, SplitSquareHorizontal,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,6 +51,17 @@ interface InstagramMessage {
   delivery_status?: 'sent' | 'delivered' | 'read' | 'failed' | 'not_sent';
 }
 
+interface CartItem {
+  product_id: string;
+  name: string;
+  price: number;
+  qty: number;
+  size?: string;
+  variant?: string;
+  image_url?: string;
+  added_at?: string;
+}
+
 interface InstagramConversation {
   id: string;
   sender_id?: string;
@@ -64,6 +77,34 @@ interface InstagramConversation {
   ai_paused?: boolean;
   conversation_stage?: string;
   notes?: Array<{ id: string; text: string; created_at: string }>;
+  cart?: CartItem[];
+  trigger_context?: string;
+  /** Origin of first contact: "dm" | "comment" | "story_reply" | "reel_share" | "ad_click" | "mention" */
+  source?: string;
+  /** Products linked to the post that triggered this conversation */
+  post_products?: Array<{ name: string; price?: string | number; sku?: string }>;
+  /** Classified intent of the triggering comment: "purchase_intent" | "soft_engagement" | "general" | "spam" */
+  comment_intent?: string;
+  /** Post type from Instagram (IMAGE, VIDEO, REEL, CAROUSEL_ALBUM) */
+  post_type?: string;
+  /** Caption of the post that triggered this conversation */
+  post_caption?: string;
+}
+
+type EngagementFilter = 'all' | 'dm' | 'comment' | 'mention' | 'away_game';
+
+interface PersonalityProfile {
+  tone?: string;
+  emoji_usage?: string;
+  selling_style?: string;
+  price_handling?: string;
+  signature_opener?: string;
+  signature_closer?: string;
+  signature_phrases?: string[];
+  negotiation_style?: string;
+  no_go_topics?: string[];
+  min_price?: number;
+  vocabulary_samples?: string;
 }
 
 interface Qualification {
@@ -199,6 +240,85 @@ const emotionIcon = (e?: string) => {
   }
 };
 
+/**
+ * Cleans up legacy raw-JSON message text produced when output_json_fields parsing
+ * succeeded but generated_response wasn't overwritten before store_conversation ran.
+ * Extracts dm_greeting_text or comment_reply_text from the JSON, falls back to raw text.
+ */
+const cleanMessageText = (text: string): string => {
+  if (!text || !text.trimStart().startsWith('{')) return text;
+  try {
+    const parsed = JSON.parse(text);
+    return parsed.dm_greeting_text || parsed.comment_reply_text || text;
+  } catch {
+    return text;
+  }
+};
+
+/** Returns icon + color for conversation source/origin */
+const sourceLabel = (source?: string): { label: string; color: string } => {
+  switch (source) {
+    case 'comment': return { label: 'Comment', color: 'text-blue-400' };
+    case 'mention': return { label: 'Mention', color: 'text-pink-400' };
+    case 'story_reply': return { label: 'Story', color: 'text-amber-400' };
+    case 'reel_share': return { label: 'Reel', color: 'text-purple-400' };
+    case 'ad_click': return { label: 'Ad', color: 'text-emerald-400' };
+    default: return { label: 'DM', color: 'text-slate-400' };
+  }
+};
+
+/** Maps engagement filter to source field values */
+const filterToSources: Record<EngagementFilter, string[]> = {
+  all: [],
+  dm: ['dm', ''],
+  comment: ['comment'],
+  mention: ['mention'],
+  away_game: ['away_game', 'cross_post_mention'],
+};
+
+const engagementFilterTabs: Array<{ id: EngagementFilter; label: string; icon: React.ElementType }> = [
+  { id: 'all', label: 'All', icon: Layers },
+  { id: 'dm', label: 'DMs', icon: MessageCircle },
+  { id: 'comment', label: 'Comments', icon: MessageSquareDot },
+  { id: 'mention', label: 'Mentions', icon: AtSign },
+  { id: 'away_game', label: 'Away', icon: Globe },
+];
+
+const intentLabel = (intent?: string): { label: string; color: string; bg: string } => {
+  switch (intent) {
+    case 'purchase_intent': return { label: 'Purchase Intent', color: 'text-emerald-400', bg: 'bg-emerald-500/20 border-emerald-500/30' };
+    case 'soft_engagement': return { label: 'Soft Engagement', color: 'text-sky-400', bg: 'bg-sky-500/20 border-sky-500/30' };
+    case 'general': return { label: 'General', color: 'text-slate-400', bg: 'bg-white/10 border-white/20' };
+    case 'spam': return { label: 'Spam', color: 'text-red-400', bg: 'bg-red-500/20 border-red-500/30' };
+    default: return { label: 'Unknown', color: 'text-slate-500', bg: 'bg-white/5 border-white/10' };
+  }
+};
+
+const postTypeBadge = (postType?: string): { label: string; icon: React.ElementType; color: string } => {
+  switch (postType?.toUpperCase()) {
+    case 'REEL': return { label: 'Reel', icon: Film, color: 'text-purple-400' };
+    case 'VIDEO': return { label: 'Video', icon: Film, color: 'text-blue-400' };
+    case 'CAROUSEL_ALBUM': return { label: 'Carousel', icon: SplitSquareHorizontal, color: 'text-pink-400' };
+    default: return { label: 'Post', icon: ImageIcon, color: 'text-slate-400' };
+  }
+};
+
+const personalitySummary = (p?: PersonalityProfile | null): string => {
+  if (!p) return '';
+  const parts: string[] = [];
+  const toneMap: Record<string, string> = {
+    casual_hinglish: 'Casual Hinglish',
+    formal_english: 'Formal',
+    fun_playful: 'Playful',
+    professional: 'Professional',
+    warm_friendly: 'Warm',
+  };
+  if (p.tone && toneMap[p.tone]) parts.push(toneMap[p.tone]);
+  const emojiMap: Record<string, string> = { heavy: '🔥🔥', moderate: '✨', minimal: '🙂', none: 'No emoji' };
+  if (p.emoji_usage && emojiMap[p.emoji_usage]) parts.push(emojiMap[p.emoji_usage]);
+  return parts.join(' · ');
+};
+
 const stageColor = (stage?: string) => {
   const map: Record<string, string> = {
     greeting: 'bg-white/10 text-slate-400',
@@ -220,10 +340,12 @@ function IntelligenceSidebar({
   conversation,
   intelligence,
   loadingIntel,
+  personalityProfile,
 }: {
   conversation: InstagramConversation;
   intelligence: Intelligence | null;
   loadingIntel: boolean;
+  personalityProfile?: PersonalityProfile | null;
 }) {
   const [activeSection, setActiveSection] = useState<string>('plan');
 
@@ -241,10 +363,11 @@ function IntelligenceSidebar({
   const score = intelligence?.lead_score ?? conversation.lead_score ?? 0;
 
   const sections = [
-    { id: 'plan', label: "Agent's Plan", icon: Brain },
-    { id: 'profile', label: 'Lead Profile', icon: User },
+    { id: 'plan', label: "Plan", icon: Brain },
+    { id: 'profile', label: 'Profile', icon: User },
     { id: 'followups', label: 'Follow-ups', icon: Calendar },
-    { id: 'reasoning', label: 'Reasoning Log', icon: BarChart2 },
+    { id: 'reasoning', label: 'Reasoning', icon: BarChart2 },
+    { id: 'engagement', label: 'Engagement', icon: Cpu },
   ];
 
   return (
@@ -378,6 +501,51 @@ function IntelligenceSidebar({
                     <span className="text-sm font-medium text-slate-200 capitalize">
                       {next.emotional_state}
                     </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Products mentioned across this conversation */}
+              {(() => {
+                const mentioned = new Map<string, number>();
+                (conversation.messages || []).forEach(m => {
+                  (m.metadata?.products_referenced || []).forEach(p => {
+                    if (p) mentioned.set(p, (mentioned.get(p) || 0) + 1);
+                  });
+                });
+                if (mentioned.size === 0) return null;
+                const sorted = [...mentioned.entries()].sort((a, b) => b[1] - a[1]);
+                return (
+                  <div className="bg-emerald-500/10 rounded-xl border border-emerald-500/20 p-3">
+                    <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-emerald-300">
+                      <Package className="w-3.5 h-3.5" />
+                      Products Referenced
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {sorted.slice(0, 6).map(([name, count]) => (
+                        <span key={name} className="text-xs bg-emerald-500/10 text-emerald-200 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                          {name}
+                          {count > 1 && <span className="ml-1 opacity-60">×{count}</span>}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Post products (comment origin) */}
+              {conversation.post_products && conversation.post_products.length > 0 && (
+                <div className="bg-blue-500/10 rounded-xl border border-blue-500/20 p-3">
+                  <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-blue-300">
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    Post Products (comment origin)
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {conversation.post_products.slice(0, 4).map((p, i) => (
+                      <span key={i} className="text-xs bg-blue-500/10 text-blue-200 border border-blue-500/20 px-2 py-0.5 rounded-full">
+                        {p.name}{p.price ? ` · ₹${p.price}` : ''}
+                      </span>
+                    ))}
                   </div>
                 </div>
               )}
@@ -611,6 +779,163 @@ function IntelligenceSidebar({
             </div>
           )}
 
+          {/* ── Engagement Context ── */}
+          {activeSection === 'engagement' && (
+            <div className="space-y-3">
+              {/* Source type */}
+              {conversation.source && (
+                <div className="bg-white/5 rounded-xl border border-white/10 p-3">
+                  <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Engagement Source</div>
+                  <div className="flex items-center gap-2">
+                    {(() => {
+                      const { label, color } = sourceLabel(conversation.source);
+                      const IconMap: Record<string, React.ElementType> = {
+                        comment: MessageSquareDot, mention: AtSign, story_reply: ImageIcon,
+                        reel_share: Film, away_game: Globe, dm: MessageCircle,
+                      };
+                      const Icon = IconMap[conversation.source] || MessageCircle;
+                      return (
+                        <>
+                          <div className={`p-2 rounded-lg bg-white/10`}>
+                            <Icon className={`w-4 h-4 ${color}`} />
+                          </div>
+                          <div>
+                            <div className={`text-sm font-semibold ${color}`}>{label}</div>
+                            <div className="text-xs text-slate-500 capitalize">{conversation.source?.replace('_', ' ')}</div>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              {/* Comment intent classification */}
+              {conversation.comment_intent && conversation.comment_intent !== 'general' && (
+                <div className={`rounded-xl border p-3 ${intentLabel(conversation.comment_intent).bg}`}>
+                  <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Comment Intent</div>
+                  <div className="flex items-center gap-2">
+                    <Target className={`w-4 h-4 ${intentLabel(conversation.comment_intent).color}`} />
+                    <span className={`text-sm font-semibold ${intentLabel(conversation.comment_intent).color}`}>
+                      {intentLabel(conversation.comment_intent).label}
+                    </span>
+                  </div>
+                  {conversation.comment_intent === 'soft_engagement' && (
+                    <p className="text-xs text-slate-400 mt-2">
+                      AI replied publicly on the post to encourage a follow. No DM was sent.
+                    </p>
+                  )}
+                  {conversation.comment_intent === 'purchase_intent' && (
+                    <p className="text-xs text-slate-400 mt-2">
+                      Comment showed purchase signals. AI acknowledged publicly and moved to DM.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Post context */}
+              {(conversation.post_type || conversation.post_caption) && (
+                <div className="bg-white/5 rounded-xl border border-white/10 p-3">
+                  <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Source Post</div>
+                  {conversation.post_type && (() => {
+                    const { label, icon: PostIcon, color } = postTypeBadge(conversation.post_type);
+                    return (
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <PostIcon className={`w-3.5 h-3.5 ${color}`} />
+                        <span className={`text-xs font-medium ${color}`}>{label}</span>
+                      </div>
+                    );
+                  })()}
+                  {conversation.post_caption && (
+                    <p className="text-xs text-slate-300 leading-relaxed italic">
+                      "{conversation.post_caption.slice(0, 120)}{conversation.post_caption.length > 120 ? '…' : ''}"
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Post products */}
+              {conversation.post_products && conversation.post_products.length > 0 && (
+                <div className="bg-blue-500/10 rounded-xl border border-blue-500/20 p-3">
+                  <div className="flex items-center gap-1.5 mb-2 text-xs font-medium text-blue-300">
+                    <Package className="w-3.5 h-3.5" />
+                    Products in Post
+                  </div>
+                  <div className="space-y-1">
+                    {conversation.post_products.map((p, i) => (
+                      <div key={i} className="flex items-center justify-between text-xs">
+                        <span className="text-slate-300">{p.name}</span>
+                        {p.price && <span className="text-blue-300 font-medium">₹{p.price}</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Active personality */}
+              {personalityProfile && Object.keys(personalityProfile).length > 0 ? (
+                <div className="bg-violet-500/10 rounded-xl border border-violet-500/20 p-3">
+                  <div className="flex items-center gap-1.5 mb-3 text-xs font-medium text-violet-300">
+                    <UserCircle2 className="w-3.5 h-3.5" />
+                    Active Personality
+                  </div>
+                  <div className="space-y-1.5 text-xs">
+                    {personalityProfile.tone && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500">Tone</span>
+                        <Badge className="bg-violet-500/20 text-violet-300 border-violet-500/30 text-xs capitalize">
+                          {personalityProfile.tone.replace('_', ' ')}
+                        </Badge>
+                      </div>
+                    )}
+                    {personalityProfile.emoji_usage && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500">Emoji</span>
+                        <Badge className="bg-white/10 text-slate-300 border-white/20 text-xs capitalize">
+                          {personalityProfile.emoji_usage}
+                        </Badge>
+                      </div>
+                    )}
+                    {personalityProfile.selling_style && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500">Style</span>
+                        <Badge className="bg-white/10 text-slate-300 border-white/20 text-xs capitalize">
+                          {personalityProfile.selling_style.replace('_', ' ')}
+                        </Badge>
+                      </div>
+                    )}
+                    {personalityProfile.signature_opener && (
+                      <div className="mt-2">
+                        <div className="text-slate-500 mb-0.5">Opens with</div>
+                        <div className="text-slate-200 font-medium italic">"{personalityProfile.signature_opener}"</div>
+                      </div>
+                    )}
+                    {personalityProfile.min_price && (
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-slate-500">Price Floor</span>
+                        <span className="text-emerald-400 font-semibold">₹{personalityProfile.min_price.toLocaleString('en-IN')}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-6 text-slate-500">
+                  <UserCircle2 className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-xs">No personality profile configured.</p>
+                  <p className="text-xs mt-0.5 text-slate-600">Set up your personality in Settings → Personality.</p>
+                </div>
+              )}
+
+              {/* Trigger context raw */}
+              {conversation.trigger_context && (
+                <div className="bg-white/5 rounded-xl border border-white/10 p-3">
+                  <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">Raw Trigger</div>
+                  <p className="text-xs text-slate-500 font-mono leading-relaxed">{conversation.trigger_context}</p>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* ── Reasoning Log ── */}
           {activeSection === 'reasoning' && (
             <div className="space-y-2">
@@ -770,6 +1095,8 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
   const [runningAnalysis, setRunningAnalysis] = useState(false);
   const [showScopeMenu, setShowScopeMenu] = useState(false);
   const [mobilePane, setMobilePane] = useState<'list' | 'chat'>('list');
+  const [engagementFilter, setEngagementFilter] = useState<EngagementFilter>('all');
+  const [personalityProfile, setPersonalityProfile] = useState<PersonalityProfile | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const endpoint = (config?.endpoint as string) || '/api/conversations';
@@ -798,6 +1125,13 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
       .finally(() => setLoadingIntel(false));
   }, [selected]);
 
+  // Load personality profile once on mount
+  useEffect(() => {
+    apiClient.get('/api/settings/personality')
+      .then((resp: any) => setPersonalityProfile(resp.data?.personality_profile || null))
+      .catch(() => {}); // Non-critical — personality is a best-effort enhancement
+  }, []);
+
   // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -805,9 +1139,13 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
 
   const reloadSelectedConversation = useCallback(async (sid: string) => {
     try {
-      const resp = await apiClient.get(`/api/conversations/${sid}/messages`);
-      const { conversation, messages } = resp.data;
-      const updated = { ...conversation, messages };
+      const [msgResp, cartResp] = await Promise.allSettled([
+        apiClient.get(`/api/conversations/${sid}/messages`),
+        apiClient.get(`/api/conversations/${sid}/cart`),
+      ]);
+      const { conversation, messages } = msgResp.status === 'fulfilled' ? msgResp.value.data : { conversation: {}, messages: [] };
+      const cart = cartResp.status === 'fulfilled' ? (cartResp.value.data?.data?.cart ?? []) : [];
+      const updated = { ...conversation, messages, cart };
       setSelected(updated);
       setConversations(prev => prev.map(c => (c.sender_id || c.id) === sid ? { ...c, ...conversation } : c));
     } catch (err) {
@@ -924,9 +1262,22 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
 
   const filteredConvs = conversations.filter(c => {
     const u = c.username || c.sender_id || '';
-    return u.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch = u.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (c.lastMessage || '').toLowerCase().includes(searchQuery.toLowerCase());
+    if (!matchesSearch) return false;
+    if (engagementFilter === 'all') return true;
+    const sources = filterToSources[engagementFilter];
+    const src = c.source || 'dm';
+    return sources.includes(src);
   });
+
+  // Mini-funnel stats computed from all conversations
+  const funnelStats = {
+    total: conversations.length,
+    engaged: conversations.filter(c => (c.messages?.length ?? 0) > 0).length,
+    dmConversions: conversations.filter(c => c.source === 'comment' && (c.messages?.length ?? 0) > 1).length,
+    hot: conversations.filter(c => (c.lead_score ?? 0) >= 70).length,
+  };
 
   return (
     <div className={cn(
@@ -942,27 +1293,80 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
         'w-full md:w-64 lg:w-72',
         mobilePane === 'chat' ? 'hidden md:flex' : 'flex'
       )}>
-        <div className="p-4 border-b border-white/10">
-          <div className="flex items-center gap-2 mb-3">
-            <Instagram className="w-4 h-4 text-pink-500" />
-            <span className="font-semibold text-sm">Conversations</span>
+        <div className="border-b border-white/10">
+          {/* Header row */}
+          <div className="px-4 pt-3 pb-2 flex items-center gap-2">
+            <Instagram className="w-4 h-4 text-pink-500 flex-shrink-0" />
+            <span className="font-semibold text-sm">Engagement Hub</span>
             <Badge variant="secondary" className="ml-auto text-xs">{conversations.length}</Badge>
             <button
               onClick={loadConversations}
-              title="Refresh conversation list"
+              title="Refresh"
               className="p-1 rounded text-slate-400 hover:text-slate-200 hover:bg-white/10 transition-colors"
             >
               <RefreshCw className="w-3.5 h-3.5" />
             </button>
           </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-            <Input
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="pl-9 h-8 text-sm bg-white/5 border-white/10 text-slate-200 placeholder:text-slate-500"
-            />
+
+          {/* Mini-funnel bar */}
+          <div className="px-4 pb-2.5 flex items-center gap-3">
+            {[
+              { label: 'Total', value: funnelStats.total, color: 'text-slate-400' },
+              { label: 'Active', value: funnelStats.engaged, color: 'text-blue-400' },
+              { label: 'DM\'d', value: funnelStats.dmConversions, color: 'text-purple-400' },
+              { label: '🔥 Hot', value: funnelStats.hot, color: 'text-emerald-400' },
+            ].map(({ label, value, color }, i, arr) => (
+              <React.Fragment key={label}>
+                <div className="flex flex-col items-center min-w-0">
+                  <span className={`text-base font-bold leading-none ${color}`}>{value}</span>
+                  <span className="text-xs text-slate-500 mt-0.5">{label}</span>
+                </div>
+                {i < arr.length - 1 && (
+                  <ArrowRight className="w-3 h-3 text-slate-700 flex-shrink-0" />
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+
+          {/* Search */}
+          <div className="px-4 pb-2.5">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+              <Input
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="pl-9 h-8 text-sm bg-white/5 border-white/10 text-slate-200 placeholder:text-slate-500"
+              />
+            </div>
+          </div>
+
+          {/* Engagement filter tabs */}
+          <div className="flex border-t border-white/10 overflow-x-auto scrollbar-none">
+            {engagementFilterTabs.map(({ id, label, icon: Icon }) => {
+              const count = id === 'all' ? conversations.length :
+                conversations.filter(c => filterToSources[id].includes(c.source || 'dm')).length;
+              return (
+                <button
+                  key={id}
+                  onClick={() => setEngagementFilter(id)}
+                  className={cn(
+                    'flex items-center gap-1 px-2.5 py-2 text-xs whitespace-nowrap flex-shrink-0 border-b-2 transition-colors',
+                    engagementFilter === id
+                      ? 'border-pink-500 text-pink-400 bg-pink-500/10'
+                      : 'border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                  )}
+                >
+                  <Icon className="w-3 h-3" />
+                  <span>{label}</span>
+                  {count > 0 && (
+                    <span className={cn('text-xs rounded-full px-1 py-px leading-none',
+                      engagementFilter === id ? 'bg-pink-500/30 text-pink-300' : 'bg-white/10 text-slate-500'
+                    )}>{count}</span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -972,9 +1376,27 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
               <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
             </div>
           ) : filteredConvs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-24 text-slate-400">
-              <MessageCircle className="w-6 h-6 mb-1" />
-              <p className="text-xs">No conversations</p>
+            <div className="flex flex-col items-center justify-center h-32 text-slate-400 px-4 text-center">
+              {engagementFilter === 'away_game' ? (
+                <>
+                  <Globe className="w-7 h-7 mb-2 opacity-40" />
+                  <p className="text-xs font-medium text-slate-300">No Away Game engagements yet</p>
+                  <p className="text-xs mt-1 text-slate-500 leading-relaxed">
+                    When your comments on others' reels receive @mentions in reply, they'll appear here.
+                  </p>
+                </>
+              ) : engagementFilter === 'mention' ? (
+                <>
+                  <AtSign className="w-7 h-7 mb-2 opacity-40" />
+                  <p className="text-xs font-medium text-slate-300">No @mentions yet</p>
+                  <p className="text-xs mt-1 text-slate-500">People who tag your account in their posts or comments will appear here.</p>
+                </>
+              ) : (
+                <>
+                  <MessageCircle className="w-6 h-6 mb-1" />
+                  <p className="text-xs">No conversations</p>
+                </>
+              )}
             </div>
           ) : (
             <div className="divide-y divide-white/10">
@@ -984,7 +1406,18 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                 return (
                   <button
                     key={sid}
-                    onClick={() => { setSelected(conv); setShowNotes(false); setNoteText(''); setMobilePane('chat'); }}
+                    onClick={() => {
+                      setSelected(conv);
+                      setShowNotes(false);
+                      setNoteText('');
+                      setMobilePane('chat');
+                      // Lazy-load cart for this conversation
+                      const cid = conv.sender_id || conv.id;
+                      apiClient.get(`/api/conversations/${cid}/cart`).then(r => {
+                        const cart = r.data?.data?.cart ?? [];
+                        setSelected(prev => prev ? { ...prev, cart } : prev);
+                      }).catch(() => {});
+                    }}
                     className={cn(
                       'w-full p-3 flex items-start gap-2.5 text-left hover:bg-white/[0.07] transition-colors',
                       selected?.sender_id === sid && 'bg-violet-500/15 border-r-2 border-violet-400'
@@ -1009,14 +1442,35 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                         <span className="text-xs text-slate-500 flex-shrink-0">{formatTime(conv.updated_at || '')}</span>
                       </div>
                       <p className="text-xs text-slate-500 truncate">{conv.lastMessage || '—'}</p>
-                      <div className="flex items-center gap-1 mt-1">
+                      <div className="flex items-center gap-1 mt-1 flex-wrap">
                         {conv.conversation_stage && (
                           <Badge className={cn('text-xs px-1.5 py-0', stageColor(conv.conversation_stage))}>
                             {conv.conversation_stage?.replace('_', ' ')}
                           </Badge>
                         )}
+                        {conv.source && conv.source !== 'dm' && (() => {
+                          const { label, color } = sourceLabel(conv.source);
+                          return (
+                            <span className={cn('text-xs font-medium flex items-center gap-0.5', color)}>
+                              <MessageSquareDot className="w-2.5 h-2.5" />
+                              {label}
+                            </span>
+                          );
+                        })()}
+                        {conv.comment_intent === 'soft_engagement' && (
+                          <span className="text-xs text-sky-400 flex items-center gap-0.5">
+                            <Heart className="w-2.5 h-2.5" />
+                            Soft
+                          </span>
+                        )}
+                        {conv.comment_intent === 'purchase_intent' && (
+                          <span className="text-xs text-emerald-400 flex items-center gap-0.5">
+                            <Zap className="w-2.5 h-2.5" />
+                            Intent
+                          </span>
+                        )}
                         {score > 0 && (
-                          <span className={cn('text-xs font-bold', scoreColor(score))}>{score}</span>
+                          <span className={cn('text-xs font-bold ml-auto', scoreColor(score))}>{score}</span>
                         )}
                       </div>
                     </div>
@@ -1055,6 +1509,22 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                   <Badge className={cn('text-xs px-1.5 py-0 flex-shrink-0', stageColor(selected.conversation_stage))}>
                     {selected.conversation_stage?.replace('_', ' ')}
                   </Badge>
+                )}
+                {selected.source && selected.source !== 'dm' && (() => {
+                  const { label, color } = sourceLabel(selected.source);
+                  return (
+                    <span className={cn('text-xs font-medium flex items-center gap-0.5 flex-shrink-0', color)}>
+                      <MessageSquareDot className="w-3 h-3" />
+                      {label}
+                    </span>
+                  );
+                })()}
+                {/* Personality indicator */}
+                {personalityProfile && personalitySummary(personalityProfile) && (
+                  <span className="hidden sm:flex items-center gap-1 text-xs text-violet-400 bg-violet-500/15 border border-violet-500/25 rounded-full px-2 py-0.5 flex-shrink-0 ml-auto">
+                    <UserCircle2 className="w-3 h-3" />
+                    {personalitySummary(personalityProfile)}
+                  </span>
                 )}
               </div>
               {/* Row 2: actions */}
@@ -1130,74 +1600,240 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
               </div>
             </div>
 
-            {/* Messages */}
-            <ScrollArea className="flex-1 p-4">
-              <div className="space-y-3">
-                {(selected.messages || []).map(msg => (
-                  <div key={msg.id} className={cn('flex flex-col', msg.role === 'assistant' ? 'items-end' : 'items-start')}>
-                    <div className={cn(
-                      'max-w-[78%] rounded-2xl px-3.5 py-2.5',
-                      msg.role === 'assistant'
-                        ? 'bg-gradient-to-br from-violet-500 to-purple-600 text-white'
-                        : 'bg-white/10 text-slate-200'
-                    )}>
-                      <div className={cn('flex items-center gap-1 text-xs mb-1 opacity-70')}>
-                        {msg.role === 'assistant' ? <Bot className="w-3 h-3" /> : <User className="w-3 h-3" />}
-                        <span>{msg.role === 'assistant' ? 'AI Agent' : `@${selected.username || 'user'}`}</span>
+            {/* Comment / Story origin banner — pinned above message thread */}
+            {(() => {
+              // Detect comment conversations: use source field (new) or trigger_context (historical).
+              // trigger_context format: "Comment on post {media_id}: {comment_text}"
+              const isCommentConversation =
+                selected.source === 'comment' ||
+                /comment/i.test(selected.trigger_context || '');
+              const { label, color } = sourceLabel(selected.source);
+
+              // Extract the original comment text for the pinned banner.
+              // Priority: per-message source='comment' → trigger_context colon split → none.
+              let originalComment = '';
+              if (selected.messages?.[0]?.source === 'comment') {
+                originalComment = selected.messages[0].text;
+              } else if (selected.trigger_context) {
+                const colonIdx = selected.trigger_context.indexOf(': ');
+                if (colonIdx !== -1) originalComment = selected.trigger_context.slice(colonIdx + 2);
+              }
+
+              if (!isCommentConversation && !(selected.source && selected.source !== 'dm' && selected.trigger_context)) {
+                return null;
+              }
+
+              // For non-comment origin (story, reel, mention) keep compact bar
+              if (!isCommentConversation && selected.source && selected.source !== 'dm') {
+                return (
+                  <div className="border-b border-blue-500/20 bg-blue-500/5 px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <MessageSquareDot className={cn('w-3.5 h-3.5 flex-shrink-0', color)} />
+                      <span className={cn('text-xs font-semibold', color)}>{label} origin</span>
+                    </div>
+                  </div>
+                );
+              }
+
+              // Comment origin: prominent pinned banner with post type + intent
+              const intent = selected.comment_intent;
+              const { label: intentLbl, color: intentColor, bg: intentBg } = intentLabel(intent);
+              const { label: postTypeLbl, icon: PostTypeIcon, color: postTypeColor } = postTypeBadge(selected.post_type);
+              const isSoftEngagement = intent === 'soft_engagement';
+
+              return (
+                <div className="px-3 pt-3 pb-0">
+                  <div className={cn(
+                    'border rounded-xl px-3.5 py-2.5',
+                    isSoftEngagement
+                      ? 'bg-sky-500/10 border-sky-500/20'
+                      : 'bg-blue-500/10 border-blue-500/20'
+                  )}>
+                    {/* Banner header row */}
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      <div className="flex items-center gap-1.5">
+                        <MessageSquareDot className={cn('w-3.5 h-3.5', isSoftEngagement ? 'text-sky-400' : 'text-blue-400')} />
+                        <span className={cn('text-xs font-semibold', isSoftEngagement ? 'text-sky-400' : 'text-blue-400')}>
+                          {label || 'Comment'} on
+                        </span>
                       </div>
-                      <p className="text-sm leading-relaxed">{msg.text}</p>
-                      <div className="text-right text-xs opacity-60 mt-1">{formatTime(msg.timestamp)}</div>
+                      {/* Post type badge */}
+                      <div className="flex items-center gap-1">
+                        <PostTypeIcon className={cn('w-3 h-3', postTypeColor)} />
+                        <span className={cn('text-xs font-medium', postTypeColor)}>{postTypeLbl}</span>
+                      </div>
+                      {/* Intent badge */}
+                      {intent && (
+                        <span className={cn('text-xs font-medium px-2 py-0.5 rounded-full border ml-auto', intentBg, intentColor)}>
+                          {intentLbl}
+                        </span>
+                      )}
                     </div>
 
-                    {/* Delivery status indicator */}
-                    {msg.role === 'assistant' && (() => {
-                      const status = msg.delivery_status || (msg.send_status === 'failed' ? 'failed' : msg.send_status === 'rate_limited' ? 'not_sent' : msg.send_status === 'sent' ? 'sent' : undefined);
-                      if (status === 'read') return (
-                        <div className="flex items-center gap-1 text-xs text-violet-400 mt-0.5 justify-end">
-                          <CheckCheck className="w-3.5 h-3.5" />
-                          <span className="opacity-70">Seen</span>
-                        </div>
-                      );
-                      if (status === 'delivered') return (
-                        <div className="flex items-center gap-1 text-xs text-slate-400 mt-0.5 justify-end">
-                          <CheckCheck className="w-3.5 h-3.5" />
-                        </div>
-                      );
-                      if (status === 'sent') return (
-                        <div className="flex items-center gap-1 text-xs text-slate-500 mt-0.5 justify-end">
-                          <Check className="w-3.5 h-3.5" />
-                        </div>
-                      );
-                      if (status === 'failed') return (
-                        <div className="flex items-center gap-1 text-xs text-red-400 mt-0.5">
-                          <AlertCircle className="w-3 h-3" />
-                          <span>Not delivered{msg.send_error ? `: ${msg.send_error}` : ''}</span>
-                        </div>
-                      );
-                      if (status === 'not_sent') return (
-                        <div className="flex items-center gap-1 text-xs text-yellow-500 mt-0.5">
-                          <AlertCircle className="w-3 h-3" />
-                          <span>Rate limited</span>
-                        </div>
-                      );
-                      return null;
-                    })()}
+                    {/* Original comment text */}
+                    {originalComment ? (
+                      <p className="text-sm text-slate-200 leading-relaxed italic">"{originalComment}"</p>
+                    ) : selected.trigger_context ? (
+                      <p className="text-xs text-slate-400 italic">{selected.trigger_context}</p>
+                    ) : null}
 
-                    {/* Inline reasoning pill below agent messages */}
-                    {msg.role === 'assistant' && msg.metadata?.internal_assessment && (
-                      <div className="mt-1 mr-1 flex items-center gap-1.5 text-xs text-slate-400">
-                        <Eye className="w-3 h-3" />
-                        <span className="italic">{msg.metadata.internal_assessment}</span>
+                    {/* Caption excerpt */}
+                    {selected.post_caption && (
+                      <p className="text-xs text-slate-500 mt-1.5 line-clamp-1">
+                        Post: "{selected.post_caption.slice(0, 80)}{selected.post_caption.length > 80 ? '…' : ''}"
+                      </p>
+                    )}
+
+                    {/* Soft engagement note */}
+                    {isSoftEngagement && (
+                      <div className="flex items-center gap-1.5 mt-2 text-xs text-sky-400">
+                        <Heart className="w-3 h-3" />
+                        <span>AI replied publicly to encourage follow — no DM sent</span>
                       </div>
                     )}
-                    {msg.role === 'assistant' && !msg.metadata?.internal_assessment && msg.metadata?.governor_reason && (
-                      <div className="mt-1 mr-1 flex items-center gap-1 text-xs text-slate-400">
-                        <Zap className="w-3 h-3" />
-                        <span>{msg.metadata.response_mode} · {msg.metadata.governor_reason}</span>
+
+                    {/* Post products */}
+                    {selected.post_products && selected.post_products.length > 0 && (
+                      <div className="flex items-center gap-1 mt-2 flex-wrap">
+                        <Package className="w-3 h-3 text-slate-500" />
+                        {selected.post_products.slice(0, 3).map((p, i) => (
+                          <span key={i} className="text-xs bg-white/10 text-slate-300 px-1.5 py-0.5 rounded-full">
+                            {p.name}{p.price ? ` · ₹${p.price}` : ''}
+                          </span>
+                        ))}
+                        {selected.post_products.length > 3 && (
+                          <span className="text-xs text-slate-500">+{selected.post_products.length - 3} more</span>
+                        )}
                       </div>
                     )}
                   </div>
-                ))}
+                </div>
+              );
+            })()}
+
+            {/* Messages */}
+            <ScrollArea className="flex-1 p-4">
+              <div className="space-y-3">
+                {(() => {
+                  const msgs = selected.messages || [];
+                  const isCommentConversation =
+                    selected.source === 'comment' ||
+                    /comment/i.test(selected.trigger_context || '');
+
+                  // Find index where DM thread starts (after public comment reply)
+                  const dmStartIdx = isCommentConversation
+                    ? msgs.findIndex((m, i) => i > 0 && m.source !== 'comment' && m.role === 'assistant' && m.metadata?.trigger !== 'comment_reply')
+                    : -1;
+
+                  return msgs.map((msg, idx) => {
+                    // Skip the original comment message — it's shown in the pinned banner above
+                    const isOriginalComment =
+                      msg.source === 'comment' ||
+                      (idx === 0 && isCommentConversation && msg.role === 'user');
+                    if (isOriginalComment) return null;
+
+                    // Show "→ Moved to DM" separator before first DM message
+                    const isDmTransition = isCommentConversation && idx === dmStartIdx && dmStartIdx > 0;
+
+                    // Emoji reaction / comment-like events → compact pill
+                    const isEmojiReaction = msg.source === 'dm_reaction' ||
+                      msg.text?.startsWith('[Reacted ') || msg.text?.startsWith('[Liked');
+
+                    return (
+                      <React.Fragment key={msg.id}>
+                        {/* DM transition marker */}
+                        {isDmTransition && (
+                          <div className="flex items-center gap-2 my-2">
+                            <div className="flex-1 h-px bg-white/10" />
+                            <div className="flex items-center gap-1.5 text-xs text-slate-500 bg-white/5 border border-white/10 rounded-full px-3 py-1">
+                              <ArrowRight className="w-3 h-3 text-violet-400" />
+                              <span>Moved to DM</span>
+                              <MessageCircle className="w-3 h-3 text-violet-400" />
+                            </div>
+                            <div className="flex-1 h-px bg-white/10" />
+                          </div>
+                        )}
+                        <div className={cn('flex flex-col', msg.role === 'assistant' ? 'items-end' : 'items-start')}>
+                          {isEmojiReaction ? (
+                            /* ── Emoji reaction pill ── */
+                            <div className={cn('flex flex-col', msg.role === 'assistant' ? 'items-end' : 'items-start')}>
+                              <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-full px-3 py-1.5 text-sm">
+                                <Heart className="w-3 h-3 text-pink-400" />
+                                <span className="text-slate-300">{msg.text.replace(/^\[|\]$/g, '')}</span>
+                                <span className="text-xs text-slate-500">{formatTime(msg.timestamp)}</span>
+                              </div>
+                            </div>
+                          ) : (
+                            /* ── Standard DM bubble (all AI messages purple, regardless of origin) ── */
+                            <div className={cn(
+                              'max-w-[78%] rounded-2xl px-3.5 py-2.5',
+                              msg.role === 'assistant'
+                                ? 'bg-gradient-to-br from-violet-500 to-purple-600 text-white'
+                                : 'bg-white/10 text-slate-200'
+                            )}>
+                              <div className="flex items-center gap-1 text-xs mb-1 opacity-70">
+                                {msg.role === 'assistant' ? <Bot className="w-3 h-3" /> : <User className="w-3 h-3" />}
+                                <span>
+                                  {msg.role === 'assistant' ? 'AI Agent' : `@${selected.username || 'user'}`}
+                                </span>
+                              </div>
+                              <p className="text-sm leading-relaxed">{cleanMessageText(msg.text)}</p>
+                              <div className="text-right text-xs opacity-60 mt-1">{formatTime(msg.timestamp)}</div>
+                            </div>
+                          )}
+
+                          {/* Delivery status indicator */}
+                          {msg.role === 'assistant' && (() => {
+                            const status = msg.delivery_status || (msg.send_status === 'failed' ? 'failed' : msg.send_status === 'rate_limited' ? 'not_sent' : msg.send_status === 'sent' ? 'sent' : undefined);
+                            if (status === 'read') return (
+                              <div className="flex items-center gap-1 text-xs text-violet-400 mt-0.5 justify-end">
+                                <CheckCheck className="w-3.5 h-3.5" />
+                                <span className="opacity-70">Seen</span>
+                              </div>
+                            );
+                            if (status === 'delivered') return (
+                              <div className="flex items-center gap-1 text-xs text-slate-400 mt-0.5 justify-end">
+                                <CheckCheck className="w-3.5 h-3.5" />
+                              </div>
+                            );
+                            if (status === 'sent') return (
+                              <div className="flex items-center gap-1 text-xs text-slate-500 mt-0.5 justify-end">
+                                <Check className="w-3.5 h-3.5" />
+                              </div>
+                            );
+                            if (status === 'failed') return (
+                              <div className="flex items-center gap-1 text-xs text-red-400 mt-0.5">
+                                <AlertCircle className="w-3 h-3" />
+                                <span>Not delivered{msg.send_error ? `: ${msg.send_error}` : ''}</span>
+                              </div>
+                            );
+                            if (status === 'not_sent') return (
+                              <div className="flex items-center gap-1 text-xs text-yellow-500 mt-0.5">
+                                <AlertCircle className="w-3 h-3" />
+                                <span>Rate limited</span>
+                              </div>
+                            );
+                            return null;
+                          })()}
+
+                          {/* Inline reasoning pill below agent messages */}
+                          {msg.role === 'assistant' && msg.metadata?.internal_assessment && (
+                            <div className="mt-1 mr-1 flex items-center gap-1.5 text-xs text-slate-400">
+                              <Eye className="w-3 h-3" />
+                              <span className="italic">{msg.metadata.internal_assessment}</span>
+                            </div>
+                          )}
+                          {msg.role === 'assistant' && !msg.metadata?.internal_assessment && msg.metadata?.governor_reason && (
+                            <div className="mt-1 mr-1 flex items-center gap-1 text-xs text-slate-400">
+                              <Zap className="w-3 h-3" />
+                              <span>{msg.metadata.response_mode} · {msg.metadata.governor_reason}</span>
+                            </div>
+                          )}
+                        </div>
+                      </React.Fragment>
+                    );
+                  });
+                })()}
                 <div ref={messagesEndRef} />
               </div>
             </ScrollArea>
@@ -1250,6 +1886,32 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {/* Cart summary (shown when cart has items) */}
+            {selected.cart && selected.cart.length > 0 && (
+              <div className="border-t border-emerald-500/20 bg-emerald-500/5 px-3 py-2.5">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-400">
+                    <ShoppingCart className="w-3.5 h-3.5" />
+                    Cart ({selected.cart.length} item{selected.cart.length !== 1 ? 's' : ''})
+                  </div>
+                  <span className="text-xs font-semibold text-emerald-300">
+                    ₹{selected.cart.reduce((sum, i) => sum + i.price * i.qty, 0).toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <div className="space-y-1 max-h-24 overflow-y-auto">
+                  {selected.cart.map((item, idx) => (
+                    <div key={`${item.product_id}-${idx}`} className="flex items-center gap-2 text-xs">
+                      <Package className="w-3 h-3 text-slate-500 shrink-0" />
+                      <span className="text-slate-300 truncate flex-1">{item.name}</span>
+                      {item.size && <span className="text-slate-500 shrink-0">{item.size}</span>}
+                      <span className="text-slate-400 shrink-0">×{item.qty}</span>
+                      <span className="text-emerald-400 shrink-0 font-medium">₹{(item.price * item.qty).toLocaleString('en-IN')}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Reply box */}
             <div className="p-3 border-t border-white/10">
@@ -1306,6 +1968,7 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
                   conversation={selected}
                   intelligence={intelligence}
                   loadingIntel={loadingIntel}
+                  personalityProfile={personalityProfile}
                 />
               </div>
             </motion.div>

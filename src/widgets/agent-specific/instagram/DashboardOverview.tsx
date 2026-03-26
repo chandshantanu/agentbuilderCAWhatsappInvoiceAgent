@@ -10,9 +10,25 @@ import {
   Loader2,
   CheckCircle2,
   XCircle,
+  Image,
+  AlertTriangle,
+  ArrowRight,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { apiClient } from '@/lib/apiClient';
+
+/** Strip raw JSON that comment pipeline stores before display was added. */
+function cleanMessage(text: string): string {
+  if (!text) return '';
+  const trimmed = text.trim();
+  if (trimmed.startsWith('{')) {
+    try {
+      const p = JSON.parse(trimmed);
+      return p.comment_reply_text || p.dm_greeting_text || p.generated_response || text;
+    } catch { /* not JSON */ }
+  }
+  return text;
+}
 
 interface OverviewData {
   kpis: {
@@ -208,6 +224,7 @@ export default function DashboardOverview({
 }) {
   const [data, setData] = useState<OverviewData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [unmappedPosts, setUnmappedPosts] = useState(0);
 
   useEffect(() => {
     apiClient
@@ -215,6 +232,11 @@ export default function DashboardOverview({
       .then((resp: any) => setData(resp.data))
       .catch((err: any) => console.error('Failed to load overview:', err))
       .finally(() => setLoading(false));
+
+    apiClient
+      .get('/api/posts/unmapped-count')
+      .then((resp: any) => setUnmappedPosts(resp.data?.count ?? 0))
+      .catch(() => { /* non-blocking */ });
   }, []);
 
   if (loading) {
@@ -258,6 +280,34 @@ export default function DashboardOverview({
 
   return (
     <div className="space-y-6">
+
+      {/* ── Unmapped Posts Banner ─────────────────────────────── */}
+      {unmappedPosts > 0 && (
+        <div
+          className="flex items-center justify-between gap-4 px-4 py-3 rounded-xl cursor-pointer"
+          style={{
+            background: 'rgba(251,191,36,0.08)',
+            border: '1px solid rgba(251,191,36,0.25)',
+          }}
+          onClick={() =>
+            window.dispatchEvent(
+              new CustomEvent('dashboard:navigate-tab', { detail: { tabId: 'posts' } })
+            )
+          }
+        >
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="w-4 h-4 shrink-0" style={{ color: '#FBBF24' }} />
+            <span className="text-sm font-medium" style={{ color: '#FDE68A' }}>
+              {unmappedPosts} new post{unmappedPosts !== 1 ? 's' : ''} need product tagging
+              — link each post to the right SKU so the AI can answer buyers accurately
+            </span>
+          </div>
+          <div className="flex items-center gap-1 shrink-0" style={{ color: '#FBBF24' }}>
+            <span className="text-xs font-semibold">Tag Posts</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </div>
+        </div>
+      )}
 
       {/* ── KPI Cards ────────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -566,7 +616,7 @@ export default function DashboardOverview({
                       className="text-xs truncate max-w-[280px] mt-0.5"
                       style={{ color: 'rgba(148,163,184,0.6)' }}
                     >
-                      {conv.lastMessage}
+                      {cleanMessage(conv.lastMessage)}
                     </p>
                   </div>
                 </div>

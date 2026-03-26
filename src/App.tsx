@@ -28,6 +28,8 @@ const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('@/pages/ResetPasswordPage'));
 const TrialExpiredPage = lazy(() => import('@/pages/TrialExpiredPage'));
 const AccountSettingsPage = lazy(() => import('@/pages/AccountSettingsPage'));
+const PrivacyPolicyPage = lazy(() => import('@/pages/PrivacyPolicyPage'));
+const TermsOfServicePage = lazy(() => import('@/pages/TermsOfServicePage'));
 
 // ── Shared UI ──
 
@@ -139,6 +141,8 @@ function SaaSModeApp() {
           <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/terms" element={<TermsOfServicePage />} />
           <Route
             path="/trial-expired"
             element={
@@ -179,6 +183,19 @@ function SaaSModeApp() {
               </RequireConfigured>
             }
           />
+          {/* 404 catch-all */}
+          <Route path="*" element={
+            <div className="min-h-screen flex items-center justify-center" style={{ background: '#070B14' }}>
+              <div className="text-center max-w-sm px-5">
+                <div className="text-6xl font-bold text-slate-600 mb-4">404</div>
+                <h2 className="text-xl font-semibold text-slate-200 mb-2">Page not found</h2>
+                <p className="text-sm text-slate-400 mb-6">The page you're looking for doesn't exist or has been moved.</p>
+                <a href="/" className="inline-block px-6 py-2.5 bg-white/10 hover:bg-white/20 text-slate-200 text-sm font-medium rounded-lg transition-colors">
+                  Go to home
+                </a>
+              </div>
+            </div>
+          } />
         </Routes>
       </Suspense>
     </SupabaseAuthProvider>

@@ -23,6 +23,7 @@ import {
   BookOpen,
   Library,
   Target,
+  Image,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -63,6 +64,8 @@ const iconMap: Record<string, LucideIcon> = {
   phone: Phone,
   target: Target,
   campaigns: Target,
+  image: Image,
+  posts: Image,
 };
 
 export function getIcon(name?: string): LucideIcon | null {

@@ -126,7 +126,12 @@ export default function KnowledgeBaseUploadStep({
     setUploadedFile(file.name);
   };
 
+  const validFaqCount = faqs.filter(f => f.question.trim() && f.answer.trim()).length;
+  const totalContent = validFaqCount + selectedTemplates.size + (uploadedFile ? 1 : 0);
+  const hasMinimumContent = totalContent >= 1;
+
   const handleSave = async () => {
+    if (!hasMinimumContent) return;
     setUploading(true);
     try {
       // Collect all KB content
@@ -267,21 +272,28 @@ export default function KnowledgeBaseUploadStep({
         </label>
       </div>
 
+      {/* Minimum content indicator */}
+      {!hasMinimumContent && (
+        <p className="text-xs text-amber-400 bg-amber-500/10 rounded-lg px-3 py-2 border border-amber-500/20">
+          Add at least 1 FAQ or select a template so your agent can answer customer questions.
+        </p>
+      )}
+
       {/* Save Button */}
       <button
         onClick={handleSave}
-        disabled={uploading}
+        disabled={uploading || !hasMinimumContent}
         className="w-full py-2.5 rounded-lg text-white font-medium text-sm disabled:opacity-50 flex items-center justify-center gap-2"
         style={{ backgroundColor: primaryColor }}
       >
         {uploading ? (
           <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
         ) : (
-          <><CheckCircle2 className="w-4 h-4" /> Save Knowledge Base</>
+          <><CheckCircle2 className="w-4 h-4" /> Save Knowledge Base ({totalContent} item{totalContent !== 1 ? 's' : ''})</>
         )}
       </button>
 
-      <p className="text-center text-xs text-gray-400">
+      <p className="text-center text-xs text-slate-500">
         You can always add more articles later from the dashboard.
       </p>
     </div>
