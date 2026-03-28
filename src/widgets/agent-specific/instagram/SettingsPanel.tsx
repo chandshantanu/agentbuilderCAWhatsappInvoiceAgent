@@ -11,6 +11,12 @@ import {
   LogOut,
   AlertTriangle,
   Trash2,
+  Sparkles,
+  Lock,
+  Users,
+  Zap,
+  Bell,
+  Crown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +25,74 @@ import { apiClient } from '@/lib/apiClient';
 import { saasApi } from '@/services/saasApiService';
 import { useSaaS } from '@/contexts/SaaSContext';
 import InstagramConnectStep from '@/components/InstagramConnectStep';
+
+const PLAN_ORDER: Record<string, number> = { starter: 0, pro: 1, agency: 2 };
+
+function FeatureToggleRow({
+  icon,
+  label,
+  description,
+  enabled,
+  available,
+  plan,
+  requiredPlan,
+  onChange,
+  comingSoon = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  description: string;
+  enabled: boolean;
+  available: boolean;
+  plan: string;
+  requiredPlan: string;
+  onChange: (next: boolean) => void;
+  comingSoon?: boolean;
+}) {
+  const isLocked = !available || (PLAN_ORDER[plan] ?? 0) < (PLAN_ORDER[requiredPlan] ?? 0);
+  const planLabel: Record<string, string> = { pro: 'Pro', agency: 'Agency' };
+
+  return (
+    <div className={`flex items-start justify-between gap-4 ${isLocked ? 'opacity-60' : ''}`}>
+      <div className="flex items-start gap-2.5 min-w-0">
+        <span className="mt-0.5 shrink-0">{icon}</span>
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <p className="text-sm font-medium text-slate-300">{label}</p>
+            {isLocked && (
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] bg-white/8 text-slate-500">
+                <Lock className="w-2.5 h-2.5" />
+                {planLabel[requiredPlan] ?? requiredPlan}+
+              </span>
+            )}
+            {comingSoon && !isLocked && (
+              <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/15 text-amber-400">
+                Coming soon
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-slate-500 mt-0.5">{description}</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={enabled && !isLocked}
+        disabled={isLocked || comingSoon}
+        onClick={() => !isLocked && !comingSoon && onChange(!enabled)}
+        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none disabled:cursor-not-allowed ${
+          enabled && !isLocked ? 'bg-purple-500' : 'bg-white/10'
+        }`}
+      >
+        <span
+          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+            enabled && !isLocked ? 'translate-x-6' : 'translate-x-1'
+          }`}
+        />
+      </button>
+    </div>
+  );
+}
 
 export default function SettingsPanel({ config }: { config: Record<string, unknown> }) {
   const { config: saasConfig } = useSaaS();
@@ -33,12 +107,47 @@ export default function SettingsPanel({ config }: { config: Record<string, unkno
   const [deleting, setDeleting] = useState(false);
   const [cancellingDelete, setCancellingDelete] = useState(false);
   const [deletionScheduledAt, setDeletionScheduledAt] = useState<string | null>(null);
+  const [storyAutoDMEnabled, setStoryAutoDMEnabled] = useState(true);
+  const [storyAutoDMTemplate, setStoryAutoDMTemplate] = useState('');
+  const [savingStoryAutoDM, setSavingStoryAutoDM] = useState(false);
+
+  // Plan + advanced features
+  const [plan, setPlan] = useState<string>('pro');
+  const [features, setFeatures] = useState<Record<string, boolean>>({});
+  const [followGateEnabled, setFollowGateEnabled] = useState(false);
+  const [followUpEnabled, setFollowUpEnabled] = useState(true);
+  const [proactiveOutreachEnabled, setProactiveOutreachEnabled] = useState(false);
+  const [savingAdvanced, setSavingAdvanced] = useState(false);
+
+  const planLabel: Record<string, string> = {
+    starter: 'Starter',
+    pro: 'Pro',
+    agency: 'Agency',
+  };
+  const planColor: Record<string, string> = {
+    starter: 'bg-slate-500/20 text-slate-300',
+    pro: 'bg-purple-500/20 text-purple-300',
+    agency: 'bg-sky-500/20 text-sky-300',
+  };
 
   useEffect(() => {
     const subdomain = saasConfig?.subdomain;
     Promise.all([
       apiClient.get('/api/settings/triggers').then((r: any) => setTriggers(r.data?.triggers || [])),
       apiClient.get('/api/instagram/status').then((r: any) => setIgStatus(r.data)),
+      apiClient.get('/api/settings/story-autodm').then((r: any) => {
+        setStoryAutoDMEnabled(r.data?.story_autodm_enabled ?? true);
+        setStoryAutoDMTemplate(r.data?.story_autodm_template || '');
+      }),
+      apiClient.get('/api/settings/features').then((r: any) => {
+        setPlan(r.data?.plan || 'pro');
+        setFeatures(r.data?.features || {});
+      }),
+      apiClient.get('/api/settings/advanced').then((r: any) => {
+        setFollowGateEnabled(r.data?.follow_gate_enabled ?? false);
+        setFollowUpEnabled(r.data?.follow_up_enabled ?? true);
+        setProactiveOutreachEnabled(r.data?.proactive_outreach_enabled ?? false);
+      }),
       subdomain
         ? saasApi.getConfigStatus(subdomain).then((r: any) => {
             if (r.data?.status === 'pending_deletion' && r.data?.deletion_scheduled_at) {
@@ -50,6 +159,41 @@ export default function SettingsPanel({ config }: { config: Record<string, unkno
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [saasConfig?.subdomain]);
+
+  const saveAdvanced = async (updates: {
+    follow_gate_enabled?: boolean;
+    follow_up_enabled?: boolean;
+    proactive_outreach_enabled?: boolean;
+  }) => {
+    setSavingAdvanced(true);
+    try {
+      await apiClient.put('/api/settings/advanced', {
+        follow_gate_enabled: followGateEnabled,
+        comment_autodm_enabled: true,
+        follow_up_enabled: followUpEnabled,
+        proactive_outreach_enabled: proactiveOutreachEnabled,
+        ...updates,
+      });
+    } catch (err) {
+      console.error('Save advanced settings failed:', err);
+    } finally {
+      setSavingAdvanced(false);
+    }
+  };
+
+  const saveStoryAutoDM = async (enabled: boolean, template: string) => {
+    setSavingStoryAutoDM(true);
+    try {
+      await apiClient.put('/api/settings/story-autodm', {
+        story_autodm_enabled: enabled,
+        story_autodm_template: template,
+      });
+    } catch (err) {
+      console.error('Save story autodm failed:', err);
+    } finally {
+      setSavingStoryAutoDM(false);
+    }
+  };
 
   const addTrigger = () => {
     if (!newTrigger.trim() || triggers.includes(newTrigger.trim().toLowerCase())) return;
@@ -264,6 +408,199 @@ export default function SettingsPanel({ config }: { config: Record<string, unkno
             ))
           )}
         </div>
+      </div>
+
+      {/* Story AutoDM */}
+      <div className={`glass-card rounded-xl p-4 sm:p-5 ${features.story_autodm === false ? 'opacity-60' : ''}`}>
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="font-semibold text-slate-200 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-purple-400" />
+            Story AutoDM
+            {savingStoryAutoDM ? (
+              <Loader2 className="w-4 h-4 animate-spin text-neutral-400" />
+            ) : null}
+            {features.story_autodm === false && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-white/8 text-slate-500">
+                <Lock className="w-2.5 h-2.5" /> Pro+
+              </span>
+            )}
+          </h3>
+        </div>
+        <p className="text-sm text-slate-500 mb-4">
+          When someone replies to your story — instant DM, then AI picks up the conversation.
+        </p>
+
+        {/* Toggle */}
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="text-sm font-medium text-slate-300">Enable Story AutoDM</p>
+            <p className="text-xs text-slate-500 mt-0.5">Replies to your stories trigger an instant DM</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={storyAutoDMEnabled}
+            disabled={features.story_autodm === false}
+            onClick={() => {
+              if (features.story_autodm === false) return;
+              const next = !storyAutoDMEnabled;
+              setStoryAutoDMEnabled(next);
+              saveStoryAutoDM(next, storyAutoDMTemplate);
+            }}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:cursor-not-allowed ${
+              storyAutoDMEnabled && features.story_autodm !== false ? 'bg-purple-500' : 'bg-white/10'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                storyAutoDMEnabled ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+
+        {storyAutoDMEnabled ? (
+          <div className="space-y-4">
+            {/* How it works — flow preview */}
+            <div className="rounded-lg bg-purple-500/5 border border-purple-500/15 p-3 space-y-2">
+              <p className="text-xs font-medium text-purple-300">How it works</p>
+              <div className="space-y-1.5 text-xs text-slate-400">
+                <div className="flex items-start gap-2">
+                  <span className="text-purple-400 mt-0.5">1.</span>
+                  <span>Someone replies to your story → instant template DM fires immediately</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-purple-400 mt-0.5">2.</span>
+                  <span>
+                    <strong className="text-slate-300">New leads</strong> get warm intro + Browse button (if catalog set) or product chips
+                  </span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-purple-400 mt-0.5">3.</span>
+                  <span>
+                    <strong className="text-slate-300">Returning leads</strong> get a recognition message — no cold intro
+                  </span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-purple-400 mt-0.5">4.</span>
+                  <span>When they reply back → AI takes over with full story context</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Custom template (optional override) */}
+            <div className="space-y-1.5">
+              <label className="text-xs text-slate-400">
+                Custom reply message{' '}
+                <span className="text-slate-600">— leave blank for smart auto-message</span>
+              </label>
+              <Input
+                value={storyAutoDMTemplate}
+                onChange={e => setStoryAutoDMTemplate(e.target.value)}
+                placeholder="Hey! 👋 Thanks for checking out our story! Here's our collection: {catalog_link}"
+                onBlur={() => saveStoryAutoDM(storyAutoDMEnabled, storyAutoDMTemplate)}
+              />
+              <p className="text-xs text-slate-600">
+                Use{' '}
+                <code className="text-purple-400">&#123;catalog_link&#125;</code>
+                {' '}to auto-insert your catalog URL.
+                Set <strong className="text-slate-500">catalog_link</strong> in your agent config to enable the Browse button.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-lg bg-white/3 border border-white/8 p-3">
+            <p className="text-xs text-slate-500">
+              Story replies will still reach the AI pipeline — no instant template DM will be sent first.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Advanced Features */}
+      <div className="glass-card rounded-xl p-4 sm:p-5">
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="font-semibold text-slate-200 flex items-center gap-2">
+            <Zap className="w-5 h-5 text-amber-400" />
+            Advanced Features
+            {savingAdvanced && <Loader2 className="w-4 h-4 animate-spin text-neutral-400" />}
+          </h3>
+          <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${planColor[plan] ?? planColor.pro}`}>
+            {planLabel[plan] ?? 'Pro'} plan
+          </span>
+        </div>
+        <p className="text-sm text-slate-500 mb-5">
+          Automation features that run in the background on every conversation.
+        </p>
+
+        <div className="space-y-4">
+          {/* Follow Gate */}
+          <FeatureToggleRow
+            icon={<Lock className="w-4 h-4 text-violet-400" />}
+            label="Follow Gate"
+            description="New story repliers must follow you to unlock catalog access"
+            enabled={followGateEnabled}
+            available={features.follow_gate !== false}
+            plan={plan}
+            requiredPlan="pro"
+            onChange={(next) => {
+              setFollowGateEnabled(next);
+              saveAdvanced({ follow_gate_enabled: next });
+            }}
+          />
+
+          {/* Follow-up Scheduler */}
+          <FeatureToggleRow
+            icon={<Bell className="w-4 h-4 text-blue-400" />}
+            label="Follow-up Scheduler"
+            description="Re-engage leads who didn't reply after 24h"
+            enabled={followUpEnabled}
+            available={features.follow_up_scheduler !== false}
+            plan={plan}
+            requiredPlan="pro"
+            onChange={(next) => {
+              setFollowUpEnabled(next);
+              saveAdvanced({ follow_up_enabled: next });
+            }}
+          />
+
+          {/* Proactive Outreach */}
+          <FeatureToggleRow
+            icon={<Users className="w-4 h-4 text-emerald-400" />}
+            label="Proactive Outreach"
+            description="AI-initiated messages to warm leads based on engagement patterns"
+            enabled={proactiveOutreachEnabled}
+            available={features.proactive_outreach !== false}
+            plan={plan}
+            requiredPlan="pro"
+            onChange={(next) => {
+              setProactiveOutreachEnabled(next);
+              saveAdvanced({ proactive_outreach_enabled: next });
+            }}
+          />
+
+          {/* Advanced Analytics — Agency only */}
+          <FeatureToggleRow
+            icon={<Crown className="w-4 h-4 text-amber-400" />}
+            label="Advanced Analytics"
+            description="Revenue attribution, funnel drop-off, customer LTV tracking"
+            enabled={false}
+            available={features.advanced_analytics === true}
+            plan={plan}
+            requiredPlan="agency"
+            onChange={() => {}}
+            comingSoon={features.advanced_analytics === true}
+          />
+        </div>
+
+        {plan === 'starter' && (
+          <div className="mt-4 rounded-lg bg-purple-500/8 border border-purple-500/20 p-3 flex items-start gap-2">
+            <Crown className="w-4 h-4 text-purple-400 mt-0.5 shrink-0" />
+            <p className="text-xs text-slate-400">
+              <span className="text-purple-300 font-medium">Upgrade to Pro (₹2,999/mo)</span> to unlock Story AutoDM, Follow Gate, scheduled follow-ups, and proactive outreach.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Rate Limits Info */}

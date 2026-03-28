@@ -78,9 +78,10 @@ export const saasApi = {
     apiCall('GET', `/api/v1/saas/config/${subdomain}`),
 
   // Create Razorpay order
-  createOrder: (subdomain: string, couponCode?: string) =>
+  createOrder: (subdomain: string, couponCode?: string, plan?: string) =>
     apiCall('POST', `/api/v1/saas/subscribe/${subdomain}`, {
       coupon_code: couponCode || null,
+      plan: plan || 'pro',
     }),
 
   // Verify payment
@@ -90,6 +91,7 @@ export const saasApi = {
       razorpay_order_id: string;
       razorpay_payment_id: string;
       razorpay_signature: string;
+      plan?: string;
     },
   ) => apiCall('POST', `/api/v1/saas/subscribe/${subdomain}/verify`, data),
 

@@ -25,6 +25,11 @@ import {
   FileText,
   Users,
   Clock,
+  Star,
+  MessageSquare,
+  Camera,
+  TrendingUp,
+  Bell,
 } from 'lucide-react';
 
 declare global {
@@ -51,6 +56,70 @@ function lightenColor(hex: string, amount: number): string {
 
 const FEATURE_ICONS = [Zap, Shield, BarChart3, FileText, Users, Clock];
 
+const PLANS = [
+  {
+    id: 'starter',
+    name: 'Starter',
+    price: 999,
+    display: '999',
+    tagline: 'Core AI for every seller',
+    color: '#64748b',
+    features: [
+      'AI DM replies (Hinglish native)',
+      'Product catalog awareness',
+      'Basic analytics dashboard',
+      'Story reply enrichment',
+      '7-day money-back guarantee',
+    ],
+    locked: [
+      'Story AutoDM',
+      'Follow Gate',
+      'Comment Auto-DM',
+      'Follow-up scheduler',
+    ],
+  },
+  {
+    id: 'pro',
+    name: 'Pro',
+    price: 2999,
+    display: '2,999',
+    tagline: 'Full sales automation',
+    color: '#7C3AED',
+    popular: true,
+    features: [
+      'Everything in Starter',
+      'Story AutoDM ✨',
+      'Follow Gate',
+      'Comment Auto-DM',
+      'Follow-up scheduler',
+      'Proactive outreach',
+    ],
+    locked: [
+      'Advanced analytics',
+      'Multi-account',
+    ],
+  },
+  {
+    id: 'agency',
+    name: 'Agency',
+    price: 5999,
+    display: '5,999',
+    tagline: 'For agencies & growing brands',
+    color: '#0ea5e9',
+    features: [
+      'Everything in Pro',
+      'Advanced analytics',
+      'Multi-account (up to 5)',
+      'White-label branding',
+      'Priority support',
+      'Custom brand voice training',
+    ],
+    locked: [],
+  },
+] as const;
+
+type PlanId = (typeof PLANS)[number]['id'];
+
 export default function CheckoutPage() {
   const { config, subdomain } = useSaaS();
   const { user } = useSupabaseAuth();
@@ -59,6 +128,7 @@ export default function CheckoutPage() {
 
   const [searchParams] = useSearchParams();
   const isTrial = (config?.pricing?.trial_days || 0) > 0;
+  const [selectedPlan, setSelectedPlan] = useState<PlanId>('pro');
   const [couponCode, setCouponCode] = useState(isTrial ? 'TEST1' : '');
   const [couponResult, setCouponResult] = useState<any>(null);
   const [couponError, setCouponError] = useState('');
@@ -105,9 +175,12 @@ export default function CheckoutPage() {
   const rgb = hexToRgb(primary);
   const currency = pricing.currency || 'INR';
   const currencySymbol = currency === 'INR' ? '\u20B9' : '$';
-  const displayPrice = pricing.display_price || pricing.monthly_price;
+  // Plan-based pricing overrides config price
+  const planData = PLANS.find(p => p.id === selectedPlan) ?? PLANS[1];
+  const planPrice = planData.price;
+  const displayPrice = planData.display;
   // Trial: always show ₹1 as "due today"; full price shows "after trial"
-  const amount = isTrial ? 1 : (couponResult ? couponResult.final_amount : pricing.monthly_price);
+  const amount = isTrial ? 1 : (couponResult ? couponResult.final_amount : planPrice);
   const features: Array<{ title: string; description: string }> =
     landing_page?.features || [];
   const discount = couponResult ? couponResult.discount : 0;
@@ -142,6 +215,7 @@ export default function CheckoutPage() {
       const orderResp = await saasApi.createOrder(
         subdomain,
         couponResult ? couponCode : undefined,
+        selectedPlan,
       );
       const order = orderResp.data;
 
@@ -164,6 +238,7 @@ export default function CheckoutPage() {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
+              plan: selectedPlan,
             });
             await refetch();
             navigate('/onboarding');
@@ -214,6 +289,86 @@ export default function CheckoutPage() {
       </header>
 
       <div className="relative z-10 max-w-5xl mx-auto px-5 sm:px-8 py-10 sm:py-14">
+
+        {/* Plan Selector */}
+        {!isTrial && (
+          <div className="mb-10">
+            <h2 className="text-center text-lg font-semibold text-slate-200 mb-2">Choose your plan</h2>
+            <p className="text-center text-sm text-slate-500 mb-6">All plans include a 7-day money-back guarantee</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {PLANS.map((plan) => {
+                const isSelected = selectedPlan === plan.id;
+                const planRgb = hexToRgb(plan.color);
+                return (
+                  <button
+                    key={plan.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedPlan(plan.id);
+                      setCouponResult(null);
+                      setCouponCode('');
+                      setCouponError('');
+                    }}
+                    className="relative text-left rounded-xl p-5 transition-all duration-200"
+                    style={{
+                      background: isSelected
+                        ? `rgba(${planRgb}, 0.12)`
+                        : 'rgba(255,255,255,0.04)',
+                      border: isSelected
+                        ? `1.5px solid ${plan.color}`
+                        : '1.5px solid rgba(255,255,255,0.08)',
+                      boxShadow: isSelected ? `0 0 20px rgba(${planRgb}, 0.15)` : 'none',
+                    }}
+                  >
+                    {'popular' in plan && plan.popular && (
+                      <span
+                        className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[11px] font-bold text-white flex items-center gap-1"
+                        style={{ background: plan.color }}
+                      >
+                        <Star className="w-3 h-3 fill-white" /> Most Popular
+                      </span>
+                    )}
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <p className="font-semibold text-slate-200 text-base">{plan.name}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{plan.tagline}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs text-slate-400">{currencySymbol}</span>
+                        <span className="text-xl font-bold text-slate-100">{plan.display}</span>
+                        <span className="text-xs text-slate-500">/mo</span>
+                      </div>
+                    </div>
+                    <ul className="space-y-1.5">
+                      {plan.features.map((f, i) => (
+                        <li key={i} className="flex items-start gap-1.5 text-xs text-slate-300">
+                          <Check className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: plan.color }} />
+                          {f}
+                        </li>
+                      ))}
+                      {plan.locked.map((f, i) => (
+                        <li key={`l${i}`} className="flex items-start gap-1.5 text-xs text-slate-600">
+                          <Lock className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                    {isSelected && (
+                      <div
+                        className="mt-3 pt-2.5 border-t flex items-center gap-1.5 text-xs font-medium"
+                        style={{ borderColor: `rgba(${planRgb}, 0.3)`, color: plan.color }}
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        Selected
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="grid lg:grid-cols-5 gap-8 lg:gap-12">
 
           {/* Left: Features + trust signals */}
@@ -296,7 +451,9 @@ export default function CheckoutPage() {
 
               {/* Plan info */}
               <div className="text-center mb-6">
-                <p className="text-sm text-slate-400 mb-2">Monthly subscription</p>
+                <p className="text-sm text-slate-400 mb-2">
+                  {isTrial ? 'Monthly subscription' : `${planData.name} plan · monthly`}
+                </p>
                 <div className="flex items-baseline justify-center gap-1">
                   <span className="text-lg font-medium text-slate-400">{currencySymbol}</span>
                   <span className="text-5xl font-extrabold text-slate-100 tracking-tight leading-none">

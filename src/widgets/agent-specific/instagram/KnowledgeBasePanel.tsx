@@ -172,7 +172,7 @@ export default function KnowledgeBasePanel({ config }: { config: Record<string, 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <h4 className="font-medium text-slate-200 truncate">{a.title}</h4>
-                    <Badge className={getCategoryColor(a.category)}>{a.category.replace('_', ' ')}</Badge>
+                    <Badge className={getCategoryColor(a.category || 'general')}>{(a.category || 'general').replace('_', ' ')}</Badge>
                   </div>
                   <p className="text-sm text-slate-500 line-clamp-2">{a.content}</p>
                 </div>

@@ -577,6 +577,14 @@ export default function DashboardOverview({
                       ? '1px solid rgba(255,255,255,0.05)'
                       : 'none',
                 }}
+                onClick={() => {
+                  window.dispatchEvent(
+                    new CustomEvent('dashboard:navigate-tab', { detail: { tabId: 'conversations' } })
+                  );
+                  window.dispatchEvent(
+                    new CustomEvent('dashboard:open-conversation', { detail: { senderId: conv.sender_id } })
+                  );
+                }}
                 onMouseEnter={(e) => {
                   (e.currentTarget as HTMLDivElement).style.background =
                     'rgba(255,255,255,0.04)';

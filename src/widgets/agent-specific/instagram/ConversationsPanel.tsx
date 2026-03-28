@@ -1113,6 +1113,24 @@ export default function ConversationsPanel({ config }: { config: Record<string, 
       .finally(() => setLoading(false));
   }, [endpoint]);
 
+  // Auto-select conversation when navigated from dashboard overview
+  useEffect(() => {
+    function handleOpen(e: Event) {
+      const senderId = (e as CustomEvent<{ senderId: string }>).detail?.senderId;
+      if (!senderId) return;
+      setConversations(prev => {
+        const match = prev.find(c => c.sender_id === senderId);
+        if (match) {
+          setSelected(match);
+          setMobilePane('chat');
+        }
+        return prev;
+      });
+    }
+    window.addEventListener('dashboard:open-conversation', handleOpen);
+    return () => window.removeEventListener('dashboard:open-conversation', handleOpen);
+  }, []);
+
   // Load intelligence when conversation selected
   useEffect(() => {
     if (!selected) { setIntelligence(null); return; }

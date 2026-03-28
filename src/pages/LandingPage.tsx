@@ -26,6 +26,11 @@ import {
   Database,
   Receipt,
   ScanLine,
+  LayoutDashboard,
+  Eye,
+  MessageCircle,
+  TrendingUp,
+  Globe,
 } from 'lucide-react';
 
 /* ─── Helpers ─────────────────────────────────────── */
@@ -68,7 +73,7 @@ const scaleUp = {
 
 /* ─── Icon map for features ───────────────────────── */
 
-const FEATURE_ICONS = [MessageSquare, Database, Receipt, Shield, BarChart3, ScanLine];
+const FEATURE_ICONS = [LayoutDashboard, Sparkles, Eye, MessageCircle, TrendingUp, Globe];
 
 /* ─── Default SaaS images (Azure CDN) ────────────── */
 
@@ -90,29 +95,53 @@ function detectAgentType(config: any): 'instagram' | 'ca' | 'generic' {
 /* ─── Instagram-specific default content ─────────── */
 
 const IG_DEFAULTS = {
-  hero_title: 'Your AI Sales Agent That Actually Sells',
-  hero_subtitle: 'Not a chatbot — a professional sales agent with chain-of-thought reasoning, lead scoring, and adaptive selling. Handles DMs, comments, objections & closing 24/7 in your brand voice.',
-  hero_badges: ['AI Sales Agent', 'Instagram DMs', '24/7 Automation'],
+  hero_title: 'Your Instagram Sales Team. Runs 24/7.',
+  hero_subtitle: 'Not a chatbot — a full sales operation. Responds to DMs, engages comments, hunts leads on competitor reels, and closes in your brand voice. Set your personality once. It never breaks character.',
+  hero_badges: ['Engagement Hub', 'Personality Engine', 'Away Game', 'Lead Scoring', 'Hinglish Native'],
   cta_text: 'Start Free Trial',
   features: [
-    { title: 'Professional Sales Agent, Not a Chatbot', description: 'Chain-of-thought reasoning analyzes each customer\'s emotional state, buying signals, and conversation history before crafting a response. Every message moves toward a sale.' },
-    { title: 'Adaptive Lead Intelligence', description: 'Scores every lead (0-100) and adapts response depth automatically. Hot leads get VIP treatment with detailed, personalized responses. Cold leads get efficient nudges.' },
-    { title: 'Comment-to-DM Conversion', description: 'Detects purchase intent in comments, replies with curiosity-driven hooks, and initiates DM conversations automatically. Turns passive engagement into active sales.' },
-    { title: 'CRM & Follow-Page Tracking', description: 'Full CRM with lead tagging, conversation history, and follow-page tracking. Knows who follows you and adapts behavior — followers get insider treatment.' },
-    { title: 'Sells Any Product Category', description: 'Fashion, electronics, beauty, food, jewelry, education, real estate, D2C — works for any business.' },
-    { title: 'Brand Protection & Security', description: 'Quality gate validates every response before sending. Prompt injection protection, prohibited items detection, and brand guideline enforcement built-in.' },
+    {
+      title: 'Engagement Hub — 3 Surfaces, One Command Center',
+      description: 'Home Ground monitors your own posts and replies to comments. DM Chamber handles every inbound conversation. Away Game lets you comment on competitors\' and influencers\' reels — and the AI replies when those users tag you back. One dashboard, full Instagram coverage.',
+    },
+    {
+      title: 'Personality Engine — Your Brand Voice, Always',
+      description: 'Set your tone (friendly, formal, bold), selling style (consultative, direct, storytelling), and signature phrases once. Every DM, every comment reply — stays perfectly in character. Never sounds like a bot.',
+    },
+    {
+      title: 'Post-Aware Sales Context',
+      description: 'The agent sees which post, reel, or story triggered the DM. It references the content naturally — "I saw you commented on our summer kurta reel…" — making every conversation feel personal, not automated.',
+    },
+    {
+      title: 'Comment Intent Classification',
+      description: 'Distinguishes soft engagement (curiosity, appreciation) from purchase intent (price queries, "where to buy"). Purchase-intent comments trigger an automatic, personalized DM. Soft engagement gets a reply that builds curiosity without being pushy.',
+    },
+    {
+      title: 'Lead Intelligence & Mini-Funnel CRM',
+      description: 'Scores every lead 0–100 in real time. Tracks follower status, conversation history, and funnel stage (new → warm → hot → converted). Hot leads get VIP depth. Cold leads get efficient nudges. You see a live mini-funnel on the dashboard.',
+    },
+    {
+      title: 'Hinglish-Native, Festival-Aware Selling',
+      description: 'Speaks Hindi, English, and Hinglish naturally — auto-detects the customer\'s preferred mix. Knows Bollywood references, festival pricing ("Diwali offer khatam ho rahi hai"), and value framing that lands with Indian buyers.',
+    },
   ],
   pricing_features: [
-    'Unlimited AI-powered DM responses 24/7',
-    'Chain-of-thought sales reasoning',
-    'Adaptive response depth based on lead quality',
-    'Comment-to-DM conversion with intent detection',
-    'Lead scoring (0-100) with CRM auto-tagging',
-    'Follow-page tracking & engagement-based behavior',
-    'Multi-language: Hindi, English, Hinglish',
-    'Knowledge base & product catalog search',
+    'Engagement Hub — Home Ground, Away Game & DM Chamber',
+    'Personality Engine — tone, style, phrases, signatures',
+    'Post-aware context: agent sees which reel/post triggered the DM',
+    'Comment intent classification (soft engagement vs purchase intent)',
+    'Auto-DM on purchase-intent comments',
+    'Lead scoring (0–100) with mini-funnel CRM',
+    'Away Game: comment on others\' reels, AI replies when tagged back',
+    'Follow-page tracking — followers get insider treatment',
+    'Hinglish + Hindi + English auto-detection',
+    'Festival & cultural awareness (Diwali, Navratri, Eid)',
+    'Product catalog search via vector DB',
+    'Knowledge base search for FAQs & policies',
     'Quality gate with prompt injection protection',
-    '14-day free trial — no commitment',
+    'Automated follow-ups with smart scheduling',
+    'Full analytics dashboard with conversion metrics',
+    '14-day free trial — no credit card required',
   ],
   social_proof_title: 'Early access — be among the first',
   social_proof_description: 'We\'re onboarding our first cohort of Instagram sellers. Early access means direct founder support and lifetime early-bird pricing.',
@@ -120,9 +149,9 @@ const IG_DEFAULTS = {
   social_proof_stats: [
     { value: '24/7', label: 'Always on' },
     { value: '< 5s', label: 'Response time' },
-    { value: 'Hindi', label: 'Native support' },
+    { value: '3 surfaces', label: 'Full IG coverage' },
   ],
-  cta_section_title: 'Ready to turn DMs into sales?',
+  cta_section_title: 'Ready to turn DMs into revenue?',
   cta_section_subtitle: 'Set up in under 10 minutes. Your first 14 days are completely free.',
 };
 
