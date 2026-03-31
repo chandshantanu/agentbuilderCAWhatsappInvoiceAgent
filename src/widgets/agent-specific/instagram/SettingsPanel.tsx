@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Settings,
   Instagram,
   MessageCircle,
   Plus,
@@ -25,6 +24,7 @@ import { apiClient } from '@/lib/apiClient';
 import { saasApi } from '@/services/saasApiService';
 import { useSaaS } from '@/contexts/SaaSContext';
 import InstagramConnectStep from '@/components/InstagramConnectStep';
+import PlanUpgradeModal, { type UpgradeModalConfig } from '@/components/PlanUpgradeModal';
 
 const PLAN_ORDER: Record<string, number> = { starter: 0, pro: 1, agency: 2 };
 
@@ -37,6 +37,7 @@ function FeatureToggleRow({
   plan,
   requiredPlan,
   onChange,
+  onLocked,
   comingSoon = false,
 }: {
   icon: React.ReactNode;
@@ -47,13 +48,14 @@ function FeatureToggleRow({
   plan: string;
   requiredPlan: string;
   onChange: (next: boolean) => void;
+  onLocked?: () => void;
   comingSoon?: boolean;
 }) {
   const isLocked = !available || (PLAN_ORDER[plan] ?? 0) < (PLAN_ORDER[requiredPlan] ?? 0);
   const planLabel: Record<string, string> = { pro: 'Pro', agency: 'Agency' };
 
   return (
-    <div className={`flex items-start justify-between gap-4 ${isLocked ? 'opacity-60' : ''}`}>
+    <div className={`flex items-start justify-between gap-4 ${isLocked ? 'opacity-70' : ''}`}>
       <div className="flex items-start gap-2.5 min-w-0">
         <span className="mt-0.5 shrink-0">{icon}</span>
         <div className="min-w-0">
@@ -78,11 +80,14 @@ function FeatureToggleRow({
         type="button"
         role="switch"
         aria-checked={enabled && !isLocked}
-        disabled={isLocked || comingSoon}
-        onClick={() => !isLocked && !comingSoon && onChange(!enabled)}
+        disabled={isLocked ? false : comingSoon}
+        onClick={() => {
+          if (isLocked) { onLocked?.(); return; }
+          if (!comingSoon) onChange(!enabled);
+        }}
         className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none disabled:cursor-not-allowed ${
           enabled && !isLocked ? 'bg-purple-500' : 'bg-white/10'
-        }`}
+        } ${isLocked ? 'cursor-pointer' : ''}`}
       >
         <span
           className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
@@ -110,6 +115,16 @@ export default function SettingsPanel({ config }: { config: Record<string, unkno
   const [storyAutoDMEnabled, setStoryAutoDMEnabled] = useState(true);
   const [storyAutoDMTemplate, setStoryAutoDMTemplate] = useState('');
   const [savingStoryAutoDM, setSavingStoryAutoDM] = useState(false);
+
+  // Plan upgrade modal
+  const [upgradeModal, setUpgradeModal] = useState<UpgradeModalConfig | null>(null);
+
+  // Save feedback
+  const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const showStatus = (type: 'success' | 'error', message: string) => {
+    setSaveStatus({ type, message });
+    setTimeout(() => setSaveStatus(null), 3000);
+  };
 
   // Plan + advanced features
   const [plan, setPlan] = useState<string>('pro');
@@ -174,8 +189,10 @@ export default function SettingsPanel({ config }: { config: Record<string, unkno
         proactive_outreach_enabled: proactiveOutreachEnabled,
         ...updates,
       });
+      showStatus('success', 'Settings saved');
     } catch (err) {
       console.error('Save advanced settings failed:', err);
+      showStatus('error', 'Failed to save. Please try again.');
     } finally {
       setSavingAdvanced(false);
     }
@@ -188,8 +205,10 @@ export default function SettingsPanel({ config }: { config: Record<string, unkno
         story_autodm_enabled: enabled,
         story_autodm_template: template,
       });
+      showStatus('success', `Story AutoDM ${enabled ? 'enabled' : 'disabled'}`);
     } catch (err) {
       console.error('Save story autodm failed:', err);
+      showStatus('error', 'Failed to save. Please try again.');
     } finally {
       setSavingStoryAutoDM(false);
     }
@@ -259,8 +278,10 @@ export default function SettingsPanel({ config }: { config: Record<string, unkno
     setSaving(true);
     try {
       await apiClient.put('/api/settings/triggers', { triggers: triggerList });
+      showStatus('success', 'Keyword triggers saved');
     } catch (err) {
       console.error('Save triggers failed:', err);
+      showStatus('error', 'Failed to save triggers. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -276,6 +297,33 @@ export default function SettingsPanel({ config }: { config: Record<string, unkno
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Plan upgrade modal */}
+      <PlanUpgradeModal
+        open={upgradeModal !== null}
+        onClose={() => setUpgradeModal(null)}
+        currentPlan={plan}
+        config={upgradeModal}
+      />
+
+      {/* Save feedback toast */}
+      {saveStatus && (
+        <div
+          className={`fixed top-4 right-4 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg text-sm font-medium transition-all ${
+            saveStatus.type === 'success'
+              ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-300'
+              : 'bg-red-500/20 border border-red-500/30 text-red-300'
+          }`}
+          style={{ backdropFilter: 'blur(12px)' }}
+        >
+          {saveStatus.type === 'success' ? (
+            <Check className="w-4 h-4 shrink-0" />
+          ) : (
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+          )}
+          {saveStatus.message}
+        </div>
+      )}
+
       {/* Instagram Connection */}
       <div className="glass-card rounded-xl p-4 sm:p-5">
         <h3 className="font-semibold text-slate-200 mb-4 flex items-center gap-2">
@@ -543,6 +591,11 @@ export default function SettingsPanel({ config }: { config: Record<string, unkno
             available={features.follow_gate !== false}
             plan={plan}
             requiredPlan="pro"
+            onLocked={() => setUpgradeModal({
+              feature: 'Follow Gate',
+              desc: 'Require story repliers to follow your account before they can access your catalog or get AI responses.',
+              requiredPlan: 'pro',
+            })}
             onChange={(next) => {
               setFollowGateEnabled(next);
               saveAdvanced({ follow_gate_enabled: next });
@@ -558,6 +611,11 @@ export default function SettingsPanel({ config }: { config: Record<string, unkno
             available={features.follow_up_scheduler !== false}
             plan={plan}
             requiredPlan="pro"
+            onLocked={() => setUpgradeModal({
+              feature: 'Follow-up Scheduler',
+              desc: 'Automatically re-message leads who went cold after 24 hours — keeps your pipeline warm without manual effort.',
+              requiredPlan: 'pro',
+            })}
             onChange={(next) => {
               setFollowUpEnabled(next);
               saveAdvanced({ follow_up_enabled: next });
@@ -573,24 +631,54 @@ export default function SettingsPanel({ config }: { config: Record<string, unkno
             available={features.proactive_outreach !== false}
             plan={plan}
             requiredPlan="pro"
+            onLocked={() => setUpgradeModal({
+              feature: 'Proactive Outreach',
+              desc: 'The AI monitors engagement signals and initiates conversations with warm leads before they go cold.',
+              requiredPlan: 'pro',
+            })}
             onChange={(next) => {
               setProactiveOutreachEnabled(next);
               saveAdvanced({ proactive_outreach_enabled: next });
             }}
           />
 
-          {/* Advanced Analytics — Agency only */}
-          <FeatureToggleRow
-            icon={<Crown className="w-4 h-4 text-amber-400" />}
-            label="Advanced Analytics"
-            description="Revenue attribution, funnel drop-off, customer LTV tracking"
-            enabled={false}
-            available={features.advanced_analytics === true}
-            plan={plan}
-            requiredPlan="agency"
-            onChange={() => {}}
-            comingSoon={features.advanced_analytics === true}
-          />
+          {/* Advanced Analytics — Coming Soon for everyone, Agency-locked for non-agency */}
+          <div className={`flex items-start justify-between gap-4 ${(PLAN_ORDER[plan] ?? 0) < PLAN_ORDER['agency'] ? 'opacity-60' : 'opacity-50'}`}>
+            <div className="flex items-start gap-2.5 min-w-0">
+              <Crown className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <p className="text-sm font-medium text-slate-300">Advanced Analytics</p>
+                  <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/15 text-amber-400">
+                    Coming soon
+                  </span>
+                  {(PLAN_ORDER[plan] ?? 0) < PLAN_ORDER['agency'] && (
+                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] bg-white/8 text-slate-500">
+                      <Lock className="w-2.5 h-2.5" /> Agency+
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Revenue attribution, funnel drop-off, customer LTV — in development
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if ((PLAN_ORDER[plan] ?? 0) < PLAN_ORDER['agency']) {
+                  setUpgradeModal({
+                    feature: 'Advanced Analytics',
+                    desc: 'Deep revenue attribution, funnel drop-off analysis, and customer LTV tracking. Know exactly which posts, stories, and campaigns are generating sales.',
+                    requiredPlan: 'agency',
+                  });
+                }
+              }}
+              className="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full bg-white/10 cursor-not-allowed"
+            >
+              <span className="inline-block h-4 w-4 transform rounded-full bg-white shadow translate-x-1" />
+            </button>
+          </div>
         </div>
 
         {plan === 'starter' && (

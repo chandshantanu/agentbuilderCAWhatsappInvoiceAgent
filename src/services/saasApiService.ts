@@ -96,9 +96,10 @@ export const saasApi = {
   ) => apiCall('POST', `/api/v1/saas/subscribe/${subdomain}/verify`, data),
 
   // Validate coupon
-  validateCoupon: (subdomain: string, couponCode: string) =>
+  validateCoupon: (subdomain: string, couponCode: string, plan?: string) =>
     apiCall('POST', `/api/v1/saas/subscribe/${subdomain}/validate-coupon`, {
       coupon_code: couponCode,
+      ...(plan ? { plan } : {}),
     }),
 
   // Start cardless trial (no payment required)
@@ -217,8 +218,11 @@ export const saasApi = {
     apiCall('GET', `/api/v1/instagram-oauth/token-status?subscription_id=${subscriptionId}`),
 
   // Create Razorpay order to resume a trial_expired subscription
-  createResumeOrder: (subscriptionId: string) =>
-    apiCall('POST', `/api/v1/subscriptions/create-resume-order`, { subscription_id: subscriptionId }),
+  createResumeOrder: (subscriptionId: string, couponCode?: string) =>
+    apiCall('POST', `/api/v1/subscriptions/create-resume-order`, {
+      subscription_id: subscriptionId,
+      ...(couponCode ? { coupon_code: couponCode } : {}),
+    }),
 
   // Verify payment and reactivate a trial_expired subscription
   verifyResumePayment: (subscriptionId: string, data: {

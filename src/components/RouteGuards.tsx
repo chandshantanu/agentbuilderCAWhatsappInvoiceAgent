@@ -1,16 +1,13 @@
 /**
  * Route guards for SaaS mode.
  * - RequireAuth: redirect to /login if not authenticated
- * - RequireSubscription: auto-start cardless trial if no subscription, or redirect to /trial-expired
+ * - RequireSubscription: redirect to /checkout if no subscription, or redirect to /trial-expired
  * - RequireConfigured: redirect to /onboarding if not configured
  */
 
-import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/auth/SupabaseAuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
-import { useSaaS } from '@/contexts/SaaSContext';
-import { saasApi } from '@/services/saasApiService';
 
 function LoadingSpinner() {
   return (
@@ -29,47 +26,12 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 
 export function RequireSubscription({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading: authLoading } = useSupabaseAuth();
-  const { hasSubscription, trialExpired, expiryReason, isLoading: subLoading, refetch } = useSubscription();
-  const { subdomain } = useSaaS();
-  const [startingTrial, setStartingTrial] = useState(false);
-  const [trialError, setTrialError] = useState('');
+  const { hasSubscription, trialExpired, expiryReason, isLoading: subLoading } = useSubscription();
 
-  // Auto-start cardless trial if authenticated but no subscription
-  const trialAttempted = React.useRef(false);
-  useEffect(() => {
-    if (authLoading || subLoading || !isAuthenticated || hasSubscription || trialExpired || expiryReason || startingTrial || trialError || trialAttempted.current || !subdomain) return;
-
-    trialAttempted.current = true;
-    const autoStartTrial = async () => {
-      setStartingTrial(true);
-      try {
-        await saasApi.startTrial(subdomain);
-        await refetch();
-      } catch (err: any) {
-        console.error('Failed to auto-start trial:', err);
-        setTrialError(err.message || 'Failed to start trial');
-      } finally {
-        setStartingTrial(false);
-      }
-    };
-
-    autoStartTrial();
-  }, [authLoading, subLoading, isAuthenticated, hasSubscription, trialExpired, expiryReason, startingTrial, trialError, subdomain, refetch]);
-
-  if (authLoading || subLoading || startingTrial) return <LoadingSpinner />;
+  if (authLoading || subLoading) return <LoadingSpinner />;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (trialExpired || expiryReason) return <Navigate to="/trial-expired" replace />;
-  if (trialError) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center max-w-sm">
-          <p className="text-red-500 mb-2">Failed to start trial</p>
-          <p className="text-sm text-gray-500">{trialError}</p>
-        </div>
-      </div>
-    );
-  }
-  if (!hasSubscription) return <LoadingSpinner />;
+  if (!hasSubscription) return <Navigate to="/checkout" replace />;
   return <>{children}</>;
 }
 

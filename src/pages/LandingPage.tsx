@@ -98,7 +98,7 @@ const IG_DEFAULTS = {
   hero_title: 'Your Instagram Sales Team. Runs 24/7.',
   hero_subtitle: 'Not a chatbot — a full sales operation. Responds to DMs, engages comments, hunts leads on competitor reels, and closes in your brand voice. Set your personality once. It never breaks character.',
   hero_badges: ['Engagement Hub', 'Personality Engine', 'Away Game', 'Lead Scoring', 'Hinglish Native'],
-  cta_text: 'Start Free Trial',
+  cta_text: 'Get Started',
   features: [
     {
       title: 'Engagement Hub — 3 Surfaces, One Command Center',
@@ -126,22 +126,14 @@ const IG_DEFAULTS = {
     },
   ],
   pricing_features: [
-    'Engagement Hub — Home Ground, Away Game & DM Chamber',
-    'Personality Engine — tone, style, phrases, signatures',
-    'Post-aware context: agent sees which reel/post triggered the DM',
-    'Comment intent classification (soft engagement vs purchase intent)',
-    'Auto-DM on purchase-intent comments',
+    'AI DM responses 24/7 — never miss a lead',
+    'Engagement Hub: Home Ground, Away Game & DM Chamber',
+    'Personality Engine — brand tone, style & signature phrases',
+    'Post-aware context: reel/story triggers inform responses',
+    'Comment intent classification → auto-DM on purchase intent',
     'Lead scoring (0–100) with mini-funnel CRM',
-    'Away Game: comment on others\' reels, AI replies when tagged back',
-    'Follow-page tracking — followers get insider treatment',
     'Hinglish + Hindi + English auto-detection',
-    'Festival & cultural awareness (Diwali, Navratri, Eid)',
-    'Product catalog search via vector DB',
-    'Knowledge base search for FAQs & policies',
-    'Quality gate with prompt injection protection',
-    'Automated follow-ups with smart scheduling',
-    'Full analytics dashboard with conversion metrics',
-    '14-day free trial — no credit card required',
+    'Product catalog & knowledge base search',
   ],
   social_proof_title: 'Early access — be among the first',
   social_proof_description: 'We\'re onboarding our first cohort of Instagram sellers. Early access means direct founder support and lifetime early-bird pricing.',
@@ -152,7 +144,7 @@ const IG_DEFAULTS = {
     { value: '3 surfaces', label: 'Full IG coverage' },
   ],
   cta_section_title: 'Ready to turn DMs into revenue?',
-  cta_section_subtitle: 'Set up in under 10 minutes. Your first 14 days are completely free.',
+  cta_section_subtitle: 'Set up in under 10 minutes. Plans from ₹999/mo — no hidden fees.',
 };
 
 /* ─── CA-specific default content ────────────────── */
@@ -594,98 +586,215 @@ export default function LandingPage() {
 
       {/* ═══════════ PRICING ═══════════ */}
       <section className="py-16 sm:py-20 px-5 sm:px-8">
-        <div className="max-w-md mx-auto">
-          {/* Section header — always visible (no animation gate for safety) */}
+        <div className={agentType === 'instagram' ? 'max-w-5xl mx-auto' : 'max-w-md mx-auto'}>
+          {/* Section header */}
           <div className="text-center mb-10">
             <div className="inline-flex items-center gap-1.5 mb-4">
               <Star className="w-4 h-4" style={{ color: primary }} />
-              <span
-                className="text-xs font-bold uppercase tracking-[0.15em]"
-                style={{ color: primary }}
-              >
+              <span className="text-xs font-bold uppercase tracking-[0.15em]" style={{ color: primary }}>
                 Pricing
               </span>
             </div>
             <h2 className="text-3xl sm:text-[2.5rem] font-bold text-slate-100 tracking-[-0.02em]">
-              Simple, transparent
+              {agentType === 'instagram' ? 'Simple, transparent pricing' : 'Simple, transparent'}
             </h2>
+            {agentType === 'instagram' && (
+              <p className="text-slate-400 mt-3 text-base">No hidden fees. No usage limits. Upgrade or cancel anytime.</p>
+            )}
           </div>
 
-          {/* Pricing card — no whileInView to avoid invisible-card bug */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 16 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.6, ease, delay: 0.15 }}
-            className="relative rounded-2xl p-7 sm:p-8"
-            style={{
-              background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(20px)',
-              border: `1.5px solid rgba(${rgb}, 0.18)`,
-              boxShadow: `0 1px 3px rgba(0,0,0,0.06), 0 12px 40px rgba(${rgb}, 0.08)`,
-            }}
-          >
-            {/* Trial badge */}
-            {pricing.trial_days > 0 && (
-              <div
-                className="absolute -top-3 left-1/2 -translate-x-1/2 h-[26px] px-4 rounded-full text-xs font-semibold text-white flex items-center gap-1 shadow-md"
+          {agentType === 'instagram' ? (
+            /* ── 3-tier grid for Instagram agents ── */
+            <div className="grid md:grid-cols-3 gap-5">
+              {/* Starter */}
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease, delay: 0.1 }}
+                className="rounded-2xl p-6 bg-white/5 border border-white/10 flex flex-col"
+              >
+                <div>
+                  <h3 className="font-semibold text-slate-200 text-lg mb-0.5">Starter</h3>
+                  <p className="text-xs text-slate-500 mb-5">Core AI — no automations</p>
+                  <div className="flex items-baseline gap-1 mb-5">
+                    <span className="text-slate-400 font-medium text-lg">{currencySymbol}</span>
+                    <span className="text-[2.6rem] font-extrabold text-slate-100 leading-none tracking-tight">999</span>
+                    <span className="text-slate-400 text-sm">/mo</span>
+                  </div>
+                </div>
+                <div className="space-y-2.5 mb-6 flex-1">
+                  {['AI DM responses 24/7', 'Comment intent → auto-DM', 'Product catalog search', 'Lead scoring (0–100)', 'Hinglish + Hindi native', 'Analytics dashboard'].map(f => (
+                    <div key={f} className="flex items-start gap-2.5">
+                      <div className="mt-0.5 w-4 h-4 rounded-full bg-white/8 flex items-center justify-center shrink-0">
+                        <Check className="w-2.5 h-2.5 text-slate-400" />
+                      </div>
+                      <span className="text-[13px] text-slate-400">{f}</span>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={handleCta}
+                  className="w-full h-10 rounded-lg text-sm font-medium text-slate-300 border border-white/20 hover:bg-white/5 hover:text-slate-100 transition-colors"
+                >
+                  Get Started
+                </button>
+              </motion.div>
+
+              {/* Pro — highlighted */}
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease, delay: 0.2 }}
+                className="rounded-2xl p-6 relative flex flex-col"
                 style={{
-                  backgroundColor: primary,
-                  boxShadow: `0 2px 12px rgba(${rgb}, 0.4)`,
+                  background: `rgba(${rgb}, 0.07)`,
+                  border: `1.5px solid rgba(${rgb}, 0.28)`,
+                  boxShadow: `0 0 40px rgba(${rgb}, 0.1)`,
                 }}
               >
-                <Sparkles className="w-3 h-3" />
-                {pricing.trial_days}-day free trial
-              </div>
-            )}
+                <div
+                  className="absolute -top-3 left-1/2 -translate-x-1/2 h-6 px-3 rounded-full text-[11px] font-semibold text-white flex items-center"
+                  style={{ backgroundColor: primary }}
+                >
+                  Most Popular
+                </div>
+                <div>
+                  <h3 className="font-semibold text-slate-200 text-lg mb-0.5">Pro</h3>
+                  <p className="text-xs text-slate-500 mb-5">Full automation suite</p>
+                  <div className="flex items-baseline gap-1 mb-5">
+                    <span className="text-slate-400 font-medium text-lg">{currencySymbol}</span>
+                    <span className="text-[2.6rem] font-extrabold text-slate-100 leading-none tracking-tight">2,999</span>
+                    <span className="text-slate-400 text-sm">/mo</span>
+                  </div>
+                </div>
+                <div className="space-y-2.5 mb-6 flex-1">
+                  {[
+                    'Everything in Starter',
+                    'Story AutoDM — instant reply on story',
+                    'Follow Gate — reply gated on follow',
+                    'Comment AutoDM automation',
+                    'Follow-up scheduler (24h re-engage)',
+                    'Post-aware sales context',
+                    'Priority support',
+                  ].map(f => (
+                    <div key={f} className="flex items-start gap-2.5">
+                      <div
+                        className="mt-0.5 w-4 h-4 rounded-full flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: `rgba(${rgb}, 0.18)` }}
+                      >
+                        <Check className="w-2.5 h-2.5" style={{ color: lightAccent }} />
+                      </div>
+                      <span className="text-[13px] text-slate-300">{f}</span>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={handleCta}
+                  className="w-full h-10 rounded-lg text-sm font-semibold text-white transition-all hover:brightness-110 hover:shadow-md"
+                  style={{
+                    background: `linear-gradient(135deg, ${primary}, ${lightenColor(primary, 0.1)})`,
+                    boxShadow: `0 4px 14px rgba(${rgb}, 0.35)`,
+                  }}
+                >
+                  Get Started
+                </button>
+              </motion.div>
 
-            {/* Price display */}
-            <p className="text-slate-400 text-center text-sm mb-2 mt-2">Monthly subscription</p>
-            <div className="flex items-baseline justify-center gap-1 mb-7">
-              <span className="text-xl font-medium text-slate-400">{currencySymbol}</span>
-              <span className="text-[3.5rem] font-extrabold text-slate-100 tracking-tight leading-none">
-                {displayPrice}
-              </span>
-              <span className="text-slate-400 text-base font-medium">/mo</span>
+              {/* Agency */}
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease, delay: 0.3 }}
+                className="rounded-2xl p-6 bg-sky-500/5 border border-sky-500/20 flex flex-col"
+              >
+                <div>
+                  <h3 className="font-semibold text-slate-200 text-lg mb-0.5">Agency</h3>
+                  <p className="text-xs text-slate-500 mb-5">Multi-account + deep analytics</p>
+                  <div className="flex items-baseline gap-1 mb-5">
+                    <span className="text-slate-400 font-medium text-lg">{currencySymbol}</span>
+                    <span className="text-[2.6rem] font-extrabold text-slate-100 leading-none tracking-tight">5,999</span>
+                    <span className="text-slate-400 text-sm">/mo</span>
+                  </div>
+                </div>
+                <div className="space-y-2.5 mb-6 flex-1">
+                  {[
+                    'Everything in Pro',
+                    'Advanced analytics (LTV, funnel, attribution)',
+                    'Multi-account management',
+                    'White-label dashboard',
+                    'Dedicated account manager',
+                    'Custom onboarding',
+                  ].map(f => (
+                    <div key={f} className="flex items-start gap-2.5">
+                      <div className="mt-0.5 w-4 h-4 rounded-full bg-sky-500/18 flex items-center justify-center shrink-0">
+                        <Check className="w-2.5 h-2.5 text-sky-400" />
+                      </div>
+                      <span className="text-[13px] text-slate-400">{f}</span>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={handleCta}
+                  className="w-full h-10 rounded-lg text-sm font-medium text-slate-300 border border-sky-500/30 hover:bg-sky-500/10 hover:text-slate-100 transition-colors"
+                >
+                  Get Started
+                </button>
+              </motion.div>
             </div>
-
-            {/* Divider */}
-            <div className="h-px bg-white/10 mb-6" />
-
-            {/* Feature checklist */}
-            <div className="space-y-3.5 mb-8">
-              {(lp.pricing_features || features.slice(0, 5)).map(
-                (item: any, i: number) => {
+          ) : (
+            /* ── Single-card for CA / generic agents ── */
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.6, ease, delay: 0.15 }}
+              className="relative rounded-2xl p-7 sm:p-8"
+              style={{
+                background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(20px)',
+                border: `1.5px solid rgba(${rgb}, 0.18)`,
+                boxShadow: `0 1px 3px rgba(0,0,0,0.06), 0 12px 40px rgba(${rgb}, 0.08)`,
+              }}
+            >
+              {pricing.trial_days > 0 && (
+                <div
+                  className="absolute -top-3 left-1/2 -translate-x-1/2 h-[26px] px-4 rounded-full text-xs font-semibold text-white flex items-center gap-1 shadow-md"
+                  style={{ backgroundColor: primary, boxShadow: `0 2px 12px rgba(${rgb}, 0.4)` }}
+                >
+                  <Sparkles className="w-3 h-3" />
+                  {pricing.trial_days}-day free trial
+                </div>
+              )}
+              <p className="text-slate-400 text-center text-sm mb-2 mt-2">Monthly subscription</p>
+              <div className="flex items-baseline justify-center gap-1 mb-7">
+                <span className="text-xl font-medium text-slate-400">{currencySymbol}</span>
+                <span className="text-[3.5rem] font-extrabold text-slate-100 tracking-tight leading-none">{displayPrice}</span>
+                <span className="text-slate-400 text-base font-medium">/mo</span>
+              </div>
+              <div className="h-px bg-white/10 mb-6" />
+              <div className="space-y-3.5 mb-8">
+                {(lp.pricing_features || features.slice(0, 5)).map((item: any, i: number) => {
                   const label = typeof item === 'string' ? item : item.title || item.label;
                   return (
                     <div key={i} className="flex items-start gap-3">
-                      <div
-                        className="mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0"
-                        style={{ backgroundColor: `rgba(${rgb}, 0.1)` }}
-                      >
+                      <div className="mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `rgba(${rgb}, 0.1)` }}>
                         <Check className="w-3 h-3" style={{ color: primary }} />
                       </div>
                       <span className="text-[14px] text-slate-300 leading-snug">{label}</span>
                     </div>
                   );
-                },
-              )}
-            </div>
-
-            {/* CTA */}
-            <button
-              onClick={handleCta}
-              className="w-full h-12 rounded-xl text-white font-semibold text-[15px] transition-all duration-300 hover:shadow-lg hover:brightness-105 active:scale-[0.99]"
-              style={{
-                background: `linear-gradient(135deg, ${primary}, ${lightenColor(primary, 0.1)})`,
-                boxShadow: `0 4px 16px rgba(${rgb}, 0.3)`,
-              }}
-            >
-              {lp.cta_text || 'Get Started'}
-            </button>
-
-            <p className="text-xs text-slate-500 text-center mt-4 tracking-wide">
-              No credit card required &middot; Cancel anytime
-            </p>
-          </motion.div>
+                })}
+              </div>
+              <button
+                onClick={handleCta}
+                className="w-full h-12 rounded-xl text-white font-semibold text-[15px] transition-all duration-300 hover:shadow-lg hover:brightness-105 active:scale-[0.99]"
+                style={{ background: `linear-gradient(135deg, ${primary}, ${lightenColor(primary, 0.1)})`, boxShadow: `0 4px 16px rgba(${rgb}, 0.3)` }}
+              >
+                {lp.cta_text || 'Get Started'}
+              </button>
+              <p className="text-xs text-slate-500 text-center mt-4 tracking-wide">
+                No credit card required &middot; Cancel anytime
+              </p>
+            </motion.div>
+          )}
         </div>
       </section>
 

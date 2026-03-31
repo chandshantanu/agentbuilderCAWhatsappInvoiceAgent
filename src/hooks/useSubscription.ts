@@ -17,6 +17,7 @@ export interface SubscriptionState {
   serviceStatus: string | null;
   trialExpired: boolean;
   expiryReason: string | null;
+  plan: string | null;
   isLoading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
@@ -33,6 +34,7 @@ export function useSubscription(): SubscriptionState {
     serviceStatus: null,
     trialExpired: false,
     expiryReason: null,
+    plan: null,
     isLoading: true,
     error: null,
   });
@@ -61,6 +63,7 @@ export function useSubscription(): SubscriptionState {
           serviceStatus: null,
           trialExpired: false,
           expiryReason: null,
+          plan: null,
           isLoading: false,
           error: null,
         });
@@ -78,6 +81,7 @@ export function useSubscription(): SubscriptionState {
           serviceStatus: sub.service_status,
           trialExpired: sub.status === 'trial_expired' || sub.expiry_reason === 'trial_ended',
           expiryReason: sub.status === 'trial_expired' ? 'trial_ended' : (sub.expiry_reason || 'expired'),
+          plan: sub.user_configuration?.plan || (sub as any).plan || null,
           isLoading: false,
           error: null,
         });
@@ -96,6 +100,7 @@ export function useSubscription(): SubscriptionState {
             serviceStatus: sub.service_status,
             trialExpired: true,
             expiryReason: 'trial_ended',
+            plan: sub.user_configuration?.plan || (sub as any).plan || null,
             isLoading: false,
             error: null,
           });
@@ -124,6 +129,7 @@ export function useSubscription(): SubscriptionState {
         serviceStatus: sub.service_status,
         trialExpired: false,
         expiryReason: null,
+        plan: sub.user_configuration?.plan || (sub as any).plan || null,
         isLoading: false,
         error: null,
       });
@@ -136,6 +142,7 @@ export function useSubscription(): SubscriptionState {
         serviceStatus: null,
         trialExpired: false,
         expiryReason: null,
+        plan: null,
         isLoading: false,
         error: err.message || 'Failed to check subscription',
       });

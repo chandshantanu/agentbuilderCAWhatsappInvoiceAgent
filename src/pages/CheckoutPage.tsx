@@ -128,7 +128,10 @@ export default function CheckoutPage() {
 
   const [searchParams] = useSearchParams();
   const isTrial = (config?.pricing?.trial_days || 0) > 0;
-  const [selectedPlan, setSelectedPlan] = useState<PlanId>('pro');
+  const planParam = searchParams.get('plan') as PlanId | null;
+  const [selectedPlan, setSelectedPlan] = useState<PlanId>(
+    planParam && PLANS.some(p => p.id === planParam) ? planParam : 'pro'
+  );
   const [couponCode, setCouponCode] = useState(isTrial ? 'TEST1' : '');
   const [couponResult, setCouponResult] = useState<any>(null);
   const [couponError, setCouponError] = useState('');
@@ -152,7 +155,7 @@ export default function CheckoutPage() {
     couponAutoApplied.current = true;
     setCouponCode(code.toUpperCase());
     setCouponLoading(true);
-    saasApi.validateCoupon(subdomain, code.toUpperCase())
+    saasApi.validateCoupon(subdomain, code.toUpperCase(), selectedPlan)
       .then((result) => setCouponResult(result.data))
       .catch((err: any) => !isTrial && setCouponError(err.message || 'Invalid coupon'))
       .finally(() => setCouponLoading(false));
@@ -190,7 +193,7 @@ export default function CheckoutPage() {
     setCouponError('');
     setCouponLoading(true);
     try {
-      const result = await saasApi.validateCoupon(subdomain, couponCode.trim());
+      const result = await saasApi.validateCoupon(subdomain, couponCode.trim(), selectedPlan);
       setCouponResult(result.data);
     } catch (err: any) {
       setCouponError(err.message || 'Invalid coupon');
@@ -438,7 +441,7 @@ export default function CheckoutPage() {
                   }}
                 >
                   <Sparkles className="w-3 h-3" />
-                  {pricing.trial_days}-day free trial
+                  {pricing.trial_days}-day trial
                 </div>
               )}
 
@@ -478,7 +481,7 @@ export default function CheckoutPage() {
                 {isTrial ? (
                   <>
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-slate-400">{pricing.trial_days}-day free trial</span>
+                      <span className="text-slate-400">{pricing.trial_days}-day trial</span>
                       <span className="font-medium text-emerald-400">FREE</span>
                     </div>
                     <div className="flex justify-between items-center text-sm text-slate-500">

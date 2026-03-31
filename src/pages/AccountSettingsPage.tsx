@@ -50,7 +50,7 @@ interface PersonalityProfile {
 
 export default function AccountSettingsPage() {
   const { config, subdomain } = useSaaS();
-  const { subscriptionId, status, isConfigured } = useSubscription();
+  const { subscriptionId, status, isConfigured, plan } = useSubscription();
   const { user, updatePassword } = useSupabaseAuth();
   const navigate = useNavigate();
 
@@ -566,12 +566,12 @@ export default function AccountSettingsPage() {
                 status === 'trialing' ? 'text-blue-400 bg-blue-500/10' :
                 'text-yellow-400 bg-yellow-500/10'
               }`}>
-                {status === 'trialing' ? 'Free Trial' : status === 'active' ? 'Active' : status || 'Unknown'}
+                {status === 'trialing' ? `${({ starter: 'Starter', pro: 'Pro', agency: 'Agency' }[plan || 'pro'] || 'Pro')} Trial` : status === 'active' ? 'Active' : status || 'Unknown'}
               </span>
             </div>
             <div className="flex justify-between items-center py-2">
               <span className="text-sm text-slate-400">Plan</span>
-              <span className="text-sm text-slate-200">{pricing.monthly_price ? `₹${Number(pricing.monthly_price).toLocaleString('en-IN')}/mo` : 'Free'}</span>
+              <span className="text-sm text-slate-200">{plan ? `₹${{ starter: 999, pro: 2999, agency: 5999 }[plan]?.toLocaleString('en-IN') || pricing.monthly_price}/mo` : pricing.monthly_price ? `₹${Number(pricing.monthly_price).toLocaleString('en-IN')}/mo` : 'Free'}</span>
             </div>
             {status === 'trialing' && (
               <div className="flex justify-between items-center py-2">

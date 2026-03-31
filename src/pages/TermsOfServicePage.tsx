@@ -43,8 +43,8 @@ export default function TermsOfServicePage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-slate-100">4. Free Trial</h2>
-            <p>New users receive a 14-day free trial with full feature access. No credit card is required for the trial. At the end of the trial period, access to the dashboard and AI agent will be paused until you subscribe to a paid plan. Your data is preserved for 90 days after trial expiry.</p>
+            <h2 className="text-lg font-semibold text-slate-100">4. Trial Period</h2>
+            <p>New users receive a 14-day trial period with access to features included in their selected plan. A ₹1 verification charge is collected at sign-up and refunded within 5–7 business days. At the end of the trial period, access to the dashboard and AI agent will be paused until you subscribe to a paid plan. Your data is preserved for 90 days after trial expiry.</p>
           </section>
 
           <section>
