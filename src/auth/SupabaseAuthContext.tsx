@@ -168,9 +168,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
 
     // Build redirect URL: use agent subdomain if in SaaS mode, else default
     // Cardless trial: redirect to /onboarding (trial auto-starts via RequireSubscription)
-    const redirectUrl = subdomain
-      ? `https://${subdomain}.agents.chatslytics.com/onboarding`
-      : undefined;
+    const redirectUrl = `${window.location.origin}/onboarding`;
 
     let data: Awaited<ReturnType<typeof supabase.auth.signUp>>['data'];
     let authError: Awaited<ReturnType<typeof supabase.auth.signUp>>['error'];
@@ -239,8 +237,16 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
     }
 
     if (authError) {
-      setError(authError.message);
-      throw authError;
+      // Map GoTrue error codes to user-friendly messages
+      const friendlyMessages: Record<string, string> = {
+        'Invalid login credentials': 'Incorrect email or password. Please try again.',
+        'Email not confirmed': 'Please verify your email before logging in. Check your inbox.',
+        'invalid_grant': 'Incorrect email or password. Please try again.',
+        'User not found': 'No account found with this email.',
+      };
+      const friendly = friendlyMessages[authError.message] || authError.message;
+      setError(friendly);
+      throw new Error(friendly);
     }
   };
 
@@ -257,9 +263,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
     if (!supabase) throw new Error('Supabase not initialized');
     setError(null);
 
-    const redirectUrl = subdomain
-      ? `https://${subdomain}.agents.chatslytics.com/reset-password`
-      : `${window.location.origin}/reset-password`;
+    const redirectUrl = `${window.location.origin}/reset-password`;
 
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: redirectUrl,

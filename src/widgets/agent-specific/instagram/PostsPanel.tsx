@@ -257,6 +257,20 @@ export default function PostsPanel({ config }: { config: Record<string, unknown>
   );
 }
 
+/** Image proxied through agent-runtime to get fresh CDN URLs from Meta API. */
+function SafeImage({ mediaId, fallbackSrc, alt, className }: { mediaId?: string; fallbackSrc?: string; alt?: string; className?: string }) {
+  const [failed, setFailed] = useState(false);
+  const src = mediaId ? `/api/media/${mediaId}/thumbnail` : fallbackSrc;
+  if (failed || !src) {
+    return (
+      <div className={cn(className, 'flex items-center justify-center bg-zinc-800')}>
+        <Image className="w-5 h-5 text-zinc-600" />
+      </div>
+    );
+  }
+  return <img src={src} alt={alt || ''} className={className} onError={() => setFailed(true)} />;
+}
+
 function PostCard({
   post,
   products,
@@ -297,17 +311,7 @@ function PostCard({
     >
       {/* Thumbnail */}
       <div className="w-16 h-16 rounded-md bg-zinc-800 flex-shrink-0 overflow-hidden">
-        {post.thumbnail_url ? (
-          <img
-            src={post.thumbnail_url}
-            alt=""
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Image className="w-5 h-5 text-zinc-600" />
-          </div>
-        )}
+        <SafeImage mediaId={post.media_id} className="w-full h-full object-cover" />
       </div>
 
       {/* Body */}

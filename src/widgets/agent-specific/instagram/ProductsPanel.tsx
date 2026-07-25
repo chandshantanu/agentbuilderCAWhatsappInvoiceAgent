@@ -10,12 +10,25 @@ import {
   X,
   Check,
   Package,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { apiClient } from '@/lib/apiClient';
+
+function SafeProductImage({ src, className }: { src: string; className?: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed || !src) {
+    return (
+      <div className={cn(className, 'flex items-center justify-center bg-white/10')}>
+        <Package className="w-4 h-4 text-slate-500" />
+      </div>
+    );
+  }
+  return <img src={src} alt="" className={className} onError={() => setFailed(true)} />;
+}
 
 interface Product {
   id: string;
@@ -188,13 +201,7 @@ export default function ProductsPanel({ config }: { config: Record<string, unkno
                   <tr key={p.id} className="hover:bg-white/[0.04]">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        {p.image_url ? (
-                          <img src={p.image_url} alt="" className="w-9 h-9 rounded-lg object-cover shrink-0" />
-                        ) : (
-                          <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
-                            <Package className="w-4 h-4 text-slate-500" />
-                          </div>
-                        )}
+                        <SafeProductImage src={p.image_url} className="w-9 h-9 rounded-lg object-cover shrink-0" />
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
                             <p className="font-medium text-slate-200 truncate">{p.name}</p>
@@ -239,13 +246,7 @@ export default function ProductsPanel({ config }: { config: Record<string, unkno
           <div className="space-y-2 sm:hidden">
             {products.map((p) => (
               <div key={p.id} className="glass-card rounded-xl p-3 flex items-center gap-3">
-                {p.image_url ? (
-                  <img src={p.image_url} alt="" className="w-12 h-12 rounded-lg object-cover shrink-0" />
-                ) : (
-                  <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
-                    <Package className="w-5 h-5 text-slate-500" />
-                  </div>
-                )}
+                <SafeProductImage src={p.image_url} className="w-12 h-12 rounded-lg object-cover shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-slate-200 text-sm truncate">{p.name}</p>
                   <p className="text-xs text-slate-400">{p.currency === 'INR' ? '₹' : '$'}{p.price.toLocaleString()} · {p.category || 'Uncategorized'}</p>

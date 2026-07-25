@@ -60,16 +60,25 @@ export function SaaSProvider({ children }: { children: React.ReactNode }) {
     // Subscription IDs are 24-char MongoDB ObjectId hex strings — treat as direct mode.
     // SaaS white-label sites have custom slug subdomains (not hex ObjectIds).
     const isSubscriptionId = /^[0-9a-f]{24}$/.test(subdomain);
+    // Custom domains mapped to SaaS subdomains
+    const customDomainMap: Record<string, string> = {
+      'dmforprice.com': 'instaseller',
+      'www.dmforprice.com': 'instaseller',
+    };
+
     const isSaaSSubdomain =
       hostname.endsWith('.agents.chatslytics.com') &&
       hostname !== 'agents.chatslytics.com' &&
       !isSubscriptionId;
+    const isCustomDomain = hostname in customDomainMap;
 
     // Also allow localhost testing with ?saas_subdomain= query param
     const params = new URLSearchParams(window.location.search);
     const testSubdomain = params.get('saas_subdomain');
 
-    if (isSaaSSubdomain) {
+    if (isCustomDomain) {
+      fetchConfig(customDomainMap[hostname]);
+    } else if (isSaaSSubdomain) {
       fetchConfig(subdomain);
     } else if (testSubdomain) {
       fetchConfig(testSubdomain);
